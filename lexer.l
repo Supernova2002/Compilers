@@ -1,22 +1,36 @@
 %option noyywrap
 %{
 #include "tokens-manual.h"
+#include <math.h>
+#include <ctype.h>
+#include <string.h>
 #define INTLONG 500
 #define LLU 501
 #define newline 600
 #define PUNCTUATION 601
 char* yylval;
 char* placeholder;
+int isFloat=0;
 %}
 %x STRING CHAR
+
+DEC [1-9][0-9]*
+E [\e][\+-]?{DEC}+
+FLOAT [0-9]+\.[0-9]*
+HEXDIGIT   [0-9a-fA-F]
+OCTALDIGIT      [0-7]
+
+HEX     0[xX]{HEXDIGIT}+
+OCTAL   0{OCTALDIGIT}*
 %%
 
 [a-z|A-Z]+\.c   {yylval = strdup(yytext); return NAME;}
-<INITIAL>\" {BEGIN(STRING);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
-<INITIAL>\' {BEGIN(CHAR);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
-<STRING,CHAR>\\['\"\\\?] {strcat(placeholder,&yytext[1]);}
+<INITIAL>\L?\" {BEGIN(STRING);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
+<INITIAL>\L?\' {BEGIN(CHAR);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
+
+<STRING,CHAR>\\['|"|\\|?] {strcat(placeholder,&yytext[1]);}
 <STRING,CHAR>\\[0|a|b|f|n|r|t|v] {strcat(placeholder, yytext);}
-<STRING,CHAR>\\[0-7]{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
+<STRING,CHAR>\\{OCTALDIGIT}{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
         if(temp > 255){temp = 255;}
         if(isprint(temp)==0){
                 sprintf(storage,"\\%03o",temp);
@@ -26,7 +40,7 @@ char* placeholder;
         }
         strcat(placeholder,storage);free(storage);}
 
-<STRING,CHAR>\\x[0-9|a-f|A-F]+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
+<STRING,CHAR>\\x{HEXDIGIT}+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
         if(temp > 255){temp = 255;}
         if(isprint(temp)==0){
                 sprintf(storage,"\\%03o",temp);
@@ -35,16 +49,18 @@ char* placeholder;
                 sprintf(storage,"%c",temp);
         }
         strcat(placeholder,storage);free(storage);}
-<STRING,CHAR>[^\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
-
+<STRING>[^\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
+<CHAR>[^\'\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
+<CHAR>\' {BEGIN(INITIAL);yylval = strdup(placeholder); free(placeholder);return CHAR;}
 <STRING>\" {BEGIN(INITIAL);yylval = strdup(placeholder); free(placeholder);return STRING;}
 
 -\> {return INDSEL;}
 \<\< {return SHL;}
 \>\> {return SHR;}
-<INITIAL>0[x|X][0-9|a-f|A-F]+[u|U]?[l|L]{0,2} {char * end;long temp = strtol(yytext+2,&end,16);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
-<INITIAL>[1-9][0-9]*[u|U]?[l|L]{0,2} {yylval = strdup(yytext);return NUMBER;}
-<INITIAL>0[0-7]*[u|U]?[l|L]{0,2}        {char * end;long temp = strtol(yytext,&end,8);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
+<INITIAL>{HEX}[u|U]?[l|L]{0,2} {char * end;long temp = strtol(yytext+2,&end,16);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
+<INITIAL>{DEC}[u|U]?[l|L]{0,2}{E}? {yylval = strdup(yytext);return NUMBER;}
+<INITIAL>{OCTAL}[u|U]?[l|L]{0,2}{E}?        {char * end;long temp = strtol(yytext,&end,8);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
+{FLOAT}[u|U]?[l|L]{0,2}{E}?      {char * end;long temp = strtol(yytext,&end,10);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);isFloat = 1; return NUMBER; }   
 <INITIAL>\+\+ {return PLUSPLUS;}
 <INITIAL>-- {return MINUSMINUS;}
 <INITIAL>\<= {return LTEQ;}
@@ -121,6 +137,7 @@ main(){
                                 case newline: line = line + 1; break;
                                 case INDSEL: printf("%s\t\%d\tINDSEL\n",name,line); break;
                                 case IDENT:printf("%s\t%d\tIDENT\t%s\n",name,line,yylval); break;
+                                case CHAR:  printf("%s\t%d\tCHAR\t%s\n",name,line,yylval); break;
                                 case STRING: printf("%s\t%d\tSTRING\t%s\n",name,line,yylval); break;
                                 case PUNCTUATION: printf("%s\t%d\t%s\n",name,line,yylval); break;
                                 case SHL:printf("%s\t%d\tSHL\n", name, line); break;
@@ -147,43 +164,87 @@ main(){
                                 case OREQ: printf("%s\t%d\tOREQ\n", name, line); break;
                                 case XOREQ: printf("%s\t%d\tXOREQ\n", name, line); break;
                                 case NUMBER:;
+                                        if(isFloat){
+                                                
+                                        }
                                         int charCount =0;
+                                        long eSign = 0;
+                                        long eVal = 0;
                                         char* type = malloc(1024);
-                                        if((strchr(yylval,'U') != NULL) || (strchr(yylval,'u') != NULL))
-                                        {
-                                                strcat(type,"UNSIGNED,");
-                                                charCount++;
-                                        }
-                                        if(strstr(yylval,"LL") != NULL)
-                                        {
-                                                strcat(type,"LONGLONG");
+                                        char* end;
+                                        char* eCheck = strchr(yylval,'e');
+                                        if ( eCheck!= NULL){
+                                                isFloat = 1;
                                                 charCount+=2;
-
+                                                
+                                                if(yylval[strlen(yylval)-2] == '-'){
+                                                        eSign = -1;
+                                                }
+                                                else{
+                                                        eSign = 1;
+                                                }
+                                                
+                                                eVal = strtol(yylval+(int)(eCheck-yylval)+2,NULL,10);
+                                                
                                         }
-                                        else if( (strchr(yylval,'L') != NULL) || (strchr(yylval,'l') != NULL))
-                                        {
-                                                strcat(type,"LONG");
+                                        long test = eVal;
+                                        while (test>0){
+                                                test = test/10;
                                                 charCount++;
-
                                         }
-                                        else{
+                                        if(!isFloat){
+                                                if((strchr(yylval,'U') != NULL) || (strchr(yylval,'u') != NULL))
+                                                {
+                                                        strcat(type,"UNSIGNED,");
+                                                        charCount++;
+                                                }
+                                                if(strstr(yylval,"LL") != NULL)
+                                                {
+                                                        strcat(type,"LONGLONG");
+                                                        charCount+=2;
 
-                                                strcat(type,"INT");
+                                                }
+                                                else if( (strchr(yylval,'L') != NULL) || (strchr(yylval,'l') != NULL))
+                                                {
+                                                        strcat(type,"LONG");
+                                                        charCount++;
+
+                                                }
+                                                else {
+
+                                                        strcat(type,"INT");
+                                                }
                                         }
                                         
+                                        
+                                        if(isFloat){
+                                                
+                                                if( (strchr(yylval,'L') != NULL) || (strchr(yylval,'l') != NULL))
+                                                {
+                                                        strcat(type,"LONGDOUBLE");
+                                                        charCount++;
+
+                                                }
+                                                else if(strchr(yylval,'f')!= NULL || strchr(yylval,'F')!= NULL  ){
+                                                        strcat(type,"Float");
+                                                }
+                                                else{
+                                                        strcat(type,"DOUBLE");
+                                                }
+                                                
+                                        }
+                                        
+                                        
                                         if(charCount!=0){yylval[strlen(yylval)-charCount] = '\0';}
+                                        
+                                        long int temp = atoi(yylval) * pow(10,eSign*eVal);
+                                        sprintf(yylval,"%ld",temp);
                                         printf("%s\t%d\tNUMBER\tINTEGER\t%s\t%s\n",name,line, yylval,type);
                                         break;
-                                case INTLONG:
-                                        yylval[strlen(yylval)-1] = '\0';
-                                        printf("%s\t%d\tNUMBER\tINTEGER\t%d\tLONG\n", name, line, atoi(yylval)); break;
-                                case LLU:
-                                        yylval[strlen(yylval)-3] = '\0';
-                                        printf("%s\t%d\tNUMBER\tINTEGER\t%d\tUNSIGNED,LONGLONG\n", name, line, atoi(yylval)); break;
+                                
                                 case AUTO: printf("%s\t%d\tAUTO\n", name, line); break;
                                 case BREAK: printf("%s\t%d\tBREAK\n", name,line); break;
                                 case CASE: printf("%s\t%d\tCASE\n", name, line); break;
-                                case CHAR: printf("%s\t%d\tCHAR\n", name,line); break;
                                 case CONST: printf("%s\t%d\tCONST\n", name, line); break;
                                 case CONTINUE: printf("%s\t%d\tCONTINUE\n", name, line); break;
                                 case DEFAULT: printf("%s\t%d\tDEFAULT\n",name, line); break;
@@ -220,7 +281,7 @@ main(){
                         }
 
         }
-
+        free(yylval);
 
 
 
