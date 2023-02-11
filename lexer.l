@@ -71,9 +71,23 @@ OCTAL   0{OCTALDIGIT}*
 -\> {return INDSEL;}
 \<\< {return SHL;}
 \>\> {return SHR;}
-<INITIAL>{HEX}[u|U]?[l|L]{0,2}{P}?[fF]? {char * end;long temp = strtol(yytext+2,&end,16);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
+<INITIAL>{HEX}[u|U]?[l|L]{0,2}{P}?[fF]? {
+        char * end;
+        long temp = strtol(yytext+2,&end,16);
+        char* storage= malloc(sizeof(char));
+        sprintf(storage,"%ld",temp);
+        strcat(storage,end);yylval =strdup(storage);
+        free(storage);
+        return NUMBER;}
 <INITIAL>{DEC}[u|U]?[l|L]{0,2}({E}|{P})?[fF]? {yylval = strdup(yytext);return NUMBER;}
-<INITIAL>{OCTAL}[u|U]?[l|L]{0,2}({E}|{P})?[fF]?        {char * end;long temp = strtol(yytext,&end,8);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
+<INITIAL>{OCTAL}[u|U]?[l|L]{0,2}({E}|{P})?[fF]?        {
+        char * end;
+        long temp = strtol(yytext,&end,8);
+        char* storage= malloc(1024);
+        sprintf(storage,"%ld",temp);
+        strcat(storage,end);
+        yylval =strdup(storage);
+        free(storage);return NUMBER;}
 {FLOAT}[l|L]?{E}?      {yylval = strdup(yytext);isFloat = 1; return NUMBER; }   
 <INITIAL>\+\+ {return PLUSPLUS;}
 <INITIAL>-- {return MINUSMINUS;}
