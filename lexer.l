@@ -10,12 +10,15 @@
 #define PUNCTUATION 601
 char* yylval;
 char* placeholder;
+char* name = "stdin";
 int isFloat=0;
+int line = 1;
 %}
 %x STRING CHAR
 
 DEC [1-9][0-9]*
 E [\e][\+-]?{DEC}+
+P [\p][\+-]?{DEC}+
 FLOAT [0-9]+\.[0-9]*
 HEXDIGIT   [0-9a-fA-F]
 OCTALDIGIT      [0-7]
@@ -31,7 +34,10 @@ OCTAL   0{OCTALDIGIT}*
 <STRING,CHAR>\\['|"|\\|?] {strcat(placeholder,&yytext[1]);}
 <STRING,CHAR>\\[0|a|b|f|n|r|t|v] {strcat(placeholder, yytext);}
 <STRING,CHAR>\\{OCTALDIGIT}{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
-        if(temp > 255){temp = 255;}
+        if(temp > 255){
+                fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
+                temp = 255;
+        }
         if(isprint(temp)==0){
                 sprintf(storage,"\\%03o",temp);
         }
@@ -41,7 +47,10 @@ OCTAL   0{OCTALDIGIT}*
         strcat(placeholder,storage);free(storage);}
 
 <STRING,CHAR>\\x{HEXDIGIT}+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
-        if(temp > 255){temp = 255;}
+        if(temp > 255){
+                fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
+                temp = 255;
+        }
         if(isprint(temp)==0){
                 sprintf(storage,"\\%03o",temp);
         }
@@ -51,16 +60,21 @@ OCTAL   0{OCTALDIGIT}*
         strcat(placeholder,storage);free(storage);}
 <STRING>[^\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
 <CHAR>[^\'\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
-<CHAR>\' {BEGIN(INITIAL);yylval = strdup(placeholder); free(placeholder);return CHAR;}
+<CHAR>\' {BEGIN(INITIAL);
+        if(strlen(placeholder) >1){
+                fprintf("%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
+                placeholder[1] = '\0';
+        }
+        yylval = strdup(placeholder); free(placeholder);return CHAR;}
 <STRING>\" {BEGIN(INITIAL);yylval = strdup(placeholder); free(placeholder);return STRING;}
 
 -\> {return INDSEL;}
 \<\< {return SHL;}
 \>\> {return SHR;}
-<INITIAL>{HEX}[u|U]?[l|L]{0,2} {char * end;long temp = strtol(yytext+2,&end,16);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
-<INITIAL>{DEC}[u|U]?[l|L]{0,2}{E}? {yylval = strdup(yytext);return NUMBER;}
-<INITIAL>{OCTAL}[u|U]?[l|L]{0,2}{E}?        {char * end;long temp = strtol(yytext,&end,8);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
-{FLOAT}[u|U]?[l|L]{0,2}{E}?      {char * end;long temp = strtol(yytext,&end,10);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);isFloat = 1; return NUMBER; }   
+<INITIAL>{HEX}[u|U]?[l|L]{0,2}{P}?[fF]? {char * end;long temp = strtol(yytext+2,&end,16);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
+<INITIAL>{DEC}[u|U]?[l|L]{0,2}({E}|{P})?[fF]? {yylval = strdup(yytext);return NUMBER;}
+<INITIAL>{OCTAL}[u|U]?[l|L]{0,2}({E}|{P})?[fF]?        {char * end;long temp = strtol(yytext,&end,8);char* storage= malloc(sizeof(char));sprintf(storage,"%ld",temp);strcat(storage,end);yylval =strdup(storage);free(storage);return NUMBER;}
+{FLOAT}[l|L]?{E}?      {yylval = strdup(yytext);isFloat = 1; return NUMBER; }   
 <INITIAL>\+\+ {return PLUSPLUS;}
 <INITIAL>-- {return MINUSMINUS;}
 <INITIAL>\<= {return LTEQ;}
@@ -117,7 +131,7 @@ while {return WHILE;}
 _Bool {return _BOOL;}
 _Complex {return _COMPLEX;}
 _Imaginary {return _IMAGINARY;}
-\n      {return newline;}
+\n      {line = line + 1;}
 <INITIAL>[\.\+\-\;\!\?\:\,\@\#\$\%\*\&\(\)\[\]\{\}\^\~\|\<\>\`\\\/] {yylval = strdup(yytext);return PUNCTUATION;}
 <INITIAL>[a-z|A-Z|_][a-z|A-Z|0-9|_]* {yylval = strdup(yytext); return IDENT;}
 .       {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
@@ -125,8 +139,8 @@ _Imaginary {return _IMAGINARY;}
 %%
 main(){
         int t;
-        yylval = malloc(1024);
-        int line = 1;
+        yylval = malloc(sizeof(float));
+        
         char* name = "stdin";
         printf("File name is %s\n", __FILE__);
         while (t = yylex())
@@ -134,16 +148,15 @@ main(){
                 switch(t)
                         {
                                 case NAME: printf("Name is %s\n", yylval); name = yylval; break;
-                                case newline: line = line + 1; break;
+                                
                                 case INDSEL: printf("%s\t\%d\tINDSEL\n",name,line); break;
                                 case IDENT:printf("%s\t%d\tIDENT\t%s\n",name,line,yylval); break;
-                                case CHAR:  printf("%s\t%d\tCHAR\t%s\n",name,line,yylval); break;
+                                case CHAR:  printf("%s\t%d\tCHARLITERAL\t%s\n",name,line,yylval); break;
                                 case STRING: printf("%s\t%d\tSTRING\t%s\n",name,line,yylval); break;
                                 case PUNCTUATION: printf("%s\t%d\t%s\n",name,line,yylval); break;
                                 case SHL:printf("%s\t%d\tSHL\n", name, line); break;
                                 case SHR: printf("%s\t%d\tSHR\n", name, line); break;
-                                case '+': printf("%s\t%d\t+\n",name,line); break;
-                                case '-': printf("%s\t%d\t-\n",name, line); break;
+                                
                                 case PLUSPLUS: printf("%s\t%d\tPLUSPLUS\n", name, line); break;
                                 case MINUSMINUS:printf("%s\t%d\tMINUSMINUS\n", name, line); break;
                                 case LTEQ: printf("%s\t%d\tLTEQ\n", name, line); break;
@@ -164,35 +177,76 @@ main(){
                                 case OREQ: printf("%s\t%d\tOREQ\n", name, line); break;
                                 case XOREQ: printf("%s\t%d\tXOREQ\n", name, line); break;
                                 case NUMBER:;
-                                        if(isFloat){
-                                                
-                                        }
+                                        double floatVal;
+                                        char* copyVal;
+                                        
                                         int charCount =0;
                                         long eSign = 0;
                                         long eVal = 0;
+                                        int pSign =0;
+                                        int pVal =0;
                                         char* type = malloc(1024);
                                         char* end;
                                         char* eCheck = strchr(yylval,'e');
+                                        char* pCheck = strchr(yylval,'p');
                                         if ( eCheck!= NULL){
                                                 isFloat = 1;
-                                                charCount+=2;
+                                                charCount+=1;
                                                 
-                                                if(yylval[strlen(yylval)-2] == '-'){
+                                                if(isdigit(eCheck[1])){
+                                                        eSign = 1;
+                                                        eVal = strtol(yylval+(int)(eCheck-yylval)+1,NULL,10);
+                                                }
+                                                else if (yylval[strlen(yylval)-2] == '-'){
+                                                        charCount+=1;
                                                         eSign = -1;
+                                                        eVal = strtol(yylval+(int)(eCheck-yylval)+2,NULL,10);
                                                 }
                                                 else{
+                                                        charCount+=1;
                                                         eSign = 1;
+                                                        eVal = strtol(yylval+(int)(eCheck-yylval)+2,NULL,10);
                                                 }
                                                 
-                                                eVal = strtol(yylval+(int)(eCheck-yylval)+2,NULL,10);
+                                                
                                                 
                                         }
+                                        
                                         long test = eVal;
                                         while (test>0){
                                                 test = test/10;
                                                 charCount++;
                                         }
+                                        if ( pCheck!= NULL){
+                                                isFloat = 1;
+                                                charCount+=1;
+                                                
+                                                if(isdigit(pCheck[1])){
+                                                        pSign = 1;
+                                                        pVal = strtol(yylval+(int)(pCheck-yylval)+1,NULL,10);
+                                                }
+                                                else if (yylval[strlen(yylval)-2] == '-'){
+                                                        charCount+=1;
+                                                        pSign = -1;
+                                                        pVal = strtol(yylval+(int)(pCheck-yylval)+2,NULL,10);
+                                                }
+                                                else{
+                                                        charCount+=1;
+                                                        pSign = 1;
+                                                        pVal = strtol(yylval+(int)(pCheck-yylval)+2,NULL,10);
+                                                }
+                                                
+                                                
+                                                
+                                        }
+                                        
+                                        test = pVal;
+                                        while (test>0){
+                                                test = test/10;
+                                                charCount++;
+                                        }
                                         if(!isFloat){
+                                                
                                                 if((strchr(yylval,'U') != NULL) || (strchr(yylval,'u') != NULL))
                                                 {
                                                         strcat(type,"UNSIGNED,");
@@ -214,6 +268,9 @@ main(){
 
                                                         strcat(type,"INT");
                                                 }
+
+                                                
+                                                
                                         }
                                         
                                         
@@ -227,19 +284,32 @@ main(){
                                                 }
                                                 else if(strchr(yylval,'f')!= NULL || strchr(yylval,'F')!= NULL  ){
                                                         strcat(type,"Float");
+                                                        charCount++;
                                                 }
                                                 else{
                                                         strcat(type,"DOUBLE");
                                                 }
                                                 
+                                                //memcpy(copyVal,yylval,strlen(yylval)-charCount);
+                                               // floatVal = atof(copyVal);
+                                                
                                         }
                                         
                                         
                                         if(charCount!=0){yylval[strlen(yylval)-charCount] = '\0';}
+                                        floatVal = atof(yylval);
                                         
-                                        long int temp = atoi(yylval) * pow(10,eSign*eVal);
-                                        sprintf(yylval,"%ld",temp);
-                                        printf("%s\t%d\tNUMBER\tINTEGER\t%s\t%s\n",name,line, yylval,type);
+                                        if(isFloat){
+                                                long double temp = floatVal * pow(10,eSign*eVal) * pow(2,pSign*pVal);
+                                                sprintf(yylval,"%Lg",temp);
+                                                printf("%s\t%d\tNUMBER\tREAL\t%s\t%s\n",name,line, yylval,type);  
+                                        }
+                                        else{
+                                                long int temp = atoi(yylval) * pow(10,eSign*eVal) * pow(2,pSign*pVal);
+                                                sprintf(yylval,"%lld",temp);
+                                                printf("%s\t%d\tNUMBER\tINTEGER\t%s\t%s\n",name,line, yylval,type);
+                                        }
+                                        
                                         break;
                                 
                                 case AUTO: printf("%s\t%d\tAUTO\n", name, line); break;
