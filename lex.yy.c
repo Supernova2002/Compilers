@@ -458,48 +458,48 @@ static const YY_CHAR yy_meta[60] =
         1,    1,    4,    4,    4,    4,    5,    5,    5,    5,
         5,    2,    1,    5,    4,    4,    4,    4,    4,    4,
         5,    5,    5,    5,    5,    5,    5,    5,    5,    5,
-        5,    5,    5,    5,    5,    5,    5,    5,    5
+        5,    5,    5,    5,    5,    5,    5,    5,    6
     } ;
 
 static const flex_int16_t yy_base[338] =
     {   0,
-        0,    0,   58,   62,   66,   70,   74,   78,  645,  646,
-      646,  624,  646,  646,  646,  623,   65,  646,  622,   50,
-       71,   89,  621,  135,  181,   67,  620,   68,    0,   90,
-      619,   84,  585,  587,   62,   72,   69,   48,  588,   77,
-      587,  595,   80,  576,  585,  583,  588,   62,    0,  646,
-      646,  236,    0,  646,  646,  646,   94,  646,  646,  646,
-      646,  646,  646,  646,  646,  646,  646,  615,  614,  646,
-      124,  127,  646,  140,   99,  153,  646,  148,  114,    0,
-      169,  191,  160,    0,  186,  117,  205,  215,  206,  607,
-      646,  646,  646,  606,    0,  646,  646,  646,  577,  576,
+        0,    0,   58,   62,   66,   70,   74,   78,  653,  654,
+      654,  632,  654,  654,  654,  631,   65,  654,  630,   50,
+       71,  116,  629,  162,  208,   67,  628,   68,    0,   90,
+      627,   79,  593,  595,   64,   57,   63,   66,  596,   69,
+      595,  603,   84,  584,  593,  591,  596,   58,    0,  654,
+      654,  263,    0,  654,  654,  654,   61,  654,  654,  654,
+      654,  654,  654,  654,  654,  654,  654,  623,  622,  654,
+      131,  134,  654,  104,   82,  146,  654,  124,  112,    0,
+      155,  169,  160,    0,  187,  155,  186,  216,  206,  607,
+      654,  654,  654,  606,    0,  654,  654,  654,  572,  548,
 
-      577,  570,  575,  562,  573,  541,  547,  533,  533,  529,
-      529,  532,  528,  525,    0,  127,  529,  173,  526,   92,
-      133,  530,  523,   76,  199,  527,  646,    0,    0,  646,
-      221,  231,  646,    0,  646,    0,  180,  646,  566,  646,
-      232,  244,  237,  280,    0,  226,  646,  235,  270,  249,
-      295,  257,  315,  248,  251,  646,  289,  299,  333,  309,
-      340,  308,  646,  646,  519,  520,  530,  516,  528,  522,
-      508,  291,  522,  517,  513,  505,  510,  506,    0,  492,
-      494,    0,  495,  490,  480,  475,  470,  471,  478,  463,
-      459,  452,  464,  448,  449,  453,  455,  444,  329,    0,
+      549,  542,  553,  539,  554,  541,  546,  532,  533,  529,
+      529,  532,  528,  525,    0,   79,  528,  179,  526,   82,
+       47,  530,  523,  107,   92,  528,  654,    0,    0,  654,
+      180,  192,  654,    0,  654,    0,   96,  654,  566,  654,
+      224,  246,  226,  271,    0,  197,  654,  210,  278,  231,
+      316,  253,  322,  291,  224,  654,  231,  264,  337,  275,
+      352,  330,  654,  654,  518,  519,  526,  512,  524,  518,
+      499,  250,  513,  509,  505,  495,  501,  501,    0,  480,
+      483,    0,  484,  480,  468,  459,  461,  457,  461,  447,
+      445,  445,  453,  439,  443,  446,  448,  432,  308,    0,
 
-      358,  365,  383,  390,  646,  384,  318,  408,  402,  422,
-      428,  646,  448,  454,  646,  646,  469,  484,  646,  490,
-      505,  646,  439,  430,  437,    0,  432,    0,    0,  423,
-      426,  410,  415,    0,    0,  409,  406,    0,  409,    0,
-      402,  402,  400,  389,  397,  386,  379,  381,  378,  373,
-      350,  355,    0,  343,  354,  646,  374,  646,  343,  347,
-      509,  452,    0,  347,  347,    0,    0,  342,  341,  340,
-      324,    0,  331,  316,  311,  305,    0,  298,  290,  291,
-      270,  272,  269,    0,  258,  259,    0,  646,  526,  530,
-      646,  252,  240,  229,  217,    0,    0,    0,  224,  220,
+      369,  384,  390,  405,  654,  335,  267,  420,  410,  430,
+      436,  654,  456,  462,  654,  654,  477,  492,  654,  498,
+      513,  654,  426,  419,  426,    0,  422,    0,    0,  409,
+      417,  405,  412,    0,    0,  401,  392,    0,  395,    0,
+      390,  386,  377,  374,  386,  372,  375,  380,  378,  374,
+      364,  364,    0,  352,  364,  654,  276,  654,  312,  329,
+      517,  460,    0,  354,  353,    0,    0,  346,  346,  351,
+      337,    0,  340,  324,  331,  326,    0,  334,  318,  315,
+      297,  301,  289,    0,  271,  271,    0,  654,  534,  538,
+      654,  270,  257,  241,  232,    0,    0,    0,  239,  237,
 
-        0,    0,    0,    0,    0,    0,  203,  190,  176,  150,
-      165,  157,    0,  113,  108,    0,  109,   92,    0,   63,
-        0,    0,    0,    0,    0,   44,    0,  646,  589,  594,
-      599,  601,  606,  611,  616,   74,   62
+        0,    0,    0,    0,    0,    0,  226,  219,  207,  189,
+      188,  173,    0,  160,  154,    0,  156,  135,    0,  120,
+        0,    0,    0,    0,    0,  109,    0,  654,  597,  603,
+      609,  612,  618,  624,  629,  155,  111
     } ;
 
 static const flex_int16_t yy_def[338] =
@@ -543,7 +543,7 @@ static const flex_int16_t yy_def[338] =
       328,  328,  328,  328,  328,  328,  328
     } ;
 
-static const flex_int16_t yy_nxt[706] =
+static const flex_int16_t yy_nxt[714] =
     {   0,
        10,   10,   11,   12,   13,   14,   15,   16,   17,   18,
        19,   20,   21,   22,   23,   24,   25,   25,   26,   27,
@@ -551,81 +551,82 @@ static const flex_int16_t yy_nxt[706] =
        29,   15,   31,   32,   33,   34,   35,   36,   37,   38,
        39,   29,   40,   29,   41,   29,   29,   29,   29,   42,
        43,   44,   45,   46,   47,   29,   29,   29,   48,   50,
-       50,   63,   51,   50,   50,  200,   51,   50,   50,   64,
-       50,   50,   50,   60,   50,   54,   56,  149,   57,   54,
-       56,  127,   57,   65,   61,   90,   91,   93,   94,   52,
-       66,   67,  112,   52,   96,  113,  104,   52,  138,   97,
+       50,   63,   51,   50,   50,  138,   51,   50,   50,   64,
+       50,   50,   50,   60,   50,   54,   56,  127,   57,   54,
+       56,  190,   57,   65,   61,   90,   91,   93,   94,   52,
+       66,   67,  139,   52,   96,  107,  191,   52,  104,   97,
 
-      327,   52,   68,  105,   69,   69,   69,   99,  100,  106,
-      107,  101,  326,  109,   70,  110,  115,   70,  194,  108,
-      128,  119,  120,  116,  111,  139,  195,   71,   70,  328,
-      325,  121,  188,   70,  122,  141,  141,   72,  143,  143,
-      142,  142,  148,  144,  144,  157,  324,   70,   74,  189,
-       75,   75,   76,  328,  328,  145,  145,  145,  148,  323,
-       77,  157,  322,   78,   79,   80,   74,  190,   76,   76,
-       76,  181,  148,   81,   77,  157,  146,  147,  182,   78,
-      150,  150,  191,   82,  138,  151,  151,   79,  154,  147,
-       80,   81,  146,   83,   74,  321,   84,   84,   84,  320,
+      138,   52,   99,  100,  108,  105,  101,  109,  115,  110,
+      112,  106,  328,  113,  200,  116,  128,  328,  111,  145,
+      145,  145,  188,  181,   50,  119,  120,  139,   50,   68,
+      182,   69,   69,   69,  196,  121,  197,  328,  122,  189,
+      148,   70,  141,  141,   70,  143,  143,  142,  142,  194,
+      144,  144,  146,  147,   71,   70,  148,  195,  149,   74,
+       70,   76,   76,   76,   72,  327,  150,  150,  146,  326,
+      148,  151,  151,  325,   70,   74,  147,   75,   75,   76,
+      152,  152,  146,  157,   81,  153,  153,   77,  154,  147,
+       78,   79,   80,  324,   82,  199,  199,  158,  158,  157,
 
-      147,   82,  152,  152,  154,  319,  146,  153,  153,   85,
-       86,  139,  147,  184,  155,  156,  158,  158,  154,   87,
-      318,  159,  159,  185,  186,   85,  160,  160,  317,   88,
-      155,  161,  161,   86,  162,  156,  199,  199,  156,   89,
-      130,  196,  316,  197,  155,  130,  199,  199,  142,  142,
-      162,  131,  132,  144,  144,  147,  315,  130,  156,  201,
-      202,  202,  314,  205,  162,  151,  151,  130,  313,   70,
-      133,  133,   70,  153,  153,  133,  205,  147,  147,  205,
-      156,  312,  133,   70,  147,  133,  311,  133,   70,  133,
-      310,  134,  205,  205,  135,  203,  204,  204,  206,  207,
+       81,   77,  159,  159,  154,  323,   78,  199,  199,  322,
+       82,  321,  147,  157,   79,  155,  156,   80,  154,  184,
+       83,   74,  320,   84,   84,   84,  147,  160,  160,  185,
+      186,  155,  161,  161,  162,  156,   85,   86,  205,  156,
+      142,  142,  144,  144,  319,  155,   87,  151,  151,  147,
+      162,  318,   85,  156,  205,  147,   88,  317,  156,  216,
+       86,  201,  202,  202,  162,  316,   89,  130,  205,  153,
+      153,   70,  130,  315,   70,  216,  156,  314,  131,  132,
+      159,  159,  156,  313,  130,   70,  203,  204,  204,  216,
+       70,  161,  161,  312,  130,  259,   70,  133,  133,   70,
 
-      147,  309,   70,  156,  308,   70,  215,  307,   70,  156,
-      210,  211,  211,  306,  206,  159,  159,  216,  208,   70,
-      212,  305,  207,  212,   70,  161,  161,  304,  209,  303,
-      213,  214,  214,  216,  212,  302,  216,  156,   70,  212,
-      212,  230,  231,  212,  256,  256,  259,  216,  217,  218,
-      218,  301,  216,  300,  212,  220,  221,  221,  212,  212,
-      156,  219,  259,  261,  261,  212,  222,  299,  219,  298,
-      297,  288,  212,  201,  202,  202,  259,  219,  296,  212,
-      201,  202,  202,   70,  219,  295,   70,  288,  294,  293,
-       70,  292,  287,   70,  286,  285,  284,   70,  203,  204,
+      230,  231,  133,  311,   70,  258,  206,  207,  310,  133,
+       70,  259,  133,  309,  133,   70,  133,  308,  134,  205,
+      147,  135,  206,  256,  256,  259,  208,  307,  258,   70,
+      207,  210,  211,  211,  258,  205,  209,  213,  214,  214,
+      288,  212,  306,  147,  212,  261,  261,  212,  305,  215,
+      212,  304,  217,  218,  218,  212,  288,  303,  216,  156,
+      212,  212,  212,  257,  258,  219,  212,  220,  221,  221,
+      288,  302,  301,  300,  216,  299,  212,  212,  298,  257,
+      219,  219,  156,  297,  201,  202,  202,  258,  222,  296,
+      295,  212,  294,  257,   70,  293,  219,   70,  292,  201,
 
-      204,  288,   70,  258,   70,  203,  204,  204,   70,   70,
-      283,   70,  257,  258,  282,   70,   70,  281,   70,  260,
-      260,  280,   70,   70,  261,  261,  258,   70,  257,   70,
-      262,  258,  258,  279,   70,  278,  258,  210,  211,  211,
-      277,   70,  257,  210,  211,  211,  262,  212,   70,  276,
-      212,  275,  274,  212,  258,  273,  212,  272,  271,  270,
-      262,  212,  269,  213,  214,  214,  212,  212,  268,  213,
-      214,  214,  212,  212,  267,  266,  212,  265,  264,  212,
-      288,  258,  212,  263,  217,  218,  218,  212,  255,  254,
-      253,  252,  212,  212,  212,  251,  288,  219,  212,  217,
+      202,  202,  287,  286,  285,  203,  204,  204,   70,   70,
+      284,  283,   70,   70,  282,   70,  281,  280,   70,  279,
+      203,  204,  204,   70,  278,  277,  276,   70,   70,   70,
+       70,  260,  260,   70,   70,  275,  261,  261,  262,  258,
+      274,  273,   70,  272,   70,  210,  211,  211,   70,   70,
+      271,  210,  211,  211,  262,  212,  270,  269,  212,  268,
+      267,  212,  258,   70,  212,  266,  265,  264,  262,  212,
+      263,  213,  214,  214,  212,  212,  255,  213,  214,  214,
+      212,  212,  254,  253,  212,  252,  251,  212,  288,  258,
+      212,  250,  217,  218,  218,  212,  249,  248,  247,  246,
 
-      218,  218,  250,  249,  258,  220,  221,  221,  212,  212,
-      291,  248,  219,  219,  247,  212,  246,  245,  219,  244,
-      220,  221,  221,  212,  289,  290,  290,  243,  219,  212,
-      212,  242,  241,  219,  219,  240,  239,  206,  207,  238,
-      237,  289,  290,  290,  212,  289,  290,  290,  236,  219,
-      235,  234,  233,  206,  206,  207,  232,  229,  206,  207,
-      228,  207,  227,  226,  225,  224,  223,  209,  328,  198,
-      206,  193,  192,  187,  206,  183,  180,  179,  207,  178,
-      177,  176,  207,  175,  209,  174,  173,  172,  209,   49,
-       49,   49,   49,   49,   53,   53,   53,   53,   53,   55,
+      212,  212,  212,  245,  288,  219,  212,  217,  218,  218,
+      244,  243,  258,  220,  221,  221,  212,  212,  291,  242,
+      219,  219,  241,  212,  240,  239,  219,  238,  220,  221,
+      221,  212,  289,  290,  290,  237,  219,  212,  212,  236,
+      235,  219,  219,  234,  233,  206,  207,  232,  229,  289,
+      290,  290,  212,  289,  290,  290,  228,  219,  227,  226,
+      225,  206,  206,  207,  224,  223,  206,  207,  328,  207,
+      198,  193,  192,  187,  183,  209,  180,  179,  206,  178,
+      177,  176,  206,  175,  174,  173,  207,  172,  171,  170,
+      207,  169,  209,  168,  167,  166,  209,   49,   49,   49,
 
-       55,   55,   55,   55,   95,   95,  129,  171,  129,  129,
-      129,  136,  170,  169,  136,  136,  137,  137,  137,  137,
-      137,  168,  167,  166,  165,  164,  163,  328,  140,  126,
-      125,  124,  123,  118,  117,  114,  103,  102,   98,   92,
-       73,   62,   59,   58,  328,    9,  328,  328,  328,  328,
+       49,   49,   49,   53,   53,   53,   53,   53,   53,   55,
+       55,   55,   55,   55,   55,   95,   95,   95,  129,  165,
+      129,  129,  129,  129,  136,  164,  163,  136,  136,  137,
+      137,  137,  137,  137,  137,  328,  140,  126,  125,  124,
+      123,  118,  117,  114,  103,  102,   98,   92,   73,   62,
+       59,   58,  328,    9,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
-      328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
 
-      328,  328,  328,  328,  328
+      328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
+      328,  328,  328
     } ;
 
-static const flex_int16_t yy_chk[706] =
+static const flex_int16_t yy_chk[714] =
     {   0,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
@@ -633,78 +634,79 @@ static const flex_int16_t yy_chk[706] =
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    1,
         1,    1,    1,    1,    1,    1,    1,    1,    1,    3,
-        3,   20,    3,    4,    4,  337,    4,    5,    5,   20,
-        5,    6,    6,   17,    6,    5,    7,  336,    7,    6,
-        8,   48,    8,   21,   17,   26,   26,   28,   28,    3,
-       21,   21,   38,    4,   30,   38,   35,    5,   57,   30,
+        3,   20,    3,    4,    4,   57,    4,    5,    5,   20,
+        5,    6,    6,   17,    6,    5,    7,   48,    7,    6,
+        8,  121,    8,   21,   17,   26,   26,   28,   28,    3,
+       21,   21,   57,    4,   30,   36,  121,    5,   35,   30,
 
-      326,    6,   22,   35,   22,   22,   22,   32,   32,   35,
-       36,   32,  320,   37,   22,   37,   40,   22,  124,   36,
-       48,   43,   43,   40,   37,   57,  124,   22,   22,   75,
-      318,   43,  120,   22,   43,   71,   71,   22,   72,   72,
-       71,   71,   79,   72,   72,   86,  317,   22,   24,  120,
-       24,   24,   24,   74,   75,   74,   74,   74,   79,  315,
-       24,   86,  314,   24,   24,   24,   76,  121,   76,   76,
-       76,  116,   79,   24,   24,   86,   78,   78,  116,   24,
-       81,   81,  121,   24,  137,   81,   81,   24,   83,   83,
-       24,   76,   78,   24,   25,  312,   25,   25,   25,  311,
+      137,    6,   32,   32,   36,   35,   32,   37,   40,   37,
+       38,   35,   75,   38,  337,   40,   48,   74,   37,   74,
+       74,   74,  120,  116,    5,   43,   43,  137,    6,   22,
+      116,   22,   22,   22,  125,   43,  125,   75,   43,  120,
+       79,   22,   71,   71,   22,   72,   72,   71,   71,  124,
+       72,   72,   78,   78,   22,   22,   79,  124,  336,   76,
+       22,   76,   76,   76,   22,  326,   81,   81,   78,  320,
+       79,   81,   81,  318,   22,   24,   78,   24,   24,   24,
+       82,   82,   78,   86,   76,   82,   82,   24,   83,   83,
+       24,   24,   24,  317,   76,  131,  131,   87,   87,   86,
 
-       78,   76,   82,   82,   83,  310,   78,   82,   82,   25,
-       25,  137,   83,  118,   85,   85,   87,   87,   83,   25,
-      309,   87,   87,  118,  118,   25,   88,   88,  308,   25,
-       85,   88,   88,   25,   89,   89,  131,  131,   85,   25,
-       52,  125,  307,  125,   85,   52,  132,  132,  141,  141,
-       89,   52,   52,  143,  143,  146,  300,   52,   89,  142,
-      142,  142,  299,  148,   89,  150,  150,   52,  295,  142,
-       52,   52,  142,  152,  152,   52,  154,  154,  146,  148,
-      155,  294,   52,  142,  146,   52,  293,   52,  142,   52,
-      292,   52,  154,  148,   52,  144,  144,  144,  149,  149,
+       24,   24,   87,   87,   83,  315,   24,  132,  132,  314,
+       24,  312,   83,   86,   24,   85,   85,   24,   83,  118,
+       24,   25,  311,   25,   25,   25,  146,   88,   88,  118,
+      118,   85,   88,   88,   89,   89,   25,   25,  148,   85,
+      141,  141,  143,  143,  310,   85,   25,  150,  150,  146,
+       89,  309,   25,  155,  148,  146,   25,  308,   89,  157,
+       25,  142,  142,  142,   89,  307,   25,   52,  148,  152,
+      152,  142,   52,  300,  142,  157,  155,  299,   52,   52,
+      158,  158,  155,  295,   52,  142,  144,  144,  144,  157,
+      142,  160,  160,  294,   52,  207,  144,   52,   52,  144,
 
-      154,  286,  142,  155,  285,  144,  154,  283,  144,  155,
-      151,  151,  151,  282,  149,  158,  158,  157,  149,  144,
-      151,  281,  149,  151,  144,  160,  160,  280,  149,  279,
-      153,  153,  153,  157,  151,  278,  162,  162,  144,  151,
-      153,  172,  172,  153,  199,  199,  207,  157,  159,  159,
-      159,  276,  162,  275,  153,  161,  161,  161,  159,  153,
-      162,  159,  207,  260,  260,  161,  162,  274,  161,  273,
-      271,  259,  159,  201,  201,  201,  207,  159,  270,  161,
-      202,  202,  202,  201,  161,  269,  201,  259,  268,  265,
-      202,  264,  255,  202,  254,  252,  251,  201,  203,  203,
+      172,  172,   52,  293,  142,  257,  149,  149,  292,   52,
+      144,  207,   52,  286,   52,  144,   52,  285,   52,  154,
+      154,   52,  149,  199,  199,  207,  149,  283,  257,  144,
+      149,  151,  151,  151,  257,  154,  149,  153,  153,  153,
+      259,  151,  282,  154,  151,  260,  260,  153,  281,  154,
+      153,  280,  159,  159,  159,  151,  259,  279,  162,  162,
+      151,  153,  159,  206,  206,  159,  153,  161,  161,  161,
+      259,  278,  276,  275,  162,  274,  159,  161,  273,  206,
+      161,  159,  162,  271,  201,  201,  201,  206,  162,  270,
+      269,  161,  268,  206,  201,  265,  161,  201,  264,  202,
 
-      203,  259,  201,  257,  202,  204,  204,  204,  203,  202,
-      250,  203,  206,  206,  249,  204,  201,  248,  204,  208,
-      208,  247,  203,  202,  208,  208,  257,  203,  206,  204,
-      209,  209,  257,  246,  204,  245,  206,  210,  210,  210,
-      244,  203,  206,  211,  211,  211,  209,  210,  204,  243,
-      210,  242,  241,  211,  209,  239,  211,  237,  236,  233,
-      209,  210,  232,  213,  213,  213,  210,  211,  231,  214,
-      214,  214,  211,  213,  230,  227,  213,  225,  224,  214,
-      262,  262,  214,  223,  217,  217,  217,  213,  198,  197,
-      196,  195,  213,  214,  217,  194,  262,  217,  214,  218,
+      202,  202,  255,  254,  252,  203,  203,  203,  201,  202,
+      251,  250,  202,  201,  249,  203,  248,  247,  203,  246,
+      204,  204,  204,  202,  245,  244,  243,  201,  202,  203,
+      204,  208,  208,  204,  203,  242,  208,  208,  209,  209,
+      241,  239,  202,  237,  204,  210,  210,  210,  203,  204,
+      236,  211,  211,  211,  209,  210,  233,  232,  210,  231,
+      230,  211,  209,  204,  211,  227,  225,  224,  209,  210,
+      223,  213,  213,  213,  210,  211,  198,  214,  214,  214,
+      211,  213,  197,  196,  213,  195,  194,  214,  262,  262,
+      214,  193,  217,  217,  217,  213,  192,  191,  190,  189,
 
-      218,  218,  193,  192,  262,  220,  220,  220,  217,  218,
-      262,  191,  218,  217,  190,  220,  189,  188,  220,  187,
-      221,  221,  221,  218,  261,  261,  261,  186,  218,  220,
-      221,  185,  184,  221,  220,  183,  181,  261,  261,  180,
-      178,  289,  289,  289,  221,  290,  290,  290,  177,  221,
-      176,  175,  174,  261,  289,  289,  173,  171,  290,  290,
-      170,  261,  169,  168,  167,  166,  165,  261,  139,  126,
-      289,  123,  122,  119,  290,  117,  114,  113,  289,  112,
-      111,  110,  290,  109,  289,  108,  107,  106,  290,  329,
-      329,  329,  329,  329,  330,  330,  330,  330,  330,  331,
+      213,  214,  217,  188,  262,  217,  214,  218,  218,  218,
+      187,  186,  262,  220,  220,  220,  217,  218,  262,  185,
+      218,  217,  184,  220,  183,  181,  220,  180,  221,  221,
+      221,  218,  261,  261,  261,  178,  218,  220,  221,  177,
+      176,  221,  220,  175,  174,  261,  261,  173,  171,  289,
+      289,  289,  221,  290,  290,  290,  170,  221,  169,  168,
+      167,  261,  289,  289,  166,  165,  290,  290,  139,  261,
+      126,  123,  122,  119,  117,  261,  114,  113,  289,  112,
+      111,  110,  290,  109,  108,  107,  289,  106,  105,  104,
+      290,  103,  289,  102,  101,  100,  290,  329,  329,  329,
 
-      331,  331,  331,  331,  332,  332,  333,  105,  333,  333,
-      333,  334,  104,  103,  334,  334,  335,  335,  335,  335,
-      335,  102,  101,  100,   99,   94,   90,   69,   68,   47,
-       46,   45,   44,   42,   41,   39,   34,   33,   31,   27,
-       23,   19,   16,   12,    9,  328,  328,  328,  328,  328,
+      329,  329,  329,  330,  330,  330,  330,  330,  330,  331,
+      331,  331,  331,  331,  331,  332,  332,  332,  333,   99,
+      333,  333,  333,  333,  334,   94,   90,  334,  334,  335,
+      335,  335,  335,  335,  335,   69,   68,   47,   46,   45,
+       44,   42,   41,   39,   34,   33,   31,   27,   23,   19,
+       16,   12,    9,  328,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
       328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
-      328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
 
-      328,  328,  328,  328,  328
+      328,  328,  328,  328,  328,  328,  328,  328,  328,  328,
+      328,  328,  328
     } ;
 
 static yy_state_type yy_last_accepting_state;
@@ -721,11 +723,13 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "lexer.l"
-#line 3 "lexer.l"
+#line 1 "parseLex.l"
+#line 3 "parseLex.l"
 
-#include "lexer.h"
-#include "tokens-manual.h"
+
+
+#include "parser.tab.h"
+#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
@@ -733,14 +737,14 @@ char *yytext;
 #define LLU 501
 #define newline 600
 #define PUNCTUATION 601
-YYSTYPE yylval;
+
 char* placeholder;
 char name[1024] = "stdin";
 int isFloat=0;
 int line = 1;
-#line 741 "lex.yy.c"
+#line 745 "lex.yy.c"
  
-#line 743 "lex.yy.c"
+#line 747 "lex.yy.c"
 
 #define INITIAL 0
 #define STRING 1
@@ -960,9 +964,9 @@ YY_DECL
 		}
 
 	{
-#line 33 "lexer.l"
+#line 35 "parseLex.l"
 
-#line 965 "lex.yy.c"
+#line 969 "lex.yy.c"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -995,7 +999,7 @@ yy_match:
 			yy_current_state = yy_nxt[yy_base[yy_current_state] + yy_c];
 			++yy_cp;
 			}
-		while ( yy_base[yy_current_state] != 646 );
+		while ( yy_base[yy_current_state] != 654 );
 
 yy_find_action:
 		yy_act = yy_accept[yy_current_state];
@@ -1021,14 +1025,14 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 34 "lexer.l"
+#line 36 "parseLex.l"
 {BEGIN(FILEINFO);}
 	YY_BREAK
 /*<FILEINFO>[0-9]+    { line = (int) strtol (yytext,NULL, 10); }*/
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 37 "lexer.l"
+#line 39 "parseLex.l"
 {      
                 strncpy(name, yytext+1, strlen(yytext)-2); //copy into filename
                 name[strlen(yytext)-2] = '\0'; //ignore ""
@@ -1036,39 +1040,39 @@ YY_RULE_SETUP
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 42 "lexer.l"
+#line 44 "parseLex.l"
 { ;}  
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 43 "lexer.l"
+#line 45 "parseLex.l"
 {BEGIN(INITIAL);}
 	YY_BREAK
 /*[a-z|A-Z]+\.c   {yylval.string = strdup(yytext);name = yylval.string; return NAME;*/
 case 5:
 YY_RULE_SETUP
-#line 45 "lexer.l"
+#line 47 "parseLex.l"
 {BEGIN(STRING);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 46 "lexer.l"
+#line 48 "parseLex.l"
 {BEGIN(CHAR);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 48 "lexer.l"
+#line 50 "parseLex.l"
 {strcat(placeholder,&yytext[1]);}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 49 "lexer.l"
+#line 51 "parseLex.l"
 {strcat(placeholder, yytext);}
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 50 "lexer.l"
+#line 52 "parseLex.l"
 {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
         if(temp > 255){
                 fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
@@ -1084,7 +1088,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 63 "lexer.l"
+#line 65 "parseLex.l"
 {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
         if(temp > 255){
                 fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
@@ -1100,49 +1104,49 @@ YY_RULE_SETUP
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 75 "lexer.l"
+#line 77 "parseLex.l"
 {strcat(placeholder, yytext);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 76 "lexer.l"
+#line 78 "parseLex.l"
 {strcat(placeholder, yytext);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 77 "lexer.l"
+#line 79 "parseLex.l"
 {BEGIN(INITIAL);
         if(strlen(placeholder) >1){
                 fprintf("%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
                 placeholder[1] = '\0';
         }
-        yylval.string = strdup(placeholder); 
+        yylval.number.value.charVal= placeholder[0]; 
         free(placeholder);
         return CHAR;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 85 "lexer.l"
-{BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);return STRING;}
+#line 87 "parseLex.l"
+{BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);printf("String found\n");return newString;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 87 "lexer.l"
+#line 89 "parseLex.l"
 {return INDSEL;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 88 "lexer.l"
+#line 90 "parseLex.l"
 {return SHL;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 89 "lexer.l"
+#line 91 "parseLex.l"
 {return SHR;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 90 "lexer.l"
+#line 92 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext+2,&end,16);
@@ -1150,7 +1154,7 @@ YY_RULE_SETUP
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
-        isFloat = numberProcessing(yylval,0);
+        isFloat = numberProcessing(0);
         
         
         
@@ -1159,7 +1163,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 103 "lexer.l"
+#line 105 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext+2,&end,16);
@@ -1167,7 +1171,7 @@ YY_RULE_SETUP
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
-        isFloat = numberProcessing(yylval,0);
+        isFloat = numberProcessing(0);
         
         
         
@@ -1176,7 +1180,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 116 "lexer.l"
+#line 118 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext+2,&end,16);
@@ -1184,7 +1188,7 @@ YY_RULE_SETUP
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
-        isFloat = numberProcessing(yylval,0);
+        isFloat = numberProcessing(0);
         
         
         
@@ -1193,34 +1197,34 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 129 "lexer.l"
+#line 131 "parseLex.l"
 {
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(yylval,0);
+        isFloat  = numberProcessing(0);
         return NUMBER;
 }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 134 "lexer.l"
-{
+#line 136 "parseLex.l"
+{        
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(yylval,0);
+        isFloat  = numberProcessing(0);
         return NUMBER;
 }
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 139 "lexer.l"
+#line 141 "parseLex.l"
 {
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(yylval,0);
+        isFloat  = numberProcessing(0);
         return NUMBER;
 }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 144 "lexer.l"
+#line 146 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext,&end,8);
@@ -1230,12 +1234,12 @@ YY_RULE_SETUP
         yylval.string =strdup(storage);
 
         free(storage);
-        isFloat = numberProcessing(yylval,isFloat);
+        isFloat = numberProcessing(isFloat);
         return NUMBER;}
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 155 "lexer.l"
+#line 157 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext,&end,8);
@@ -1245,12 +1249,12 @@ YY_RULE_SETUP
         yylval.string =strdup(storage);
 
         free(storage);
-        isFloat = numberProcessing(yylval,isFloat);
+        isFloat = numberProcessing(isFloat);
         return NUMBER;}
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 166 "lexer.l"
+#line 168 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext,&end,8);
@@ -1260,335 +1264,335 @@ YY_RULE_SETUP
         yylval.string =strdup(storage);
 
         free(storage);
-        isFloat = numberProcessing(yylval,isFloat);
+        isFloat = numberProcessing(isFloat);
         return NUMBER;}
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 177 "lexer.l"
+#line 179 "parseLex.l"
 {
         
         yylval.string = strdup(yytext);
         isFloat = 1; 
-        isFloat = numberProcessing(yylval,isFloat);
+        isFloat = numberProcessing(isFloat);
         return NUMBER; }  
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 183 "lexer.l"
+#line 185 "parseLex.l"
 {
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(yylval,0);
+        isFloat  = numberProcessing(0);
         return NUMBER;
 }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 188 "lexer.l"
+#line 190 "parseLex.l"
 {return PLUSPLUS;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 189 "lexer.l"
+#line 191 "parseLex.l"
 {return MINUSMINUS;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 190 "lexer.l"
+#line 192 "parseLex.l"
 {return LTEQ;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 191 "lexer.l"
+#line 193 "parseLex.l"
 {return GTEQ;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 192 "lexer.l"
+#line 194 "parseLex.l"
 {return EQEQ;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 193 "lexer.l"
+#line 195 "parseLex.l"
 {return NOTEQ;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 194 "lexer.l"
+#line 196 "parseLex.l"
 {return LOGAND;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 195 "lexer.l"
+#line 197 "parseLex.l"
 {return LOGOR;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 196 "lexer.l"
+#line 198 "parseLex.l"
 {return ELLIPSIS;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 197 "lexer.l"
+#line 199 "parseLex.l"
 {return TIMESEQ;}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 198 "lexer.l"
+#line 200 "parseLex.l"
 {return DIVEQ;}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 199 "lexer.l"
+#line 201 "parseLex.l"
 {return MODEQ;}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 200 "lexer.l"
+#line 202 "parseLex.l"
 {return PLUSEQ;}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 201 "lexer.l"
+#line 203 "parseLex.l"
 {return MINUSEQ;}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 202 "lexer.l"
+#line 204 "parseLex.l"
 {return SHLEQ;}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 203 "lexer.l"
+#line 205 "parseLex.l"
 {return SHREQ;}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 204 "lexer.l"
+#line 206 "parseLex.l"
 {return OREQ;}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 205 "lexer.l"
+#line 207 "parseLex.l"
 {return ANDEQ;}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 206 "lexer.l"
+#line 208 "parseLex.l"
 {return XOREQ;}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 207 "lexer.l"
+#line 209 "parseLex.l"
 {return AUTO;}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 208 "lexer.l"
+#line 210 "parseLex.l"
 {return BREAK;}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 209 "lexer.l"
+#line 211 "parseLex.l"
 {return CASE;}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 210 "lexer.l"
+#line 212 "parseLex.l"
 {return CHAR;}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 211 "lexer.l"
+#line 213 "parseLex.l"
 {return CONST;}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 212 "lexer.l"
+#line 214 "parseLex.l"
 {return CONTINUE;}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 213 "lexer.l"
+#line 215 "parseLex.l"
 {return DEFAULT;}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 214 "lexer.l"
+#line 216 "parseLex.l"
 {return DO;}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 215 "lexer.l"
+#line 217 "parseLex.l"
 {return DOUBLE;}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 216 "lexer.l"
+#line 218 "parseLex.l"
 {return ELSE;}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 217 "lexer.l"
+#line 219 "parseLex.l"
 {return ENUM;}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 218 "lexer.l"
+#line 220 "parseLex.l"
 {return EXTERN;}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 219 "lexer.l"
+#line 221 "parseLex.l"
 {return FLOAT;}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 220 "lexer.l"
+#line 222 "parseLex.l"
 {return FOR;}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 221 "lexer.l"
+#line 223 "parseLex.l"
 {return GOTO;}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 222 "lexer.l"
+#line 224 "parseLex.l"
 {return IF;}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 223 "lexer.l"
+#line 225 "parseLex.l"
 {return INLINE;}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 224 "lexer.l"
+#line 226 "parseLex.l"
 {return INT;}
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 225 "lexer.l"
+#line 227 "parseLex.l"
 {return LONG;}
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 226 "lexer.l"
+#line 228 "parseLex.l"
 {return REGISTER;}
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 227 "lexer.l"
+#line 229 "parseLex.l"
 {return RESTRICT;}
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 228 "lexer.l"
+#line 230 "parseLex.l"
 {return RETURN;}
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 229 "lexer.l"
+#line 231 "parseLex.l"
 {return SHORT;}
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 230 "lexer.l"
+#line 232 "parseLex.l"
 {return SIGNED;}
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 231 "lexer.l"
+#line 233 "parseLex.l"
 {return SIZEOF;}
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 232 "lexer.l"
+#line 234 "parseLex.l"
 {return STATIC;}
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 233 "lexer.l"
+#line 235 "parseLex.l"
 {return STRUCT;}
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 234 "lexer.l"
+#line 236 "parseLex.l"
 {return SWITCH;}
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 235 "lexer.l"
+#line 237 "parseLex.l"
 {return TYPEDEF;}
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 236 "lexer.l"
+#line 238 "parseLex.l"
 {return UNION;}
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 237 "lexer.l"
+#line 239 "parseLex.l"
 {return UNSIGNED;}
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 238 "lexer.l"
+#line 240 "parseLex.l"
 {return VOID;}
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 239 "lexer.l"
+#line 241 "parseLex.l"
 {return VOLATILE;}
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 240 "lexer.l"
+#line 242 "parseLex.l"
 {return WHILE;}
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 241 "lexer.l"
+#line 243 "parseLex.l"
 {return _BOOL;}
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 242 "lexer.l"
+#line 244 "parseLex.l"
 {return _COMPLEX;}
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 243 "lexer.l"
+#line 245 "parseLex.l"
 {return _IMAGINARY;}
 	YY_BREAK
 case 85:
 /* rule 85 can match eol */
 YY_RULE_SETUP
-#line 244 "lexer.l"
+#line 246 "parseLex.l"
 {line = line + 1;}
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 245 "lexer.l"
-{yylval.string = strdup(yytext);return PUNCTUATION;}
+#line 247 "parseLex.l"
+{yylval.string = strdup(yytext);return yylval.string;}
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 246 "lexer.l"
-{yylval.string = strdup(yytext); return IDENT;}
+#line 248 "parseLex.l"
+{yylval.string = strdup(yytext);printf("IDENT FOUND\n"); return IDENT;}
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 247 "lexer.l"
+#line 249 "parseLex.l"
 {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 249 "lexer.l"
+#line 251 "parseLex.l"
 ECHO;
 	YY_BREAK
-#line 1591 "lex.yy.c"
+#line 1595 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STRING):
 case YY_STATE_EOF(CHAR):
@@ -2596,232 +2600,12 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 249 "lexer.l"
-
-main(){
-        int t;
-        yylval.string = malloc(sizeof( float));
-        
-        
-        printf("File name is %s\n", name);
-        while (t = yylex())
-        {
-                switch(t)
-                        {
-                               
-                                
-                                case INDSEL: printf("%s\t\%d\tINDSEL\n",name,line); break;
-                                case IDENT:printf("%s\t%d\tIDENT\t%s\n",name,line,yylval.string); break;
-                                case CHAR:  printf("%s\t%d\tCHARLITERAL\t%s\n",name,line,yylval.string); break;
-                                case STRING: printf("%s\t%d\tSTRING\t%s\n",name,line,yylval.string); break;
-                                case PUNCTUATION: printf("%s\t%d\t%s\n",name,line,yylval.string); break;
-                                case SHL:printf("%s\t%d\tSHL\n", name, line); break;
-                                case SHR: printf("%s\t%d\tSHR\n", name, line); break;
-                                
-                                case PLUSPLUS: printf("%s\t%d\tPLUSPLUS\n", name, line); break;
-                                case MINUSMINUS:printf("%s\t%d\tMINUSMINUS\n", name, line); break;
-                                case LTEQ: printf("%s\t%d\tLTEQ\n", name, line); break;
-                                case GTEQ: printf("%s\t%d\tGTEQ\n", name, line); break;
-                                case EQEQ: printf("%s\t%d\tEQEQ\n", name, line); break;
-                                case NOTEQ: printf("%s\t%d\tNOTEQ\n", name, line); break;
-                                case LOGAND: printf("%s\t%d\tLOGAND\n", name, line); break;
-                                case LOGOR: printf("%s\t%d\tLOGOR\n", name, line); break;
-                                case ELLIPSIS: printf("%s\t%d\tELLIPSIS\n", name, line); break;
-                                case TIMESEQ: printf("%s\t%d\tTIMESEQ\n", name, line); break;
-                                case DIVEQ: printf("%s\t%d\tDIVEQ\n", name, line); break;
-                                case MODEQ:printf("%s\t%d\tMODEQ\n", name, line); break;
-                                case PLUSEQ: printf("%s\t%d\tPLUSEQ\n", name, line); break;
-                                case MINUSEQ: printf("%s\t%d\tMINUSEQ\n", name, line); break;
-                                case SHLEQ: printf("%s\t%d\tSHLEQ\n", name, line); break;
-                                case SHREQ: printf("%s\t%d\tSHREQ\n", name, line); break;
-                                case ANDEQ: printf("%s\t%d\tANDEQ\n", name, line); break;
-                                case OREQ: printf("%s\t%d\tOREQ\n", name, line); break;
-                                case XOREQ: printf("%s\t%d\tXOREQ\n", name, line); break;
-                                case NUMBER:;
-                                       /* double floatVal;
-                                        char* copyVal;
-                                        
-                                        int charCount =0;
-                                        long eSign = 0;
-                                        long eVal = 0;
-                                        int pSign =0;
-                                        int pVal =0;
-                                        char* type = malloc(1024);
-                                        char* end;
-                                        char* eCheck = strchr(yylval.string,'e');
-                                        char* pCheck = strchr(yylval.string,'p');
-                                        if ( eCheck!= NULL){
-                                                isFloat = 1;
-                                                charCount+=1;
-                                                
-                                                if(isdigit(eCheck[1])){
-                                                        eSign = 1;
-                                                        eVal = strtol(yylval.string+(int)(eCheck-yylval.string)+1,NULL,10);
-                                                }
-                                                else if (yylval.string[strlen(yylval.string)-2] == '-'){
-                                                        charCount+=1;
-                                                        eSign = -1;
-                                                        eVal = strtol(yylval.string+(int)(eCheck-yylval.string)+2,NULL,10);
-                                                }
-                                                else{
-                                                        charCount+=1;
-                                                        eSign = 1;
-                                                        eVal = strtol(yylval.string+(int)(eCheck-yylval.string)+2,NULL,10);
-                                                }
-                                                
-                                                
-                                                
-                                        }
-                                        
-                                        long test = eVal;
-                                        while (test>0){
-                                                test = test/10;
-                                                charCount++;
-                                        }
-                                        if ( pCheck!= NULL){
-                                                isFloat = 1;
-                                                charCount+=1;
-                                                
-                                                if(isdigit(pCheck[1])){
-                                                        pSign = 1;
-                                                        pVal = strtol(yylval.string+(int)(pCheck-yylval.string)+1,NULL,10);
-                                                }
-                                                else if (yylval.string[strlen(yylval.string)-2] == '-'){
-                                                        charCount+=1;
-                                                        pSign = -1;
-                                                        pVal = strtol(yylval.string+(int)(pCheck-yylval.string)+2,NULL,10);
-                                                }
-                                                else{
-                                                        charCount+=1;
-                                                        pSign = 1;
-                                                        pVal = strtol(yylval.string+(int)(pCheck-yylval.string)+2,NULL,10);
-                                                }
-                                                
-                                                
-                                                
-                                        }
-                                        
-                                        test = pVal;
-                                        while (test>0){
-                                                test = test/10;
-                                                charCount++;
-                                        }
-                                        if(!isFloat){
-                                                
-                                                if((strchr(yylval.string,'U') != NULL) || (strchr(yylval.string,'u') != NULL))
-                                                {
-                                                        strcat(type,"UNSIGNED,");
-                                                        charCount++;
-                                                }
-                                                if(strstr(yylval.string,"LL") != NULL)
-                                                {
-                                                        strcat(type,"LONGLONG");
-                                                        charCount+=2;
-
-                                                }
-                                                else if( (strchr(yylval.string,'L') != NULL) || (strchr(yylval.string,'l') != NULL))
-                                                {
-                                                        strcat(type,"LONG");
-                                                        charCount++;
-
-                                                }
-                                                else {
-
-                                                        strcat(type,"INT");
-                                                }
-
-                                                
-                                                
-                                        }
-                                        
-                                        
-                                        /*if(isFloat){
-                                                
-                                                if( (strchr(yylval.string,'L') != NULL) || (strchr(yylval.string,'l') != NULL))
-                                                {
-                                                        strcat(type,"LONGDOUBLE");
-                                                        charCount++;
-
-                                                }
-                                                else if(strchr(yylval.string,'f')!= NULL || strchr(yylval.string,'F')!= NULL  ){
-                                                        strcat(type,"Float");
-                                                        charCount++;
-                                                }
-                                                else{
-                                                        strcat(type,"DOUBLE");
-                                                }
-                                                
-                                                //memcpy(copyVal,yylval.string,strlen(yylval.string)-charCount);
-                                               // floatVal = atof(copyVal);
-                                                
-                                        }
-                                        
-                                        
-                                        if(!isFloat){if(charCount!=0){yylval.string[strlen(yylval.string)-charCount] = '\0';}}
-                                        floatVal = atof(yylval.string);
-                                        */
-                                        if(isFloat){
-                                                //long double temp = floatVal * pow(10,eSign*eVal) * pow(2,pSign*pVal);
-                                                //sprintf(yylval.string,"%Lg",temp);
-                                                printf("%s\t%d\tNUMBER\tREAL\t%s\n",name,line, yylval.string);  
-                                                //yylval.type = "";
-                                                isFloat = 0;
-                                        }
-                                        else{
-                                                
-                                                 printf("%s\t%d\tNUMBER\tINTEGER\t%s\n",name,line, yylval.string);  
-                                        }
-                                        
-                                        break;
-                                
-                                case AUTO: printf("%s\t%d\tAUTO\n", name, line); break;
-                                case BREAK: printf("%s\t%d\tBREAK\n", name,line); break;
-                                case CASE: printf("%s\t%d\tCASE\n", name, line); break;
-                                case CONST: printf("%s\t%d\tCONST\n", name, line); break;
-                                case CONTINUE: printf("%s\t%d\tCONTINUE\n", name, line); break;
-                                case DEFAULT: printf("%s\t%d\tDEFAULT\n",name, line); break;
-                                case DO: printf("%s\t%d\tDO\n", name, line); break;
-                                case DOUBLE: printf("%s\t%d\tDOUBLE\n", name, line); break;
-                                case ELSE: printf("%s\t%d\tELSE\n",name, line); break;
-                                case ENUM: printf("%s\t%d\tENUM\n", name, line); break;
-                                case EXTERN: printf("%s\t%d\tEXTERN\n", name, line); break;
-                                case FLOAT: printf("%s\t%d\tFLOAT\n", name, line); break;
-                                case FOR: printf("%s\t%d\tFOR\n", name, line); break;
-                                case GOTO: printf("%s\t%d\tGOTO\n", name, line); break;
-                                case IF: printf("%s\t%d\tIF\n", name, line); break;
-                                case INLINE: printf("%s\t%d\tINLINE\n", name, line); break;
-                                case INT: printf("%s\t%d\tINT\n", name, line); break;
-                                case LONG: printf("%s\t%d\tLONG\n", name, line); break;
-                                case REGISTER: printf("%s\t%d\tREGISTER\n", name, line); break;
-                                case RESTRICT: printf("%s\t%d\tRESTRICT\n", name, line); break;
-                                case RETURN: printf("%s\t%d\tRETURN\n", name, line); break;
-                                case SHORT: printf("%s\t%d\tSHORT\n", name, line); break;
-                                case SIGNED: printf("%s\t%d\tSIGNED\n", name, line); break;
-                                case SIZEOF: printf("%s\t%d\tSIZEOF\n", name, line); break;
-                                case STATIC: printf("%s\t%d\tSTATIC\n", name, line); break;
-                                case STRUCT: printf("%s\t%d\tSTRUCT\n", name, line); break;
-                                case SWITCH: printf("%s\t%d\tSWITCH\n", name, line); break;
-                                case TYPEDEF: printf("%s\t%d\tTYPEDEF\n", name, line); break;
-                                case UNION: printf("%s\t%d\tUNION\n", name, line); break;
-                                case UNSIGNED: printf("%s\t%d\tUNSIGNED\n",name,line); break;
-                                case VOID: printf("%s\t%d\tUNION\n", name, line); break;
-                                case VOLATILE: printf("%s\t%d\tVolatile\n", name, line); break;
-                                case WHILE: printf("%s\t%d\tWHILE\n", name, line);break;
-                                case _BOOL: printf("%s\t%d\t_BOOL\n", name, line); break;
-                                case _COMPLEX: printf("%s\t%d\t_COMPLEX\n", name, line); break;
-                                case _IMAGINARY: printf("%s\t%d\t_IMAGINARY\n",name,line); break;
-                        }
-
-        }
-        free(yylval.string);
-        
+#line 251 "parseLex.l"
 
 
 
-}
 
-
-int numberProcessing(YYSTYPE yylval,int realCheck){
+int numberProcessing(int realCheck){
         int isFloat = realCheck;
         double floatVal;
         char* copyVal;
@@ -2837,6 +2621,7 @@ int numberProcessing(YYSTYPE yylval,int realCheck){
         char* eCheck = NULL;
         char* pCheck = NULL;
         char* fCheck = NULL;
+        char* temp = strdup(yylval.string);
         if(strchr(yylval.string,'f') != NULL){
                 fCheck = strchr(yylval.string,'f');
                 
@@ -2894,7 +2679,7 @@ int numberProcessing(YYSTYPE yylval,int realCheck){
                 
                 if(isdigit(pCheck[1])){
                         pSign = 1;
-                        pVal = strtol(yylval.string+(int)(pCheck-yylval.string)+1,NULL,10);
+                        pVal = strtol(temp+(int)(pCheck-temp)+1,NULL,10);
                 }
                 else if (pCheck[1] == '-'){
                         charCount+=1;
@@ -2918,26 +2703,38 @@ int numberProcessing(YYSTYPE yylval,int realCheck){
         }
         if(!isFloat){
                 
-                if((strchr(yylval.string,'U') != NULL) || (strchr(yylval.string,'u') != NULL))
+                if((strchr(temp,'U') != NULL) || (strchr(temp,'u') != NULL))
                 {
-                        strcat(type,"UNSIGNED,");
+                        yylval.number.type = 1;
+                        
                         charCount++;
                 }
-                if(strstr(yylval.string,"LL") != NULL)
-                {
-                        strcat(type,"LONGLONG");
+                if(strstr(temp,"LL") != NULL)
+                {       if(yylval.number.type == 1){
+                                yylval.number.type = 4;
+                        }
+                        else{
+                                yylval.number.type = 5;
+                        }
+                        
                         charCount+=2;
 
                 }
-                else if(strstr(yylval.string,"L") != NULL || strstr(yylval.string,"l") != NULL)
-                {
-                        strcat(type,"LONG");
+                else if(strstr(temp,"L") != NULL || strstr(temp,"l") != NULL)
+                {       if(yylval.number.type == 1){
+                                yylval.number.type = 3;
+                        }
+                        else{
+                                yylval.number.type = 2;
+                        }
+
+                        
                         charCount++;
 
                 }
                 else {
                         yylval.number.type = 0;
-                        strcat(type,"INT");
+                        
                 }
 
                 
@@ -2947,31 +2744,39 @@ int numberProcessing(YYSTYPE yylval,int realCheck){
         
         if(isFloat){
                 
-                if( (strchr(yylval.string,'L') != NULL) || (strchr(yylval.string,'l') != NULL))
+                if( (strchr(temp,'L') != NULL) || (strchr(temp,'l') != NULL))
                 {
-                        strcat(type,"LONGDOUBLE");
+                        yylval.number.type = 8;
+                        
                         charCount++;
 
                 }
-                else if(strchr(yylval.string,'f')!= NULL || strchr(yylval.string,'F')!= NULL  ){
-                        strcat(type,"FLOAT");
+                else if(strchr(temp,'f')!= NULL || strchr(temp,'F')!= NULL  ){
+                        yylval.number.type = 7;
+                        
                         charCount++;
                 }
                 else{
-                        strcat(type,"DOUBLE");
+                        yylval.number.type = 6;
+                        
                 }
                 
                 
                 
         }
         if(charCount!=0){
-                yylval.string[strlen(yylval.string)-charCount] = '\0';
+                temp[strlen(temp)-charCount] = '\0';
         }
-        floatVal = atof(yylval.string);
-        long double temp = floatVal * pow(10,eSign*eVal) * pow(2,pSign*pVal);
-
-        //yylval.number.value.intVal = temp;
-        sprintf(yylval.string,"%Lg\t%s",temp,type);
+        floatVal = atof(temp);
+        long double numTemp = floatVal * pow(10,eSign*eVal) * pow(2,pSign*pVal);
+        if(isFloat){
+                yylval.number.value.realVal = numTemp;
+        }
+        else{
+                yylval.number.value.intVal= numTemp;
+        }
+        
+        //sprintf(yylval.string,"%Lg\t%s",temp,type);
         free(type);
         return isFloat;
 

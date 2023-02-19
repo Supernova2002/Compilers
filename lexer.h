@@ -9,6 +9,7 @@ struct number{
                 SIGNED_LONG,
                 UNSIGNED_LONG,
                 UNSIGNED_LONGLONG,
+                SIGNED_LONGLONG,
                 TYPE_DOUBLE,
                 TYPE_FLOAT,
                 LONG_DOUBLE

@@ -3,7 +3,6 @@
 
 #include "lexer.h"
 #include "tokens-manual.h"
-
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
@@ -74,13 +73,13 @@ OCTAL   0{OCTALDIGIT}*
         }
         strcat(placeholder,storage);free(storage);}
 <STRING>[^\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
-<CHAR>[^|\'|\"|\\|\n|\0|\a|\b|\f|\n|\r|\t|\v]+ {strcat(placeholder, yytext);}
+<CHAR>[^\'\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
 <CHAR>\' {BEGIN(INITIAL);
         if(strlen(placeholder) >1){
                 fprintf("%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
                 placeholder[1] = '\0';
         }
-        yylval.number.value.charVal= placeholder[0]; 
+        yylval.string = strdup(placeholder); 
         free(placeholder);
         return CHAR;}
 <STRING>\" {BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);return STRING;}
@@ -95,7 +94,7 @@ OCTAL   0{OCTALDIGIT}*
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
-        isFloat = numberProcessing(0);
+        isFloat = numberProcessing(yylval,0);
         
         
         
@@ -108,7 +107,7 @@ OCTAL   0{OCTALDIGIT}*
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
-        isFloat = numberProcessing(0);
+        isFloat = numberProcessing(yylval,0);
         
         
         
@@ -121,7 +120,7 @@ OCTAL   0{OCTALDIGIT}*
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
-        isFloat = numberProcessing(0);
+        isFloat = numberProcessing(yylval,0);
         
         
         
@@ -129,17 +128,17 @@ OCTAL   0{OCTALDIGIT}*
         return NUMBER;}
 <INITIAL>{DEC}({E}|{P})?[lL]? {
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(0);
+        isFloat  = numberProcessing(yylval,0);
         return NUMBER;
 }
-<INITIAL>{DEC}[u|U]?[l|L]{0,2} {        
+<INITIAL>{DEC}[u|U]?[l|L]{0,2} {
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(0);
+        isFloat  = numberProcessing(yylval,0);
         return NUMBER;
 }
 <INITIAL>{DEC}[l|L]{0,2}[u|U]? {
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(0);
+        isFloat  = numberProcessing(yylval,0);
         return NUMBER;
 }
 <INITIAL>{OCTAL}[lLfF]? {
@@ -151,7 +150,7 @@ OCTAL   0{OCTALDIGIT}*
         yylval.string =strdup(storage);
 
         free(storage);
-        isFloat = numberProcessing(isFloat);
+        isFloat = numberProcessing(yylval,isFloat);
         return NUMBER;}
 <INITIAL>{OCTAL}([u|U]?[l|L]{0,2}) {
         char * end;
@@ -162,7 +161,7 @@ OCTAL   0{OCTALDIGIT}*
         yylval.string =strdup(storage);
 
         free(storage);
-        isFloat = numberProcessing(isFloat);
+        isFloat = numberProcessing(yylval,isFloat);
         return NUMBER;}
 <INITIAL>{OCTAL}([l|L]{0,2}[u|U]?) {
         char * end;
@@ -173,17 +172,17 @@ OCTAL   0{OCTALDIGIT}*
         yylval.string =strdup(storage);
 
         free(storage);
-        isFloat = numberProcessing(isFloat);
+        isFloat = numberProcessing(yylval,isFloat);
         return NUMBER;}
 ({FLOAT}|{FLOAT2})({E}|{P})?[l|L|f|F]?      {
         
         yylval.string = strdup(yytext);
         isFloat = 1; 
-        isFloat = numberProcessing(isFloat);
+        isFloat = numberProcessing(yylval,isFloat);
         return NUMBER; }  
 {DIGIT}({E}|{P})[lLfF]? {
         yylval.string = strdup(yytext);
-        isFloat  = numberProcessing(0);
+        isFloat  = numberProcessing(yylval,0);
         return NUMBER;
 }
 <INITIAL>\+\+ {return PLUSPLUS;}
@@ -250,7 +249,7 @@ _Imaginary {return _IMAGINARY;}
 %%
 main(){
         int t;
-        //yylval.string = malloc(sizeof( float));
+        yylval.string = malloc(sizeof( float));
         
         
         printf("File name is %s\n", name);
@@ -262,7 +261,7 @@ main(){
                                 
                                 case INDSEL: printf("%s\t\%d\tINDSEL\n",name,line); break;
                                 case IDENT:printf("%s\t%d\tIDENT\t%s\n",name,line,yylval.string); break;
-                                case CHAR:  printf("%s\t%d\tCHARLITERAL\t%c\n",name,line,yylval.number.value.charVal); break;
+                                case CHAR:  printf("%s\t%d\tCHARLITERAL\t%s\n",name,line,yylval.string); break;
                                 case STRING: printf("%s\t%d\tSTRING\t%s\n",name,line,yylval.string); break;
                                 case PUNCTUATION: printf("%s\t%d\t%s\n",name,line,yylval.string); break;
                                 case SHL:printf("%s\t%d\tSHL\n", name, line); break;
@@ -367,19 +366,15 @@ main(){
                                                 {
                                                         strcat(type,"LONGLONG");
                                                         charCount+=2;
-
                                                 }
                                                 else if( (strchr(yylval.string,'L') != NULL) || (strchr(yylval.string,'l') != NULL))
                                                 {
                                                         strcat(type,"LONG");
                                                         charCount++;
-
                                                 }
                                                 else {
-
                                                         strcat(type,"INT");
                                                 }
-
                                                 
                                                 
                                         }
@@ -391,7 +386,6 @@ main(){
                                                 {
                                                         strcat(type,"LONGDOUBLE");
                                                         charCount++;
-
                                                 }
                                                 else if(strchr(yylval.string,'f')!= NULL || strchr(yylval.string,'F')!= NULL  ){
                                                         strcat(type,"Float");
@@ -410,29 +404,16 @@ main(){
                                         if(!isFloat){if(charCount!=0){yylval.string[strlen(yylval.string)-charCount] = '\0';}}
                                         floatVal = atof(yylval.string);
                                         */
-                                        char* type[1024];
-                                        int typeNum = yylval.number.type;
-                                        switch(typeNum){
-                                                case SIGNED_INT: sprintf(type,"INT");break;
-                                                case UNSIGNED_INT: sprintf(type,"UNSIGNED,INT"); break;
-                                                case SIGNED_LONG: sprintf(type,"LONG"); break;
-                                                case UNSIGNED_LONG: sprintf(type,"UNSIGNED,LONG"); break;
-                                                case UNSIGNED_LONGLONG: sprintf(type,"UNSIGNED,LONGLONG"); break;
-                                                case SIGNED_LONGLONG: sprintf(type,"LONGLONG"); break;
-                                                case TYPE_DOUBLE: sprintf(type,"DOUBLE"); break;
-                                                case TYPE_FLOAT: sprintf(type,"FLOAT"); break;
-                                                case LONG_DOUBLE: sprintf(type,"LONGDOUBLE"); break;
-                                        }
                                         if(isFloat){
                                                 //long double temp = floatVal * pow(10,eSign*eVal) * pow(2,pSign*pVal);
                                                 //sprintf(yylval.string,"%Lg",temp);
-                                                printf("%s\t%d\tNUMBER\tREAL\t%Lg\t%s\n",name,line, yylval.number.value.realVal,type);  
+                                                printf("%s\t%d\tNUMBER\tREAL\t%s\n",name,line, yylval.string);  
                                                 //yylval.type = "";
                                                 isFloat = 0;
                                         }
                                         else{
                                                 
-                                                 printf("%s\t%d\tNUMBER\tINTEGER\t%lld\t%s\n",name,line, yylval.number.value.intVal,type);  
+                                                 printf("%s\t%d\tNUMBER\tINTEGER\t%s\n",name,line, yylval.string);  
                                         }
                                         
                                         break;
@@ -476,8 +457,7 @@ main(){
                         }
 
         }
-        
-        //free(yylval.string);
+        free(yylval.string);
         
 
 
@@ -485,7 +465,7 @@ main(){
 }
 
 
-int numberProcessing(int realCheck){
+int numberProcessing(YYSTYPE yylval,int realCheck){
         int isFloat = realCheck;
         double floatVal;
         char* copyVal;
@@ -501,7 +481,6 @@ int numberProcessing(int realCheck){
         char* eCheck = NULL;
         char* pCheck = NULL;
         char* fCheck = NULL;
-        char* temp = strdup(yylval.string);
         if(strchr(yylval.string,'f') != NULL){
                 fCheck = strchr(yylval.string,'f');
                 
@@ -559,7 +538,7 @@ int numberProcessing(int realCheck){
                 
                 if(isdigit(pCheck[1])){
                         pSign = 1;
-                        pVal = strtol(temp+(int)(pCheck-temp)+1,NULL,10);
+                        pVal = strtol(yylval.string+(int)(pCheck-yylval.string)+1,NULL,10);
                 }
                 else if (pCheck[1] == '-'){
                         charCount+=1;
@@ -583,38 +562,26 @@ int numberProcessing(int realCheck){
         }
         if(!isFloat){
                 
-                if((strchr(temp,'U') != NULL) || (strchr(temp,'u') != NULL))
+                if((strchr(yylval.string,'U') != NULL) || (strchr(yylval.string,'u') != NULL))
                 {
-                        yylval.number.type = 1;
-                        
+                        strcat(type,"UNSIGNED,");
                         charCount++;
                 }
-                if(strstr(temp,"LL") != NULL)
-                {       if(yylval.number.type == 1){
-                                yylval.number.type = 4;
-                        }
-                        else{
-                                yylval.number.type = 5;
-                        }
-                        
+                if(strstr(yylval.string,"LL") != NULL)
+                {
+                        strcat(type,"LONGLONG");
                         charCount+=2;
 
                 }
-                else if(strstr(temp,"L") != NULL || strstr(temp,"l") != NULL)
-                {       if(yylval.number.type == 1){
-                                yylval.number.type = 3;
-                        }
-                        else{
-                                yylval.number.type = 2;
-                        }
-
-                        
+                else if(strstr(yylval.string,"L") != NULL || strstr(yylval.string,"l") != NULL)
+                {
+                        strcat(type,"LONG");
                         charCount++;
 
                 }
                 else {
-                        yylval.number.type = 0;
-                        
+                        //yylval.number.type = 0;
+                        strcat(type,"INT");
                 }
 
                 
@@ -624,39 +591,31 @@ int numberProcessing(int realCheck){
         
         if(isFloat){
                 
-                if( (strchr(temp,'L') != NULL) || (strchr(temp,'l') != NULL))
+                if( (strchr(yylval.string,'L') != NULL) || (strchr(yylval.string,'l') != NULL))
                 {
-                        yylval.number.type = 8;
-                        
+                        strcat(type,"LONGDOUBLE");
                         charCount++;
 
                 }
-                else if(strchr(temp,'f')!= NULL || strchr(temp,'F')!= NULL  ){
-                        yylval.number.type = 7;
-                        
+                else if(strchr(yylval.string,'f')!= NULL || strchr(yylval.string,'F')!= NULL  ){
+                        strcat(type,"FLOAT");
                         charCount++;
                 }
                 else{
-                        yylval.number.type = 6;
-                        
+                        strcat(type,"DOUBLE");
                 }
                 
                 
                 
         }
         if(charCount!=0){
-                temp[strlen(temp)-charCount] = '\0';
+                yylval.string[strlen(yylval.string)-charCount] = '\0';
         }
-        floatVal = atof(temp);
-        long double numTemp = floatVal * pow(10,eSign*eVal) * pow(2,pSign*pVal);
-        if(isFloat){
-                yylval.number.value.realVal = numTemp;
-        }
-        else{
-                yylval.number.value.intVal= numTemp;
-        }
-        
-        //sprintf(yylval.string,"%Lg\t%s",temp,type);
+        floatVal = atof(yylval.string);
+        long double temp = floatVal * pow(10,eSign*eVal) * pow(2,pSign*pVal);
+
+        //yylval.number.value.intVal = temp;
+        sprintf(yylval.string,"%Lg\t%s",temp,type);
         free(type);
         return isFloat;
 

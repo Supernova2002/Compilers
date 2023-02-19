@@ -1,4 +1,4 @@
-%define parse.error verbose
+%error-verbose
 %{
     int yylex();
     //#include "tokens-manual.h"
@@ -47,7 +47,7 @@
     char *string;
 }
 %token <number> NUMBER
-%token <number> CHARLIT
+%token <number> CHARLITERAL
 %token  INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ NOTEQ LOGAND LOGOR,
         ELLIPSIS,
         TIMESEQ,
@@ -99,22 +99,15 @@
         _IMAGINARY,
         NAME
 %token <string> IDENT 
-%token <string> newString;
+%token <string> STRING
 %left '+' '-' 
 %left '*' '/'
 
 %%
-expr: _IMAGINARY {printf("IMAGINARY");}
-    | NUMBER    {printf("NUMBER is %i",$1.value );}
-    | newString {printf("STRING is : %s\n",$1);}
+expr: STRING {printf("String is : %s",$1);}
+    | NUMBER    
+    | '*' {printf("TIMES");}
     ;
 
 
 %%
-
-main(){
-       yyparse();
-
-
-
-}
