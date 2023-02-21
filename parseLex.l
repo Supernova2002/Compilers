@@ -51,40 +51,44 @@ OCTAL   0{OCTALDIGIT}*
 <STRING,CHAR>\\[0|a|b|f|n|r|t|v] {strcat(placeholder, yytext);}
 <STRING,CHAR>\\{OCTALDIGIT}{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
         if(temp > 255){
-                fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
+                
+                fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
                 temp = 255;
         }
+        int intTemp = temp;
         if(isprint(temp)==0){
-                sprintf(storage,"\\%03o",temp);
+                sprintf(storage,"\\%03o",intTemp);
         }
         else{
-                sprintf(storage,"%c",temp);
+                sprintf(storage,"%c",intTemp);
         }
         strcat(placeholder,storage);free(storage);}
 
 <STRING,CHAR>\\x{HEXDIGIT}+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
         if(temp > 255){
-                fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
+                fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
                 temp = 255;
         }
+        int intTemp = temp;
         if(isprint(temp)==0){
-                sprintf(storage,"\\%03o",temp);
+                sprintf(storage,"\\%03o",intTemp);
         }
         else{
-                sprintf(storage,"%c",temp);
+                sprintf(storage,"%c",intTemp);
         }
         strcat(placeholder,storage);free(storage);}
 <STRING>[^\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
 <CHAR>[^|\'|\"|\\|\n|\0|\a|\b|\f|\n|\r|\t|\v]+ {strcat(placeholder, yytext);}
 <CHAR>\' {BEGIN(INITIAL);
         if(strlen(placeholder) >1){
-                fprintf("%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
+                fprintf(stderr,"%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
                 placeholder[1] = '\0';
         }
+        yylval.number.type = 9;
         yylval.number.value.charVal= placeholder[0]; 
         free(placeholder);
         return CHAR;}
-<STRING>\" {BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);printf("String found\n");return newString;}
+<STRING>\" {BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);return newString;}
 
 -\> {return INDSEL;}
 \<\< {return SHL;}
@@ -244,8 +248,15 @@ _Bool {return _BOOL;}
 _Complex {return _COMPLEX;}
 _Imaginary {return _IMAGINARY;}
 \n      {line = line + 1;}
-<INITIAL>[\.\+\-\;\!\?\:\,\@\#\$\%\*\&\(\)\[\]\{\}\^\~\|\<\>\`\\\/] {yylval.string = strdup(yytext);return yylval.string;}
-<INITIAL>[a-z|A-Z|_][a-z|A-Z|0-9|_]* {yylval.string = strdup(yytext);printf("IDENT FOUND\n"); return IDENT;}
+<INITIAL>[\.\+\-\;\!\?\:\,\@\#\$\%\*\&\(\)\[\]\{\}\^\~\|\<\>\`\\\/\=] {
+        
+        yylval.string = strdup(yytext);
+       // printf("String is %s\n", yylval.string);
+        int returnVal = yylval.string[0];
+       // printf("Punctuation is %i\n", returnVal);
+        return returnVal;
+        }
+<INITIAL>[a-z|A-Z|_][a-z|A-Z|0-9|_]* {yylval.string = strdup(yytext);return IDENT;}
 .       {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
 
 %%

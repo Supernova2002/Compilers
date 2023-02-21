@@ -383,7 +383,7 @@ static const flex_int16_t yy_accept[329] =
     {   0,
         0,    0,    0,    0,    0,    0,    0,    0,   90,   88,
        85,   86,    5,    1,   86,   86,   86,    6,   86,   86,
-       86,   27,   86,   24,   21,   86,   88,   86,   87,   87,
+       86,   27,   86,   24,   21,   86,   86,   86,   87,   87,
        86,   87,   87,   87,   87,   87,   87,   87,   87,   87,
        87,   87,   87,   87,   87,   87,   87,   86,   11,   89,
        14,   89,   12,   13,    3,    4,    3,   34,   40,   35,
@@ -1075,78 +1075,82 @@ YY_RULE_SETUP
 #line 52 "parseLex.l"
 {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
         if(temp > 255){
-                fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
+                
+                fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
                 temp = 255;
         }
+        int intTemp = temp;
         if(isprint(temp)==0){
-                sprintf(storage,"\\%03o",temp);
+                sprintf(storage,"\\%03o",intTemp);
         }
         else{
-                sprintf(storage,"%c",temp);
+                sprintf(storage,"%c",intTemp);
         }
         strcat(placeholder,storage);free(storage);}
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 65 "parseLex.l"
+#line 67 "parseLex.l"
 {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
         if(temp > 255){
-                fprintf("%s:%d:Hex escape sequence %s out of range",name,line); 
+                fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
                 temp = 255;
         }
+        int intTemp = temp;
         if(isprint(temp)==0){
-                sprintf(storage,"\\%03o",temp);
+                sprintf(storage,"\\%03o",intTemp);
         }
         else{
-                sprintf(storage,"%c",temp);
+                sprintf(storage,"%c",intTemp);
         }
         strcat(placeholder,storage);free(storage);}
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 77 "parseLex.l"
+#line 80 "parseLex.l"
 {strcat(placeholder, yytext);}
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 78 "parseLex.l"
+#line 81 "parseLex.l"
 {strcat(placeholder, yytext);}
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 79 "parseLex.l"
+#line 82 "parseLex.l"
 {BEGIN(INITIAL);
         if(strlen(placeholder) >1){
-                fprintf("%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
+                fprintf(stderr,"%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
                 placeholder[1] = '\0';
         }
+        yylval.number.type = 9;
         yylval.number.value.charVal= placeholder[0]; 
         free(placeholder);
         return CHAR;}
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 87 "parseLex.l"
-{BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);printf("String found\n");return newString;}
+#line 91 "parseLex.l"
+{BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);return newString;}
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 89 "parseLex.l"
+#line 93 "parseLex.l"
 {return INDSEL;}
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 90 "parseLex.l"
+#line 94 "parseLex.l"
 {return SHL;}
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 91 "parseLex.l"
+#line 95 "parseLex.l"
 {return SHR;}
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 92 "parseLex.l"
+#line 96 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext+2,&end,16);
@@ -1163,7 +1167,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 105 "parseLex.l"
+#line 109 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext+2,&end,16);
@@ -1180,7 +1184,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 118 "parseLex.l"
+#line 122 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext+2,&end,16);
@@ -1197,7 +1201,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 131 "parseLex.l"
+#line 135 "parseLex.l"
 {
         yylval.string = strdup(yytext);
         isFloat  = numberProcessing(0);
@@ -1206,7 +1210,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 136 "parseLex.l"
+#line 140 "parseLex.l"
 {        
         yylval.string = strdup(yytext);
         isFloat  = numberProcessing(0);
@@ -1215,7 +1219,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 141 "parseLex.l"
+#line 145 "parseLex.l"
 {
         yylval.string = strdup(yytext);
         isFloat  = numberProcessing(0);
@@ -1224,7 +1228,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 146 "parseLex.l"
+#line 150 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext,&end,8);
@@ -1239,7 +1243,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 157 "parseLex.l"
+#line 161 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext,&end,8);
@@ -1254,7 +1258,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 168 "parseLex.l"
+#line 172 "parseLex.l"
 {
         char * end;
         long temp = strtol(yytext,&end,8);
@@ -1269,7 +1273,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 179 "parseLex.l"
+#line 183 "parseLex.l"
 {
         
         yylval.string = strdup(yytext);
@@ -1279,7 +1283,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 185 "parseLex.l"
+#line 189 "parseLex.l"
 {
         yylval.string = strdup(yytext);
         isFloat  = numberProcessing(0);
@@ -1288,311 +1292,318 @@ YY_RULE_SETUP
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 190 "parseLex.l"
+#line 194 "parseLex.l"
 {return PLUSPLUS;}
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 191 "parseLex.l"
+#line 195 "parseLex.l"
 {return MINUSMINUS;}
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 192 "parseLex.l"
+#line 196 "parseLex.l"
 {return LTEQ;}
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 193 "parseLex.l"
+#line 197 "parseLex.l"
 {return GTEQ;}
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 194 "parseLex.l"
+#line 198 "parseLex.l"
 {return EQEQ;}
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 195 "parseLex.l"
+#line 199 "parseLex.l"
 {return NOTEQ;}
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 196 "parseLex.l"
+#line 200 "parseLex.l"
 {return LOGAND;}
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 197 "parseLex.l"
+#line 201 "parseLex.l"
 {return LOGOR;}
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 198 "parseLex.l"
+#line 202 "parseLex.l"
 {return ELLIPSIS;}
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 199 "parseLex.l"
+#line 203 "parseLex.l"
 {return TIMESEQ;}
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 200 "parseLex.l"
+#line 204 "parseLex.l"
 {return DIVEQ;}
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 201 "parseLex.l"
+#line 205 "parseLex.l"
 {return MODEQ;}
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 202 "parseLex.l"
+#line 206 "parseLex.l"
 {return PLUSEQ;}
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 203 "parseLex.l"
+#line 207 "parseLex.l"
 {return MINUSEQ;}
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 204 "parseLex.l"
+#line 208 "parseLex.l"
 {return SHLEQ;}
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 205 "parseLex.l"
+#line 209 "parseLex.l"
 {return SHREQ;}
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 206 "parseLex.l"
+#line 210 "parseLex.l"
 {return OREQ;}
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 207 "parseLex.l"
+#line 211 "parseLex.l"
 {return ANDEQ;}
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 208 "parseLex.l"
+#line 212 "parseLex.l"
 {return XOREQ;}
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 209 "parseLex.l"
+#line 213 "parseLex.l"
 {return AUTO;}
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 210 "parseLex.l"
+#line 214 "parseLex.l"
 {return BREAK;}
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 211 "parseLex.l"
+#line 215 "parseLex.l"
 {return CASE;}
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 212 "parseLex.l"
+#line 216 "parseLex.l"
 {return CHAR;}
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 213 "parseLex.l"
+#line 217 "parseLex.l"
 {return CONST;}
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 214 "parseLex.l"
+#line 218 "parseLex.l"
 {return CONTINUE;}
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 215 "parseLex.l"
+#line 219 "parseLex.l"
 {return DEFAULT;}
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 216 "parseLex.l"
+#line 220 "parseLex.l"
 {return DO;}
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 217 "parseLex.l"
+#line 221 "parseLex.l"
 {return DOUBLE;}
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 218 "parseLex.l"
+#line 222 "parseLex.l"
 {return ELSE;}
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 219 "parseLex.l"
+#line 223 "parseLex.l"
 {return ENUM;}
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 220 "parseLex.l"
+#line 224 "parseLex.l"
 {return EXTERN;}
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 221 "parseLex.l"
+#line 225 "parseLex.l"
 {return FLOAT;}
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 222 "parseLex.l"
+#line 226 "parseLex.l"
 {return FOR;}
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 223 "parseLex.l"
+#line 227 "parseLex.l"
 {return GOTO;}
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 224 "parseLex.l"
+#line 228 "parseLex.l"
 {return IF;}
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 225 "parseLex.l"
+#line 229 "parseLex.l"
 {return INLINE;}
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 226 "parseLex.l"
+#line 230 "parseLex.l"
 {return INT;}
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 227 "parseLex.l"
+#line 231 "parseLex.l"
 {return LONG;}
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 228 "parseLex.l"
+#line 232 "parseLex.l"
 {return REGISTER;}
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 229 "parseLex.l"
+#line 233 "parseLex.l"
 {return RESTRICT;}
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 230 "parseLex.l"
+#line 234 "parseLex.l"
 {return RETURN;}
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 231 "parseLex.l"
+#line 235 "parseLex.l"
 {return SHORT;}
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 232 "parseLex.l"
+#line 236 "parseLex.l"
 {return SIGNED;}
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 233 "parseLex.l"
+#line 237 "parseLex.l"
 {return SIZEOF;}
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 234 "parseLex.l"
+#line 238 "parseLex.l"
 {return STATIC;}
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 235 "parseLex.l"
+#line 239 "parseLex.l"
 {return STRUCT;}
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 236 "parseLex.l"
+#line 240 "parseLex.l"
 {return SWITCH;}
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 237 "parseLex.l"
+#line 241 "parseLex.l"
 {return TYPEDEF;}
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 238 "parseLex.l"
+#line 242 "parseLex.l"
 {return UNION;}
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 239 "parseLex.l"
+#line 243 "parseLex.l"
 {return UNSIGNED;}
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 240 "parseLex.l"
+#line 244 "parseLex.l"
 {return VOID;}
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 241 "parseLex.l"
+#line 245 "parseLex.l"
 {return VOLATILE;}
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 242 "parseLex.l"
+#line 246 "parseLex.l"
 {return WHILE;}
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 243 "parseLex.l"
+#line 247 "parseLex.l"
 {return _BOOL;}
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 244 "parseLex.l"
+#line 248 "parseLex.l"
 {return _COMPLEX;}
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 245 "parseLex.l"
+#line 249 "parseLex.l"
 {return _IMAGINARY;}
 	YY_BREAK
 case 85:
 /* rule 85 can match eol */
 YY_RULE_SETUP
-#line 246 "parseLex.l"
+#line 250 "parseLex.l"
 {line = line + 1;}
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 247 "parseLex.l"
-{yylval.string = strdup(yytext);return yylval.string;}
+#line 251 "parseLex.l"
+{
+        
+        yylval.string = strdup(yytext);
+       // printf("String is %s\n", yylval.string);
+        int returnVal = yylval.string[0];
+       // printf("Punctuation is %i\n", returnVal);
+        return returnVal;
+        }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 248 "parseLex.l"
-{yylval.string = strdup(yytext);printf("IDENT FOUND\n"); return IDENT;}
+#line 259 "parseLex.l"
+{yylval.string = strdup(yytext);return IDENT;}
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 249 "parseLex.l"
+#line 260 "parseLex.l"
 {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 251 "parseLex.l"
+#line 262 "parseLex.l"
 ECHO;
 	YY_BREAK
-#line 1595 "lex.yy.c"
+#line 1606 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(STRING):
 case YY_STATE_EOF(CHAR):
@@ -2600,7 +2611,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 251 "parseLex.l"
+#line 262 "parseLex.l"
 
 
 

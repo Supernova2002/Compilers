@@ -39,14 +39,54 @@
 # define YY_YY_PARSER_TAB_H_INCLUDED
 /* Debug traces.  */
 #ifndef YYDEBUG
-# define YYDEBUG 0
+# define YYDEBUG 1
 #endif
 #if YYDEBUG
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 18 "parser.y"
+#line 46 "parser.y"
 
+    struct astnode_ternop{
+        struct astnode *opIf;
+        struct astnode *opThen;
+        struct astnode *opElse;
+    };
+    struct astnode_binop{
+        int nodetype;
+        int operator;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_logop{
+        int operator;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_num{
+        int numtype;
+        long long int number;
+    };
+    struct astnode_ident{
+        int nodetype;
+        char* ident;
+    };
+    struct astnode_string{
+        char* string;
+    };
+    
+    struct astnode{
+        int nodetype;
+        union {
+            struct astnode_binop binop;
+            struct astnode_num num;
+            struct astnode_ident ident;
+            struct astnode_string string;
+            struct astnode_ternop ternop;
+            struct astnode_logop logop;
+        };
+
+    };
     struct number{
         unsigned long long integer;
         enum types {
@@ -57,11 +97,13 @@ extern int yydebug;
                 UNSIGNED_LONGLONG,
                 SIGNED_LONGLONG,
                 TYPE_DOUBLE,
+                LONG_DOUBLE,
                 TYPE_FLOAT,
-                LONG_DOUBLE
+                TYPE_CHAR
+                
 
-        };      
-        enum types type;
+        }type;    
+        
         union {
                 int charVal;
                 long int intVal;
@@ -73,7 +115,7 @@ extern int yydebug;
 
     };
 
-#line 77 "parser.tab.h"
+#line 119 "parser.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -156,12 +198,13 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 45 "parser.y"
+#line 115 "parser.y"
 
     struct number number;
     char *string;
+    struct astnode *astnode_p;
 
-#line 165 "parser.tab.h"
+#line 208 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
