@@ -256,7 +256,7 @@ _Imaginary {return _IMAGINARY;}
        // printf("Punctuation is %i\n", returnVal);
         return returnVal;
         }
-<INITIAL>[a-z|A-Z|_][a-z|A-Z|0-9|_]* {yylval.string = strdup(yytext);return IDENT;}
+<INITIAL>[a-zA-Z_][a-zA-Z0-9_]* {yylval.string = strdup(yytext);return IDENT;}
 .       {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
 
 %%

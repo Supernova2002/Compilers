@@ -74,7 +74,31 @@ extern int yydebug;
     struct astnode_string{
         char* string;
     };
-    
+    struct astnode_assop{
+        int assType;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_unop{
+        int operator;
+        struct astnode *operand;
+       
+    };
+    struct astnode_compop{
+        int operator;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_general{
+        int genType;
+        struct astnode *next;
+        // 0 is DEREF, 1 is ADDRESSOF
+    };
+    struct astnode_select{
+        int indirectFlag;
+        //0 if direct, 1 if indirect
+        char* member;
+    };
     struct astnode{
         int nodetype;
         union {
@@ -84,6 +108,11 @@ extern int yydebug;
             struct astnode_string string;
             struct astnode_ternop ternop;
             struct astnode_logop logop;
+            struct astnode_assop assop;
+            struct astnode_unop unop;
+            struct astnode_compop compop;
+            struct astnode_general general;
+            struct astnode_select select;
         };
 
     };
@@ -115,7 +144,7 @@ extern int yydebug;
 
     };
 
-#line 119 "parser.tab.h"
+#line 148 "parser.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -140,54 +169,54 @@ extern int yydebug;
     LOGAND = 269,                  /* LOGAND  */
     LOGOR = 270,                   /* LOGOR  */
     ELLIPSIS = 271,                /* ELLIPSIS  */
-    TIMESEQ = 272,                 /* TIMESEQ  */
-    DIVEQ = 273,                   /* DIVEQ  */
-    MODEQ = 274,                   /* MODEQ  */
-    PLUSEQ = 275,                  /* PLUSEQ  */
-    MINUSEQ = 276,                 /* MINUSEQ  */
-    SHLEQ = 277,                   /* SHLEQ  */
-    SHREQ = 278,                   /* SHREQ  */
-    ANDEQ = 279,                   /* ANDEQ  */
-    OREQ = 280,                    /* OREQ  */
-    XOREQ = 281,                   /* XOREQ  */
-    AUTO = 282,                    /* AUTO  */
-    BREAK = 283,                   /* BREAK  */
-    CASE = 284,                    /* CASE  */
-    CHAR = 285,                    /* CHAR  */
-    CONST = 286,                   /* CONST  */
-    CONTINUE = 287,                /* CONTINUE  */
-    DEFAULT = 288,                 /* DEFAULT  */
-    DO = 289,                      /* DO  */
-    DOUBLE = 290,                  /* DOUBLE  */
-    ELSE = 291,                    /* ELSE  */
-    ENUM = 292,                    /* ENUM  */
-    EXTERN = 293,                  /* EXTERN  */
-    FLOAT = 294,                   /* FLOAT  */
-    FOR = 295,                     /* FOR  */
-    GOTO = 296,                    /* GOTO  */
-    IF = 297,                      /* IF  */
-    INLINE = 298,                  /* INLINE  */
-    INT = 299,                     /* INT  */
-    LONG = 300,                    /* LONG  */
-    REGISTER = 301,                /* REGISTER  */
-    RESTRICT = 302,                /* RESTRICT  */
-    RETURN = 303,                  /* RETURN  */
-    SHORT = 304,                   /* SHORT  */
-    SIGNED = 305,                  /* SIGNED  */
-    SIZEOF = 306,                  /* SIZEOF  */
-    STATIC = 307,                  /* STATIC  */
-    STRUCT = 308,                  /* STRUCT  */
-    SWITCH = 309,                  /* SWITCH  */
-    TYPEDEF = 310,                 /* TYPEDEF  */
-    UNION = 311,                   /* UNION  */
-    UNSIGNED = 312,                /* UNSIGNED  */
-    VOID = 313,                    /* VOID  */
-    VOLATILE = 314,                /* VOLATILE  */
-    WHILE = 315,                   /* WHILE  */
-    _BOOL = 316,                   /* _BOOL  */
-    _COMPLEX = 317,                /* _COMPLEX  */
-    _IMAGINARY = 318,              /* _IMAGINARY  */
-    NAME = 319,                    /* NAME  */
+    DIVEQ = 272,                   /* DIVEQ  */
+    MODEQ = 273,                   /* MODEQ  */
+    PLUSEQ = 274,                  /* PLUSEQ  */
+    MINUSEQ = 275,                 /* MINUSEQ  */
+    SHLEQ = 276,                   /* SHLEQ  */
+    SHREQ = 277,                   /* SHREQ  */
+    ANDEQ = 278,                   /* ANDEQ  */
+    OREQ = 279,                    /* OREQ  */
+    XOREQ = 280,                   /* XOREQ  */
+    AUTO = 281,                    /* AUTO  */
+    BREAK = 282,                   /* BREAK  */
+    CASE = 283,                    /* CASE  */
+    CHAR = 284,                    /* CHAR  */
+    CONST = 285,                   /* CONST  */
+    CONTINUE = 286,                /* CONTINUE  */
+    DEFAULT = 287,                 /* DEFAULT  */
+    DO = 288,                      /* DO  */
+    DOUBLE = 289,                  /* DOUBLE  */
+    ELSE = 290,                    /* ELSE  */
+    ENUM = 291,                    /* ENUM  */
+    EXTERN = 292,                  /* EXTERN  */
+    FLOAT = 293,                   /* FLOAT  */
+    FOR = 294,                     /* FOR  */
+    GOTO = 295,                    /* GOTO  */
+    IF = 296,                      /* IF  */
+    INLINE = 297,                  /* INLINE  */
+    INT = 298,                     /* INT  */
+    LONG = 299,                    /* LONG  */
+    REGISTER = 300,                /* REGISTER  */
+    RESTRICT = 301,                /* RESTRICT  */
+    RETURN = 302,                  /* RETURN  */
+    SHORT = 303,                   /* SHORT  */
+    SIGNED = 304,                  /* SIGNED  */
+    SIZEOF = 305,                  /* SIZEOF  */
+    STATIC = 306,                  /* STATIC  */
+    STRUCT = 307,                  /* STRUCT  */
+    SWITCH = 308,                  /* SWITCH  */
+    TYPEDEF = 309,                 /* TYPEDEF  */
+    UNION = 310,                   /* UNION  */
+    UNSIGNED = 311,                /* UNSIGNED  */
+    VOID = 312,                    /* VOID  */
+    VOLATILE = 313,                /* VOLATILE  */
+    WHILE = 314,                   /* WHILE  */
+    _BOOL = 315,                   /* _BOOL  */
+    _COMPLEX = 316,                /* _COMPLEX  */
+    _IMAGINARY = 317,              /* _IMAGINARY  */
+    NAME = 318,                    /* NAME  */
+    TIMESEQ = 319,                 /* TIMESEQ  */
     IDENT = 320,                   /* IDENT  */
     newString = 321                /* newString  */
   };
@@ -198,13 +227,14 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 115 "parser.y"
+#line 144 "parser.y"
 
     struct number number;
     char *string;
     struct astnode *astnode_p;
+    int operator;
 
-#line 208 "parser.tab.h"
+#line 238 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
