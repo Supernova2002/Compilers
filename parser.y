@@ -42,7 +42,7 @@
     
     
 %}
-//0 is binop, 1 is num, 2 is ident, 3 is string, 4 is ternary, 5 is logop, 6 is assignment, 7 is unary op, 8 is comparison op, 9 is general, 10 is select
+//0 is binop, 1 is num, 2 is ident, 3 is string, 4 is ternary, 5 is logop, 6 is assignment, 7 is unary op, 8 is comparison op, 9 is general, 10 is select, 11 is type, 12 is funcarg and 13 is func
 %code requires {
     struct astnode_ternop{
         struct astnode *opIf;
@@ -63,6 +63,7 @@
     struct astnode_num{
         int numtype;
         long long int number;
+        long double realNum;
     };
     struct astnode_ident{
         int nodetype;
@@ -89,12 +90,27 @@
     struct astnode_general{
         int genType;
         struct astnode *next;
-        // 0 is DEREF, 1 is ADDRESSOF
+        // 0 is DEREF, 1 is ADDRESSOF, 2 is SIZEOF
     };
     struct astnode_select{
         int indirectFlag;
         //0 if direct, 1 if indirect
+        struct astnode *parent;
         char* member;
+    };
+    struct astnode_type{
+        int type;
+        struct astnode *next;
+    };
+    struct astnode_funcarg{
+        struct astnode *current;
+        struct astnode *next;
+        struct astnode *head;
+        int argCount;
+    };
+    struct astnode_func{
+        struct astnode *name;
+        struct astnode *args;
     };
     struct astnode{
         int nodetype;
@@ -110,6 +126,9 @@
             struct astnode_compop compop;
             struct astnode_general general;
             struct astnode_select select;
+            struct astnode_type type;
+            struct astnode_funcarg funcarg;
+            struct astnode_func func;
         };
 
     };
@@ -149,16 +168,16 @@
 }
 %token <number> NUMBER
 %token <number> CHARLIT
-%token  INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ NOTEQ LOGAND LOGOR ELLIPSIS  DIVEQ MODEQ PLUSEQ MINUSEQ SHLEQ SHREQ
+%token  INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ NOTEQ LOGAND LOGOR ELLIPSIS TIMESEQ  DIVEQ MODEQ PLUSEQ MINUSEQ SHLEQ SHREQ
 %token  ANDEQ OREQ XOREQ AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN FLOAT FOR GOTO IF INLINE INT LONG REGISTER
 %token  RESTRICT RETURN SHORT SIGNED SIZEOF STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY NAME
-%token <operator> TIMESEQ
+//%token <operator> TIMESEQ
 %token <string> IDENT 
 %token <string> newString;
 %left '+' '-' 
 %left '*' '/' '%'
-%type <astnode_p> start statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp 
-%type <operator> assop unaryop
+%type <astnode_p> start statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
+%type <operator> assop unaryop typename
 %%
 
 start: statement
@@ -210,8 +229,21 @@ postexp:  primexp
                                 $$= n;
 
                             }
-    | postexp '.' IDENT 
-    | postexp INDSEL IDENT
+    | postexp '(' argexplist ')'    {   struct astnode *n = malloc(1024);
+                                        setupFunc(n,$1,$3);
+                                        $$ = n;
+                                        }
+                                     //this is where the functions go
+
+    | postexp '.' IDENT     {struct astnode *n = malloc(1024);
+                                setupSelect(n,0,$1,$3);
+                                $$= n;
+                                }
+    | postexp INDSEL IDENT  {struct astnode *n = malloc(1024);
+                            //FIX THIS WITH THE EQUIVALENCY
+                                setupSelect(n,1,$1,$3);
+                                $$= n;
+                                }
     | postexp PLUSPLUS      {struct astnode *n = malloc(1024);
                             setupUnop(n,PLUSPLUS,$1);
                             $$ = n;
@@ -220,24 +252,40 @@ postexp:  primexp
                             setupUnop(n,MINUSMINUS,$1);
                             $$ = n;
                         }
-
+    
 
 
 ;
+argexplist : assexp     { struct astnode *n = malloc(1024);
+                            setupFuncarg(n,$1,n);
+                            n->funcarg.head = n;
+                            $$ = n;
+                            }
+    | argexplist ',' assexp {  struct astnode *n = malloc(1024);
+                                
+                                setupFuncarg(n,$3,$1);
+                                n->funcarg.argCount = $1->funcarg.argCount + 1;
+                                n->funcarg.head = $1->funcarg.head;
+                                $1->funcarg.next = n;
+                                
+                            $$= n;
+
+                    }
 castexp: unexp  
-    | '('typename')' castexp
+    | '('typename')' castexp    {   struct astnode *n = malloc(1024);
+                                    setupType(n,$2,$4);
+                                    $$ = n;
+                                }
 ;
-typename: CHAR
-    | INT
-    | LONG
-    | DOUBLE
-    | FLOAT
+typename: CHAR  {$$ = CHAR;}
+    | INT   {$$ = INT;}
+    | LONG  { $$ = LONG;}
+    | DOUBLE    { $$ = DOUBLE;}
+    | FLOAT { $$ = FLOAT;}
 
 
 ;
-unaryop: '&'{$$ = '&';}
-    | '*' {$$ = '*';}
-    | '+'   {$$ = '+';}
+unaryop: '+'   {$$ = '+';}
     | '-'   {$$ = '-';}
     | '~'   {$$ = '~';}
     | '!'   {$$ = '!';}
@@ -265,11 +313,24 @@ unexp: postexp
                         setupUnop(n,$1,$2);
                         $$ = n;
                         }
+    | '&' castexp       { struct astnode *n = malloc(1024);
+                            setupGeneral(n,1,$2);
+                            $$ = n;
+                            }
+    | '*' castexp       { struct astnode *n = malloc(1024);
+                            setupGeneral(n,0,$2);
+                            $$= n;
+                            } 
     | SIZEOF unexp  {struct astnode *n = malloc(1024);
-                        setupUnop(n,SIZEOF,$2);
+                        setupGeneral(n,2,$2);
                         $$ = n;
                         }
-    | SIZEOF '('typename')' 
+    | SIZEOF '('typename')' {struct astnode *n = malloc(1024);
+                                struct astnode *type = malloc(1024);
+                                setupType(type,$3,NULL);
+                            setupGeneral(n,2,type);
+                            $$ = n;
+                            }
 ;
 multexp:castexp
     | multexp '*' castexp   {  struct astnode *n = malloc(1024);
@@ -442,6 +503,7 @@ constexp: condexp
 %%
 void printAST(struct astnode* n, int indent){
         char temp[1000];
+        strcpy(temp, "");
         for (int i = 0; i<indent; i++){
             printf("\t");
         }
@@ -463,7 +525,16 @@ void printAST(struct astnode* n, int indent){
                 printAST(n->binop.right, indent+1);
                 break;
             case 1:
-                printf("CONSTANT: (type = %s)%lld\n",stringFromType(n->num.numtype),n->num.number); break;
+                if(n->num.numtype <6){
+                    printf("CONSTANT: (type = %s)%lld\n",stringFromType(n->num.numtype),n->num.number); break;
+                }
+                else if (n->num.numtype<9){
+                    printf("CONSTANT: (type = %s)%Lg\n",stringFromType(n->num.numtype),n->num.realNum); break;
+                }
+                else if (n->num.numtype == 9){
+                    printf("CONSTANT: (type = %s)%c\n",stringFromType(n->num.numtype),n->num.number); break;
+                }
+                break;
             case 2:
                 printf("IDENT %s\n", n->ident.ident); break;
             case 3: 
@@ -547,8 +618,51 @@ void printAST(struct astnode* n, int indent){
                 switch(n->general.genType){
                     case 0: printf("DEREF\n"); break;
                     case 1: printf("ADDRESSOF\n"); break;
+                    case 2: printf("SIZEOF\n"); break;
                 }
                 printAST(n->general.next, indent + 1);
+                break;
+            case 10:
+                switch(n->select.indirectFlag){
+                    case 0: printf("SELECT, MEMBER %s\n", n->select.member); break;
+                    case 1: printf("INDIRECT SELECT, MEMBER %s\n", n->select.member); break;
+                }
+                printAST(n->select.parent,indent+1);
+                break;
+            case 11: 
+                switch(n->type.type){
+                    case CHAR: strcpy(temp, "char"); break;
+                    case INT: strcpy(temp, "int"); break;
+                    case LONG: strcpy(temp, "long"); break;
+                    case DOUBLE: strcpy(temp, "double"); break;
+                    case FLOAT: strcpy(temp, "float"); break;
+                }
+                printf("TYPE %s\n", temp);
+                
+                if(n->type.next != NULL){
+                    
+                    printAST(n->type.next, indent + 1);
+                }
+                break;
+            case 13:    
+                printf("FUNCTION CALL,%i arguments\n",n->func.args->funcarg.argCount);
+                printAST(n->func.name, indent + 1);
+                int i;
+                i = 1;
+                struct astnode *copy = n->func.args->funcarg.head;
+                while (copy!= NULL){
+                    printf("arg #%i=\n",i);
+                    printAST(copy->funcarg.current,indent+1);
+                    copy = copy->funcarg.next;
+                    i++;
+                }
+                break;
+
+
+
+
+                break;
+            
         }
 }
 
@@ -563,9 +677,9 @@ void setupBinop(struct astnode *n, int operator,struct astnode* left, struct ast
 void setupLogop(struct astnode *n, int operator,struct astnode* left, struct astnode* right){
         
         n->nodetype = 5;
-        n->binop.operator = operator;
-        n->binop.left = left;
-        n->binop.right = right;
+        n->logop.operator = operator;
+        n->logop.left = left;
+        n->logop.right = right;
         
 }
 void setupNumber(struct astnode *n,struct number number){
@@ -576,7 +690,7 @@ void setupNumber(struct astnode *n,struct number number){
             n->num.number = number.value.intVal;
         }
         else if (number.type<9 ){
-            n->num.number = number.value.realVal;
+            n->num.realNum = number.value.realVal;
         }
         else{
             n->num.number = number.value.charVal;
@@ -628,10 +742,28 @@ void setupGeneral(struct astnode *n, int type, struct astnode *sub){
     n->general.genType = type;
     n->general.next = sub;
 }
-void setupSelect(struct astnode *n, int flag, struct astnode *member){
+void setupSelect(struct astnode *n, int flag, struct astnode *parent, char* member){
     n->nodetype = 10;
     n->select.indirectFlag = flag;
-    n->select.member = strdup(member->string.string);
+    n->select.parent = parent;
+    n->select.member = strdup(member);
+}
+void setupType(struct astnode *n, int type, struct astnode *next){
+    n->nodetype = 11;
+    n->type.type = type;
+    n->type.next = next;
+}
+void setupFuncarg(struct astnode *n, struct astnode *current, struct astnode* head){
+    n->nodetype = 12;
+    n->funcarg.current = current;
+    n->funcarg.next = NULL;
+    //n->funcarg.head = head->funcarg.head;
+    n->funcarg.argCount = 1;
+}
+void setupFunc(struct astnode *n, struct astnode *name, struct astnode *args){
+    n->nodetype = 13;
+    n->func.name = name;
+    n->func.args = args;
 }
 int main(){
     int t;

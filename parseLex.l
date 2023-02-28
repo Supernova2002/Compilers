@@ -19,13 +19,13 @@ int isFloat=0;
 int line = 1;
 %}
 %x STRING 
-%x CHAR
+%x CHARCASE
 %x FILEINFO
 DEC [1-9][0-9]*
 E [\e][\+-]?{DEC}+
 P [\p][\+-]?{DEC}+
 FLOAT [0-9]+\.[0-9]*
-FLOAT2 \.[0-9]*
+FLOAT2 \.[0-9]+
 DIGIT [0-9]+
 HEXDIGIT   [0-9a-fA-F]
 OCTALDIGIT      [0-7]
@@ -45,11 +45,11 @@ OCTAL   0{OCTALDIGIT}*
 <FILEINFO>\n        {BEGIN(INITIAL);}
         /*[a-z|A-Z]+\.c   {yylval.string = strdup(yytext);name = yylval.string; return NAME;*/
 <INITIAL>\L?\" {BEGIN(STRING);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
-<INITIAL>\L?\' {BEGIN(CHAR);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
+<INITIAL>\L?\' {BEGIN(CHARCASE);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
 
-<STRING,CHAR>\\['|"|\\|?] {strcat(placeholder,&yytext[1]);}
-<STRING,CHAR>\\[0|a|b|f|n|r|t|v] {strcat(placeholder, yytext);}
-<STRING,CHAR>\\{OCTALDIGIT}{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
+<STRING,CHARCASE>\\['|"|\\|?] {strcat(placeholder,&yytext[1]);}
+<STRING,CHARCASE>\\[0|a|b|f|n|r|t|v] {strcat(placeholder, yytext);}
+<STRING,CHARCASE>\\{OCTALDIGIT}{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
         if(temp > 255){
                 
                 fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
@@ -64,7 +64,7 @@ OCTAL   0{OCTALDIGIT}*
         }
         strcat(placeholder,storage);free(storage);}
 
-<STRING,CHAR>\\x{HEXDIGIT}+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
+<STRING,CHARCASE>\\x{HEXDIGIT}+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
         if(temp > 255){
                 fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
                 temp = 255;
@@ -78,8 +78,8 @@ OCTAL   0{OCTALDIGIT}*
         }
         strcat(placeholder,storage);free(storage);}
 <STRING>[^\"\\\n\0\a\b\f\n\r\t\v]+ {strcat(placeholder, yytext);}
-<CHAR>[^|\'|\"|\\|\n|\0|\a|\b|\f|\n|\r|\t|\v]+ {strcat(placeholder, yytext);}
-<CHAR>\' {BEGIN(INITIAL);
+<CHARCASE>[^|\'|\"|\\|\n|\0|\a|\b|\f|\n|\r|\t|\v]+ {strcat(placeholder, yytext);}
+<CHARCASE>\' {BEGIN(INITIAL);
         if(strlen(placeholder) >1){
                 fprintf(stderr,"%s:%d:WARNING:Unsupported multibyte character literal truncated to first byte \n",name,line); 
                 placeholder[1] = '\0';
@@ -87,7 +87,7 @@ OCTAL   0{OCTALDIGIT}*
         yylval.number.type = 9;
         yylval.number.value.charVal= placeholder[0]; 
         free(placeholder);
-        return CHAR;}
+        return CHARLIT;}
 <STRING>\" {BEGIN(INITIAL);yylval.string = strdup(placeholder); free(placeholder);return newString;}
 
 -\> {return INDSEL;}
@@ -247,6 +247,7 @@ while {return WHILE;}
 _Bool {return _BOOL;}
 _Complex {return _COMPLEX;}
 _Imaginary {return _IMAGINARY;}
+\s 
 \n      {line = line + 1;}
 <INITIAL>[\.\+\-\;\!\?\:\,\@\#\$\%\*\&\(\)\[\]\{\}\^\~\|\<\>\`\\\/\=] {
         
@@ -257,6 +258,7 @@ _Imaginary {return _IMAGINARY;}
         return returnVal;
         }
 <INITIAL>[a-zA-Z_][a-zA-Z0-9_]* {yylval.string = strdup(yytext);return IDENT;}
+[ ]+ 
 .       {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
 
 %%
@@ -440,3 +442,4 @@ int numberProcessing(int realCheck){
 
         
 }
+

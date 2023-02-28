@@ -32,6 +32,7 @@ OCTALDIGIT      [0-7]
 HEX     0[xX]{HEXDIGIT}+
 OCTAL   0{OCTALDIGIT}*
 %%
+
 #               {BEGIN(FILEINFO);}
         /*<FILEINFO>[0-9]+    { line = (int) strtol (yytext,NULL, 10); }*/
     
@@ -243,8 +244,11 @@ _Bool {return _BOOL;}
 _Complex {return _COMPLEX;}
 _Imaginary {return _IMAGINARY;}
 \n      {line = line + 1;}
-<INITIAL>[\.\+\-\;\!\?\:\,\@\#\$\%\*\&\(\)\[\]\{\}\^\~\|\<\>\`\\\/] {yylval.string = strdup(yytext);return PUNCTUATION;}
+
+<INITIAL>[\.\+\-\;\!\?\:\,\@\#\$\%\*\&\(\)\[\]\{\}\^\~\|\<\>\`\\\/\=] {yylval.string = strdup(yytext);return PUNCTUATION;}
+     
 <INITIAL>[a-z|A-Z|_][a-z|A-Z|0-9|_]* {yylval.string = strdup(yytext); return IDENT;}
+
 .       {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
 
 %%
