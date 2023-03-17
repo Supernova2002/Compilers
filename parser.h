@@ -1,0 +1,133 @@
+#ifndef PARSER_H
+#define PARSER_H
+
+ struct astnode_ternop{
+        struct astnode *opIf;
+        struct astnode *opThen;
+        struct astnode *opElse;
+    };
+    struct astnode_binop{
+        int nodetype;
+        int operator;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_logop{
+        int operator;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_num{
+        int numtype;
+        int number;
+        long double realNum;
+    };
+    struct astnode_ident{
+        int nodetype;
+        char* ident;
+    };
+    struct astnode_string{
+        char* string;
+    };
+    struct astnode_assop{
+        int assType;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_unop{
+        int operator;
+        struct astnode *operand;
+       
+    };
+    struct astnode_compop{
+        int operator;
+        struct astnode *left;
+        struct astnode *right;
+    };
+    struct astnode_general{
+        int genType;
+        struct astnode *next;
+        // 0 is DEREF, 1 is ADDRESSOF, 2 is SIZEOF
+    };
+    struct astnode_select{
+        int indirectFlag;
+        //0 if direct, 1 if indirect
+        struct astnode *parent;
+        char* member;
+    };
+    struct astnode_type{
+        int type;
+        struct astnode *next;
+    };
+    struct astnode_funcarg{
+        struct astnode *current;
+        struct astnode *next;
+        struct astnode *head;
+        int argCount;
+    };
+    struct astnode_func{
+        struct astnode *name;
+        struct astnode *args;
+    };
+    struct astnode{
+        int nodetype;
+        union {
+            struct astnode_binop binop;
+            struct astnode_num num;
+            struct astnode_ident ident;
+            struct astnode_string string;
+            struct astnode_ternop ternop;
+            struct astnode_logop logop;
+            struct astnode_assop assop;
+            struct astnode_unop unop;
+            struct astnode_compop compop;
+            struct astnode_general general;
+            struct astnode_select select;
+            struct astnode_type type;
+            struct astnode_funcarg funcarg;
+            struct astnode_func func;
+        };
+
+    };
+    struct number{
+        unsigned long long integer;
+        enum types {
+                SIGNED_INT,
+                UNSIGNED_INT,
+                SIGNED_LONG,
+                UNSIGNED_LONG,
+                UNSIGNED_LONGLONG,
+                SIGNED_LONGLONG,
+                TYPE_DOUBLE,
+                LONG_DOUBLE,
+                TYPE_FLOAT,
+                TYPE_CHAR
+                
+
+        }type; 
+        union {
+                int charVal;
+                long int intVal;
+                long double realVal;
+        }value;
+    };
+    
+void printAST(struct astnode *n, int indent);
+void setupBinop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
+void setupLogop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
+void setupNumber(struct astnode *n,struct number number);
+void setupIdent(struct astnode *n, char *string);
+void setupString(struct astnode *n, char *string);
+void setupTernary(struct astnode *n, struct astnode *opIf,struct astnode *opThen, struct astnode *opElse );
+void setupAssignment(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
+void setupUnop(struct astnode *n, int operator,struct astnode* operand);
+void setupCompop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
+void setupGeneral(struct astnode *n, int type, struct astnode *sub);
+void setupSelect(struct astnode *n, int flag, struct astnode *parent, char* member);
+void setupType(struct astnode *n, int type, struct astnode *next);
+void setupFuncarg(struct astnode *n, struct astnode *current, struct astnode* head);
+void setupFunc(struct astnode *n, struct astnode *name, struct astnode *args);
+int numberProcessing(int realCheck);
+
+
+#endif

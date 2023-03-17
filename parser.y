@@ -7,6 +7,7 @@
     #include <math.h>
     #include <ctype.h>
     #include <string.h>
+    
     #define INTLONG 500
     #define LLU 501
     #define newline 600
@@ -44,122 +45,15 @@
 %}
 //0 is binop, 1 is num, 2 is ident, 3 is string, 4 is ternary, 5 is logop, 6 is assignment, 7 is unary op, 8 is comparison op, 9 is general, 10 is select, 11 is type, 12 is funcarg and 13 is func
 %code requires {
-    struct astnode_ternop{
-        struct astnode *opIf;
-        struct astnode *opThen;
-        struct astnode *opElse;
-    };
-    struct astnode_binop{
-        int nodetype;
-        int operator;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_logop{
-        int operator;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_num{
-        int numtype;
-        long long int number;
-        long double realNum;
-    };
-    struct astnode_ident{
-        int nodetype;
-        char* ident;
-    };
-    struct astnode_string{
-        char* string;
-    };
-    struct astnode_assop{
-        int assType;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_unop{
-        int operator;
-        struct astnode *operand;
-       
-    };
-    struct astnode_compop{
-        int operator;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_general{
-        int genType;
-        struct astnode *next;
-        // 0 is DEREF, 1 is ADDRESSOF, 2 is SIZEOF
-    };
-    struct astnode_select{
-        int indirectFlag;
-        //0 if direct, 1 if indirect
-        struct astnode *parent;
-        char* member;
-    };
-    struct astnode_type{
-        int type;
-        struct astnode *next;
-    };
-    struct astnode_funcarg{
-        struct astnode *current;
-        struct astnode *next;
-        struct astnode *head;
-        int argCount;
-    };
-    struct astnode_func{
-        struct astnode *name;
-        struct astnode *args;
-    };
-    struct astnode{
-        int nodetype;
-        union {
-            struct astnode_binop binop;
-            struct astnode_num num;
-            struct astnode_ident ident;
-            struct astnode_string string;
-            struct astnode_ternop ternop;
-            struct astnode_logop logop;
-            struct astnode_assop assop;
-            struct astnode_unop unop;
-            struct astnode_compop compop;
-            struct astnode_general general;
-            struct astnode_select select;
-            struct astnode_type type;
-            struct astnode_funcarg funcarg;
-            struct astnode_func func;
-        };
-
-    };
-    struct number{
-        unsigned long long integer;
-        enum types {
-                SIGNED_INT,
-                UNSIGNED_INT,
-                SIGNED_LONG,
-                UNSIGNED_LONG,
-                UNSIGNED_LONGLONG,
-                SIGNED_LONGLONG,
-                TYPE_DOUBLE,
-                LONG_DOUBLE,
-                TYPE_FLOAT,
-                TYPE_CHAR
-                
-
-        }type;    
+      
+        #include "parser.h"
         
-        union {
-                int charVal;
-                long int intVal;
-                long double realVal;
-        }value;
 
 
 
 
     };
-}
+
 %union{
     struct number number;
     char *string;
@@ -170,7 +64,7 @@
 %token <number> CHARLIT
 %token  INDSEL PLUSPLUS MINUSMINUS SHL SHR LTEQ GTEQ EQEQ NOTEQ LOGAND LOGOR ELLIPSIS TIMESEQ  DIVEQ MODEQ PLUSEQ MINUSEQ SHLEQ SHREQ
 %token  ANDEQ OREQ XOREQ AUTO BREAK CASE CHAR CONST CONTINUE DEFAULT DO DOUBLE ELSE ENUM EXTERN FLOAT FOR GOTO IF INLINE INT LONG REGISTER
-%token  RESTRICT RETURN SHORT SIGNED SIZEOF STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY NAME
+%token  RESTRICT RETURN SHORT SIGNED SIZEOF STATIC STRUCT SWITCH TYPEDEF UNION UNSIGNED VOID VOLATILE WHILE _BOOL _COMPLEX _IMAGINARY NAME ENDFILE
 //%token <operator> TIMESEQ
 %token <string> IDENT 
 %token <string> newString;
@@ -767,9 +661,7 @@ void setupFunc(struct astnode *n, struct astnode *name, struct astnode *args){
 }
 int main(){
     int t;
-       while(!(t = yyparse())){
-
-       };
+       yyparse();
 
 
 

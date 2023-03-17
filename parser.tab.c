@@ -75,6 +75,7 @@
     #include <math.h>
     #include <ctype.h>
     #include <string.h>
+    
     #define INTLONG 500
     #define LLU 501
     #define newline 600
@@ -110,7 +111,7 @@
     
     
 
-#line 114 "parser.tab.c"
+#line 115 "parser.tab.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -203,54 +204,55 @@ enum yysymbol_kind_t
   YYSYMBOL__COMPLEX = 62,                  /* _COMPLEX  */
   YYSYMBOL__IMAGINARY = 63,                /* _IMAGINARY  */
   YYSYMBOL_NAME = 64,                      /* NAME  */
-  YYSYMBOL_IDENT = 65,                     /* IDENT  */
-  YYSYMBOL_newString = 66,                 /* newString  */
-  YYSYMBOL_67_ = 67,                       /* '+'  */
-  YYSYMBOL_68_ = 68,                       /* '-'  */
-  YYSYMBOL_69_ = 69,                       /* '*'  */
-  YYSYMBOL_70_ = 70,                       /* '/'  */
-  YYSYMBOL_71_ = 71,                       /* '%'  */
-  YYSYMBOL_72_ = 72,                       /* ';'  */
-  YYSYMBOL_73_ = 73,                       /* ','  */
-  YYSYMBOL_74_ = 74,                       /* '('  */
-  YYSYMBOL_75_ = 75,                       /* ')'  */
-  YYSYMBOL_76_ = 76,                       /* '['  */
-  YYSYMBOL_77_ = 77,                       /* ']'  */
-  YYSYMBOL_78_ = 78,                       /* '.'  */
-  YYSYMBOL_79_ = 79,                       /* '~'  */
-  YYSYMBOL_80_ = 80,                       /* '!'  */
-  YYSYMBOL_81_ = 81,                       /* '&'  */
-  YYSYMBOL_82_ = 82,                       /* '<'  */
-  YYSYMBOL_83_ = 83,                       /* '>'  */
-  YYSYMBOL_84_ = 84,                       /* '^'  */
-  YYSYMBOL_85_ = 85,                       /* '|'  */
-  YYSYMBOL_86_ = 86,                       /* '?'  */
-  YYSYMBOL_87_ = 87,                       /* ':'  */
-  YYSYMBOL_88_ = 88,                       /* '='  */
-  YYSYMBOL_YYACCEPT = 89,                  /* $accept  */
-  YYSYMBOL_start = 90,                     /* start  */
-  YYSYMBOL_statement = 91,                 /* statement  */
-  YYSYMBOL_expr = 92,                      /* expr  */
-  YYSYMBOL_primexp = 93,                   /* primexp  */
-  YYSYMBOL_postexp = 94,                   /* postexp  */
-  YYSYMBOL_argexplist = 95,                /* argexplist  */
-  YYSYMBOL_castexp = 96,                   /* castexp  */
-  YYSYMBOL_typename = 97,                  /* typename  */
-  YYSYMBOL_unaryop = 98,                   /* unaryop  */
-  YYSYMBOL_unexp = 99,                     /* unexp  */
-  YYSYMBOL_multexp = 100,                  /* multexp  */
-  YYSYMBOL_addexp = 101,                   /* addexp  */
-  YYSYMBOL_shiftexp = 102,                 /* shiftexp  */
-  YYSYMBOL_relexp = 103,                   /* relexp  */
-  YYSYMBOL_eqexp = 104,                    /* eqexp  */
-  YYSYMBOL_andexp = 105,                   /* andexp  */
-  YYSYMBOL_exorexp = 106,                  /* exorexp  */
-  YYSYMBOL_inorexp = 107,                  /* inorexp  */
-  YYSYMBOL_logandexp = 108,                /* logandexp  */
-  YYSYMBOL_logorexp = 109,                 /* logorexp  */
-  YYSYMBOL_condexp = 110,                  /* condexp  */
-  YYSYMBOL_assexp = 111,                   /* assexp  */
-  YYSYMBOL_assop = 112                     /* assop  */
+  YYSYMBOL_ENDFILE = 65,                   /* ENDFILE  */
+  YYSYMBOL_IDENT = 66,                     /* IDENT  */
+  YYSYMBOL_newString = 67,                 /* newString  */
+  YYSYMBOL_68_ = 68,                       /* '+'  */
+  YYSYMBOL_69_ = 69,                       /* '-'  */
+  YYSYMBOL_70_ = 70,                       /* '*'  */
+  YYSYMBOL_71_ = 71,                       /* '/'  */
+  YYSYMBOL_72_ = 72,                       /* '%'  */
+  YYSYMBOL_73_ = 73,                       /* ';'  */
+  YYSYMBOL_74_ = 74,                       /* ','  */
+  YYSYMBOL_75_ = 75,                       /* '('  */
+  YYSYMBOL_76_ = 76,                       /* ')'  */
+  YYSYMBOL_77_ = 77,                       /* '['  */
+  YYSYMBOL_78_ = 78,                       /* ']'  */
+  YYSYMBOL_79_ = 79,                       /* '.'  */
+  YYSYMBOL_80_ = 80,                       /* '~'  */
+  YYSYMBOL_81_ = 81,                       /* '!'  */
+  YYSYMBOL_82_ = 82,                       /* '&'  */
+  YYSYMBOL_83_ = 83,                       /* '<'  */
+  YYSYMBOL_84_ = 84,                       /* '>'  */
+  YYSYMBOL_85_ = 85,                       /* '^'  */
+  YYSYMBOL_86_ = 86,                       /* '|'  */
+  YYSYMBOL_87_ = 87,                       /* '?'  */
+  YYSYMBOL_88_ = 88,                       /* ':'  */
+  YYSYMBOL_89_ = 89,                       /* '='  */
+  YYSYMBOL_YYACCEPT = 90,                  /* $accept  */
+  YYSYMBOL_start = 91,                     /* start  */
+  YYSYMBOL_statement = 92,                 /* statement  */
+  YYSYMBOL_expr = 93,                      /* expr  */
+  YYSYMBOL_primexp = 94,                   /* primexp  */
+  YYSYMBOL_postexp = 95,                   /* postexp  */
+  YYSYMBOL_argexplist = 96,                /* argexplist  */
+  YYSYMBOL_castexp = 97,                   /* castexp  */
+  YYSYMBOL_typename = 98,                  /* typename  */
+  YYSYMBOL_unaryop = 99,                   /* unaryop  */
+  YYSYMBOL_unexp = 100,                    /* unexp  */
+  YYSYMBOL_multexp = 101,                  /* multexp  */
+  YYSYMBOL_addexp = 102,                   /* addexp  */
+  YYSYMBOL_shiftexp = 103,                 /* shiftexp  */
+  YYSYMBOL_relexp = 104,                   /* relexp  */
+  YYSYMBOL_eqexp = 105,                    /* eqexp  */
+  YYSYMBOL_andexp = 106,                   /* andexp  */
+  YYSYMBOL_exorexp = 107,                  /* exorexp  */
+  YYSYMBOL_inorexp = 108,                  /* inorexp  */
+  YYSYMBOL_logandexp = 109,                /* logandexp  */
+  YYSYMBOL_logorexp = 110,                 /* logorexp  */
+  YYSYMBOL_condexp = 111,                  /* condexp  */
+  YYSYMBOL_assexp = 112,                   /* assexp  */
+  YYSYMBOL_assop = 113                     /* assop  */
 };
 typedef enum yysymbol_kind_t yysymbol_kind_t;
 
@@ -578,10 +580,10 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  50
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   242
+#define YYLAST   277
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  89
+#define YYNTOKENS  90
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  24
 /* YYNRULES -- Number of rules.  */
@@ -590,7 +592,7 @@ union yyalloc
 #define YYNSTATES  129
 
 /* YYMAXUTOK -- Last valid token kind.  */
-#define YYMAXUTOK   321
+#define YYMAXUTOK   322
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -607,16 +609,16 @@ static const yytype_int8 yytranslate[] =
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    80,     2,     2,     2,    71,    81,     2,
-      74,    75,    69,    67,    73,    68,    78,    70,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,    87,    72,
-      82,    88,    83,    86,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,    81,     2,     2,     2,    72,    82,     2,
+      75,    76,    70,    68,    74,    69,    79,    71,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,    88,    73,
+      83,    89,    84,    87,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    76,     2,    77,    84,     2,     2,     2,     2,     2,
+       2,    77,     2,    78,    85,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,    85,     2,    79,     2,     2,     2,
+       2,     2,     2,     2,    86,     2,    80,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -636,22 +638,22 @@ static const yytype_int8 yytranslate[] =
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
       55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
-      65,    66
+      65,    66,    67
 };
 
 #if YYDEBUG
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   183,   183,   184,   186,   190,   191,   202,   207,   211,
-     215,   219,   222,   223,   232,   238,   242,   247,   251,   259,
-     264,   274,   275,   280,   281,   282,   283,   284,   288,   289,
-     290,   291,   293,   294,   303,   312,   316,   320,   324,   328,
-     335,   336,   343,   350,   358,   359,   366,   374,   375,   382,
-     390,   391,   396,   401,   406,   412,   413,   418,   424,   425,
-     433,   434,   442,   443,   451,   452,   460,   461,   469,   470,
-     478,   479,   488,   489,   490,   491,   492,   493,   494,   495,
-     496,   497,   498
+       0,    77,    77,    78,    80,    84,    85,    96,   101,   105,
+     109,   113,   116,   117,   126,   132,   136,   141,   145,   153,
+     158,   168,   169,   174,   175,   176,   177,   178,   182,   183,
+     184,   185,   187,   188,   197,   206,   210,   214,   218,   222,
+     229,   230,   237,   244,   252,   253,   260,   268,   269,   276,
+     284,   285,   290,   295,   300,   306,   307,   312,   318,   319,
+     327,   328,   336,   337,   345,   346,   354,   355,   363,   364,
+     372,   373,   382,   383,   384,   385,   386,   387,   388,   389,
+     390,   391,   392
 };
 #endif
 
@@ -675,14 +677,14 @@ static const char *const yytname[] =
   "ELSE", "ENUM", "EXTERN", "FLOAT", "FOR", "GOTO", "IF", "INLINE", "INT",
   "LONG", "REGISTER", "RESTRICT", "RETURN", "SHORT", "SIGNED", "SIZEOF",
   "STATIC", "STRUCT", "SWITCH", "TYPEDEF", "UNION", "UNSIGNED", "VOID",
-  "VOLATILE", "WHILE", "_BOOL", "_COMPLEX", "_IMAGINARY", "NAME", "IDENT",
-  "newString", "'+'", "'-'", "'*'", "'/'", "'%'", "';'", "','", "'('",
-  "')'", "'['", "']'", "'.'", "'~'", "'!'", "'&'", "'<'", "'>'", "'^'",
-  "'|'", "'?'", "':'", "'='", "$accept", "start", "statement", "expr",
-  "primexp", "postexp", "argexplist", "castexp", "typename", "unaryop",
-  "unexp", "multexp", "addexp", "shiftexp", "relexp", "eqexp", "andexp",
-  "exorexp", "inorexp", "logandexp", "logorexp", "condexp", "assexp",
-  "assop", YY_NULLPTR
+  "VOLATILE", "WHILE", "_BOOL", "_COMPLEX", "_IMAGINARY", "NAME",
+  "ENDFILE", "IDENT", "newString", "'+'", "'-'", "'*'", "'/'", "'%'",
+  "';'", "','", "'('", "')'", "'['", "']'", "'.'", "'~'", "'!'", "'&'",
+  "'<'", "'>'", "'^'", "'|'", "'?'", "':'", "'='", "$accept", "start",
+  "statement", "expr", "primexp", "postexp", "argexplist", "castexp",
+  "typename", "unaryop", "unexp", "multexp", "addexp", "shiftexp",
+  "relexp", "eqexp", "andexp", "exorexp", "inorexp", "logandexp",
+  "logorexp", "condexp", "assexp", "assop", YY_NULLPTR
 };
 
 static const char *
@@ -692,7 +694,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-67)
+#define YYPACT_NINF (-76)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -706,19 +708,19 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     122,   -67,   -67,   142,   142,   161,   -67,   -67,   -67,   -67,
-     122,    73,   -67,   -67,   122,    30,   -67,   -64,   -67,    56,
-     -67,   122,    25,   -43,   -48,    46,     7,    57,   -49,   -24,
-     -45,    50,    -3,   -67,   -67,   122,   -67,   -67,    73,   -67,
-     -67,   -67,   -67,   -67,   -67,   -67,   -67,   -44,    -7,   -67,
-     -67,   -67,   -67,   122,     8,   -67,   -67,   122,   122,    13,
-     -67,   -67,   -67,   -67,   -67,   -67,   -67,   -67,   -67,   -67,
-     -67,   -67,   122,   122,   122,   122,   122,   122,   122,   122,
-     122,   122,   122,   122,   122,   122,   122,   122,   122,   122,
-     122,   122,    18,   -67,   122,   -67,   -67,   -34,   -67,   -63,
-     -67,   -67,   -67,   -67,   -67,   -43,   -43,   -48,   -48,    46,
-      46,    46,    46,     7,     7,    57,   -49,   -24,   -45,    50,
-     -66,   -67,   -67,   122,   -67,   -67,   122,   -67,   -67
+      97,   -76,   -76,   122,   122,   177,   -76,   -76,   -76,   -76,
+      97,    76,   -76,   -76,    97,    27,   -76,   -50,   -76,    35,
+     -76,    97,   188,   -52,   -40,    43,    15,    42,   -75,   -73,
+     -54,    23,    -6,   -76,   -76,    97,   -76,   -76,    76,   -76,
+     -76,   -76,   -76,   -76,   -76,   -76,   -76,   -27,   -20,   -76,
+     -76,   -76,   -76,    97,    -4,   -76,   -76,    97,    97,     2,
+     -76,   -76,   -76,   -76,   -76,   -76,   -76,   -76,   -76,   -76,
+     -76,   -76,    97,    97,    97,    97,    97,    97,    97,    97,
+      97,    97,    97,    97,    97,    97,    97,    97,    97,    97,
+      97,    97,    -7,   -76,    97,   -76,   -76,   -26,   -76,   -64,
+     -76,   -76,   -76,   -76,   -76,   -52,   -52,   -40,   -40,    43,
+      43,    43,    43,    15,    15,    42,   -75,   -73,   -54,    23,
+     -66,   -76,   -76,    97,   -76,   -76,    97,   -76,   -76
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -744,9 +746,9 @@ static const yytype_int8 yydefact[] =
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -67,   -67,    67,     1,   -67,   -67,   -67,    -8,    62,   -67,
-       0,    -2,     6,   -58,     3,    15,    19,    14,     5,    17,
-     -67,   -21,    -1,   -67
+     -76,   -76,    24,     1,   -76,   -76,   -76,    -8,    36,   -76,
+       0,   -16,   -15,   -37,   -14,   -13,   -12,   -11,    -5,    -2,
+     -76,   -41,   -36,   -76
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
@@ -762,93 +764,99 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_uint8 yytable[] =
 {
-      22,    17,    40,    36,    37,    39,    49,    53,    52,    53,
-      53,    22,    90,    60,   125,    22,    17,    80,    81,    76,
-      77,   126,   109,   110,   111,   112,    73,    74,    75,    53,
-      50,    93,    86,     1,     2,    22,     3,     4,    22,   123,
-      88,   124,    61,    62,    63,    64,    65,    66,    67,    68,
-      69,    70,    95,    22,    78,    79,    98,    22,    22,    99,
-      87,    54,    55,    56,    89,   102,   103,   104,    94,    84,
-      85,   101,    22,    96,   105,   106,     1,     2,   100,     3,
-       4,     5,    51,    91,   107,   108,   122,   113,   114,    82,
-      83,    22,   120,   121,   118,     6,     7,     8,     9,    10,
-      92,   115,   117,    42,    11,   128,   116,   119,    43,    12,
-      13,    14,    44,    71,     0,     0,     0,    45,    46,     0,
-       0,     0,   127,    22,     5,     1,     2,     0,     3,     4,
-      57,     0,    58,     0,    59,     0,     0,     0,     6,     7,
-       8,     9,    10,     0,     0,     1,     2,    11,     3,     4,
-       0,     0,    12,    13,    14,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     1,     2,     0,     3,     4,     0,
-       0,     0,     0,     5,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     6,     7,     8,
-       9,    10,     0,     5,     0,     0,    11,     0,     0,     0,
-       0,    12,    13,    14,     0,     0,     0,     6,     7,     8,
-       9,    10,     5,     0,     0,     0,    35,     0,     0,     0,
-       0,    12,    13,    14,     0,     0,     6,     7,     8,     9,
-      10,     0,     0,     0,     0,    38,     0,     0,     0,     0,
-      12,    13,    14
+      22,    17,    40,    36,    37,    39,    49,    86,    53,    90,
+      53,    22,    87,    60,   125,    22,    17,    95,    73,    74,
+      75,    98,   126,    52,    53,    80,    81,    50,    76,    77,
+       1,     2,    88,     3,     4,    22,   101,    89,    22,    51,
+      54,    55,    56,   109,   110,   111,   112,    53,   123,    93,
+     124,    78,    79,    22,    84,    85,    94,    22,    22,    99,
+     105,   106,    96,   107,   108,   102,   103,   104,   100,   121,
+     113,   114,    22,   115,    92,   116,     0,   117,     5,     1,
+       2,    91,     3,     4,   118,   128,   122,   127,   119,     0,
+       0,    22,   120,     6,     7,     8,     9,    10,    82,    83,
+       1,     2,    11,     3,     4,     0,    42,    12,    13,    14,
+      57,    43,    58,     0,    59,    44,     0,     0,     0,     0,
+      45,    46,     0,    22,     0,     1,     2,     5,     3,     4,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     6,     7,     8,     9,    10,     0,     5,     0,
+       0,    11,     0,     0,     0,     0,    12,    13,    14,     0,
+       0,     0,     0,     6,     7,     8,     9,    10,     0,     0,
+       0,     0,    11,     5,     0,     0,     0,    12,    13,    14,
+       1,     2,     0,     3,     4,     0,     0,     0,     6,     7,
+       8,     9,    10,     0,     0,     0,     0,    35,     0,     0,
+       0,     0,    12,    13,    14,    61,    62,    63,    64,    65,
+      66,    67,    68,    69,    70,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     5,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     6,     7,     8,     9,    10,     0,     0,
+       0,     0,    38,     0,     0,     0,     0,    12,    13,    14,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,    71
 };
 
 static const yytype_int8 yycheck[] =
 {
-       0,     0,    10,     3,     4,     5,    14,    73,    72,    73,
-      73,    11,    15,    21,    77,    15,    15,    10,    11,    67,
-      68,    87,    80,    81,    82,    83,    69,    70,    71,    73,
-       0,    75,    81,     3,     4,    35,     6,     7,    38,    73,
-      85,    75,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    53,    53,     8,     9,    57,    57,    58,    58,
-      84,     5,     6,     7,    14,    73,    74,    75,    75,    12,
-      13,    72,    72,    65,    76,    77,     3,     4,    65,     6,
-       7,    51,    15,    86,    78,    79,    94,    84,    85,    82,
-      83,    91,    91,    75,    89,    65,    66,    67,    68,    69,
-      38,    86,    88,    30,    74,   126,    87,    90,    35,    79,
-      80,    81,    39,    88,    -1,    -1,    -1,    44,    45,    -1,
-      -1,    -1,   123,   123,    51,     3,     4,    -1,     6,     7,
-      74,    -1,    76,    -1,    78,    -1,    -1,    -1,    65,    66,
-      67,    68,    69,    -1,    -1,     3,     4,    74,     6,     7,
-      -1,    -1,    79,    80,    81,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,     3,     4,    -1,     6,     7,    -1,
-      -1,    -1,    -1,    51,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    -1,    -1,    65,    66,    67,
-      68,    69,    -1,    51,    -1,    -1,    74,    -1,    -1,    -1,
-      -1,    79,    80,    81,    -1,    -1,    -1,    65,    66,    67,
-      68,    69,    51,    -1,    -1,    -1,    74,    -1,    -1,    -1,
-      -1,    79,    80,    81,    -1,    -1,    65,    66,    67,    68,
-      69,    -1,    -1,    -1,    -1,    74,    -1,    -1,    -1,    -1,
-      79,    80,    81
+       0,     0,    10,     3,     4,     5,    14,    82,    74,    15,
+      74,    11,    85,    21,    78,    15,    15,    53,    70,    71,
+      72,    57,    88,    73,    74,    10,    11,     0,    68,    69,
+       3,     4,    86,     6,     7,    35,    72,    14,    38,    15,
+       5,     6,     7,    80,    81,    82,    83,    74,    74,    76,
+      76,     8,     9,    53,    12,    13,    76,    57,    58,    58,
+      76,    77,    66,    78,    79,    73,    74,    75,    66,    76,
+      84,    85,    72,    86,    38,    87,    -1,    88,    51,     3,
+       4,    87,     6,     7,    89,   126,    94,   123,    90,    -1,
+      -1,    91,    91,    66,    67,    68,    69,    70,    83,    84,
+       3,     4,    75,     6,     7,    -1,    30,    80,    81,    82,
+      75,    35,    77,    -1,    79,    39,    -1,    -1,    -1,    -1,
+      44,    45,    -1,   123,    -1,     3,     4,    51,     6,     7,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    66,    67,    68,    69,    70,    -1,    51,    -1,
+      -1,    75,    -1,    -1,    -1,    -1,    80,    81,    82,    -1,
+      -1,    -1,    -1,    66,    67,    68,    69,    70,    -1,    -1,
+      -1,    -1,    75,    51,    -1,    -1,    -1,    80,    81,    82,
+       3,     4,    -1,     6,     7,    -1,    -1,    -1,    66,    67,
+      68,    69,    70,    -1,    -1,    -1,    -1,    75,    -1,    -1,
+      -1,    -1,    80,    81,    82,    17,    18,    19,    20,    21,
+      22,    23,    24,    25,    26,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    51,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    66,    67,    68,    69,    70,    -1,    -1,
+      -1,    -1,    75,    -1,    -1,    -1,    -1,    80,    81,    82,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    89
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     3,     4,     6,     7,    51,    65,    66,    67,    68,
-      69,    74,    79,    80,    81,    90,    91,    92,    93,    94,
-      96,    98,    99,   100,   101,   102,   103,   104,   105,   106,
-     107,   108,   109,   110,   111,    74,    99,    99,    74,    99,
-      96,    99,    30,    35,    39,    44,    45,    92,    97,    96,
-       0,    91,    72,    73,     5,     6,     7,    74,    76,    78,
-      96,    17,    18,    19,    20,    21,    22,    23,    24,    25,
-      26,    88,   112,    69,    70,    71,    67,    68,     8,     9,
-      10,    11,    82,    83,    12,    13,    81,    84,    85,    14,
-      15,    86,    97,    75,    75,   111,    65,    95,   111,    92,
-      65,   111,    96,    96,    96,   100,   100,   101,   101,   102,
-     102,   102,   102,   103,   103,   104,   105,   106,   107,   108,
-      92,    75,    96,    73,    75,    77,    87,   111,   110
+       0,     3,     4,     6,     7,    51,    66,    67,    68,    69,
+      70,    75,    80,    81,    82,    91,    92,    93,    94,    95,
+      97,    99,   100,   101,   102,   103,   104,   105,   106,   107,
+     108,   109,   110,   111,   112,    75,   100,   100,    75,   100,
+      97,   100,    30,    35,    39,    44,    45,    93,    98,    97,
+       0,    92,    73,    74,     5,     6,     7,    75,    77,    79,
+      97,    17,    18,    19,    20,    21,    22,    23,    24,    25,
+      26,    89,   113,    70,    71,    72,    68,    69,     8,     9,
+      10,    11,    83,    84,    12,    13,    82,    85,    86,    14,
+      15,    87,    98,    76,    76,   112,    66,    96,   112,    93,
+      66,   112,    97,    97,    97,   101,   101,   102,   102,   103,
+     103,   103,   103,   104,   104,   105,   106,   107,   108,   109,
+      93,    76,    97,    74,    76,    78,    88,   112,   111
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    89,    90,    90,    91,    92,    92,    93,    93,    93,
-      93,    93,    94,    94,    94,    94,    94,    94,    94,    95,
-      95,    96,    96,    97,    97,    97,    97,    97,    98,    98,
-      98,    98,    99,    99,    99,    99,    99,    99,    99,    99,
-     100,   100,   100,   100,   101,   101,   101,   102,   102,   102,
-     103,   103,   103,   103,   103,   104,   104,   104,   105,   105,
-     106,   106,   107,   107,   108,   108,   109,   109,   110,   110,
-     111,   111,   112,   112,   112,   112,   112,   112,   112,   112,
-     112,   112,   112
+       0,    90,    91,    91,    92,    93,    93,    94,    94,    94,
+      94,    94,    95,    95,    95,    95,    95,    95,    95,    96,
+      96,    97,    97,    98,    98,    98,    98,    98,    99,    99,
+      99,    99,   100,   100,   100,   100,   100,   100,   100,   100,
+     101,   101,   101,   101,   102,   102,   102,   103,   103,   103,
+     104,   104,   104,   104,   104,   105,   105,   105,   106,   106,
+     107,   107,   108,   108,   109,   109,   110,   110,   111,   111,
+     112,   112,   113,   113,   113,   113,   113,   113,   113,   113,
+     113,   113,   113
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
@@ -1596,14 +1604,14 @@ yyreduce:
   switch (yyn)
     {
   case 4: /* statement: expr ';'  */
-#line 186 "parser.y"
+#line 80 "parser.y"
                    {
                     printAST((yyvsp[-1].astnode_p),0);}
-#line 1603 "parser.tab.c"
+#line 1611 "parser.tab.c"
     break;
 
   case 6: /* expr: expr ',' assexp  */
-#line 191 "parser.y"
+#line 85 "parser.y"
                       {  struct astnode *n = malloc(1024);
                                 
                         setupBinop(n,',',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1611,54 +1619,54 @@ yyreduce:
                         (yyval.astnode_p)= n;
 
                     }
-#line 1615 "parser.tab.c"
+#line 1623 "parser.tab.c"
     break;
 
   case 7: /* primexp: IDENT  */
-#line 202 "parser.y"
+#line 96 "parser.y"
                { struct astnode *n = malloc(1024);
                  setupIdent(n,(yyvsp[0].string));
                  (yyval.astnode_p) = n;
 
                 }
-#line 1625 "parser.tab.c"
+#line 1633 "parser.tab.c"
     break;
 
   case 8: /* primexp: NUMBER  */
-#line 207 "parser.y"
+#line 101 "parser.y"
                {struct astnode *n = malloc(1024);
                          setupNumber(n,(yyvsp[0].number));
                 (yyval.astnode_p) = n;
                 }
-#line 1634 "parser.tab.c"
+#line 1642 "parser.tab.c"
     break;
 
   case 9: /* primexp: CHARLIT  */
-#line 211 "parser.y"
+#line 105 "parser.y"
                 {struct astnode *n = malloc(1024);
                          setupNumber(n,(yyvsp[0].number));
                 (yyval.astnode_p) = n;
                 }
-#line 1643 "parser.tab.c"
+#line 1651 "parser.tab.c"
     break;
 
   case 10: /* primexp: newString  */
-#line 215 "parser.y"
+#line 109 "parser.y"
                 { struct astnode *n = malloc(1024);
                  setupString(n,(yyvsp[0].string));
                  (yyval.astnode_p) = n;
                  }
-#line 1652 "parser.tab.c"
+#line 1660 "parser.tab.c"
     break;
 
   case 11: /* primexp: '(' expr ')'  */
-#line 219 "parser.y"
+#line 113 "parser.y"
                    {(yyval.astnode_p) = (yyvsp[-1].astnode_p);}
-#line 1658 "parser.tab.c"
+#line 1666 "parser.tab.c"
     break;
 
   case 13: /* postexp: postexp '[' expr ']'  */
-#line 223 "parser.y"
+#line 117 "parser.y"
                            {  struct astnode *sub = malloc(1024);
                                 //Need to add in a dereference AST node above the binop.
                                 setupBinop(sub,'+',(yyvsp[-3].astnode_p),(yyvsp[-1].astnode_p));
@@ -1668,67 +1676,67 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1672 "parser.tab.c"
+#line 1680 "parser.tab.c"
     break;
 
   case 14: /* postexp: postexp '(' argexplist ')'  */
-#line 232 "parser.y"
+#line 126 "parser.y"
                                     {   struct astnode *n = malloc(1024);
                                         setupFunc(n,(yyvsp[-3].astnode_p),(yyvsp[-1].astnode_p));
                                         (yyval.astnode_p) = n;
                                         }
-#line 1681 "parser.tab.c"
+#line 1689 "parser.tab.c"
     break;
 
   case 15: /* postexp: postexp '.' IDENT  */
-#line 238 "parser.y"
+#line 132 "parser.y"
                             {struct astnode *n = malloc(1024);
                                 setupSelect(n,0,(yyvsp[-2].astnode_p),(yyvsp[0].string));
                                 (yyval.astnode_p)= n;
                                 }
-#line 1690 "parser.tab.c"
+#line 1698 "parser.tab.c"
     break;
 
   case 16: /* postexp: postexp INDSEL IDENT  */
-#line 242 "parser.y"
+#line 136 "parser.y"
                             {struct astnode *n = malloc(1024);
                             //FIX THIS WITH THE EQUIVALENCY
                                 setupSelect(n,1,(yyvsp[-2].astnode_p),(yyvsp[0].string));
                                 (yyval.astnode_p)= n;
                                 }
-#line 1700 "parser.tab.c"
+#line 1708 "parser.tab.c"
     break;
 
   case 17: /* postexp: postexp PLUSPLUS  */
-#line 247 "parser.y"
+#line 141 "parser.y"
                             {struct astnode *n = malloc(1024);
                             setupUnop(n,PLUSPLUS,(yyvsp[-1].astnode_p));
                             (yyval.astnode_p) = n;
                         }
-#line 1709 "parser.tab.c"
+#line 1717 "parser.tab.c"
     break;
 
   case 18: /* postexp: postexp MINUSMINUS  */
-#line 251 "parser.y"
+#line 145 "parser.y"
                             {struct astnode *n = malloc(1024);
                             setupUnop(n,MINUSMINUS,(yyvsp[-1].astnode_p));
                             (yyval.astnode_p) = n;
                         }
-#line 1718 "parser.tab.c"
+#line 1726 "parser.tab.c"
     break;
 
   case 19: /* argexplist: assexp  */
-#line 259 "parser.y"
+#line 153 "parser.y"
                         { struct astnode *n = malloc(1024);
                             setupFuncarg(n,(yyvsp[0].astnode_p),n);
                             n->funcarg.head = n;
                             (yyval.astnode_p) = n;
                             }
-#line 1728 "parser.tab.c"
+#line 1736 "parser.tab.c"
     break;
 
   case 20: /* argexplist: argexplist ',' assexp  */
-#line 264 "parser.y"
+#line 158 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupFuncarg(n,(yyvsp[0].astnode_p),(yyvsp[-2].astnode_p));
@@ -1739,74 +1747,74 @@ yyreduce:
                             (yyval.astnode_p)= n;
 
                     }
-#line 1743 "parser.tab.c"
+#line 1751 "parser.tab.c"
     break;
 
   case 22: /* castexp: '(' typename ')' castexp  */
-#line 275 "parser.y"
+#line 169 "parser.y"
                                 {   struct astnode *n = malloc(1024);
                                     setupType(n,(yyvsp[-2].operator),(yyvsp[0].astnode_p));
                                     (yyval.astnode_p) = n;
                                 }
-#line 1752 "parser.tab.c"
+#line 1760 "parser.tab.c"
     break;
 
   case 23: /* typename: CHAR  */
-#line 280 "parser.y"
+#line 174 "parser.y"
                 {(yyval.operator) = CHAR;}
-#line 1758 "parser.tab.c"
+#line 1766 "parser.tab.c"
     break;
 
   case 24: /* typename: INT  */
-#line 281 "parser.y"
+#line 175 "parser.y"
             {(yyval.operator) = INT;}
-#line 1764 "parser.tab.c"
+#line 1772 "parser.tab.c"
     break;
 
   case 25: /* typename: LONG  */
-#line 282 "parser.y"
+#line 176 "parser.y"
             { (yyval.operator) = LONG;}
-#line 1770 "parser.tab.c"
+#line 1778 "parser.tab.c"
     break;
 
   case 26: /* typename: DOUBLE  */
-#line 283 "parser.y"
+#line 177 "parser.y"
                 { (yyval.operator) = DOUBLE;}
-#line 1776 "parser.tab.c"
+#line 1784 "parser.tab.c"
     break;
 
   case 27: /* typename: FLOAT  */
-#line 284 "parser.y"
+#line 178 "parser.y"
             { (yyval.operator) = FLOAT;}
-#line 1782 "parser.tab.c"
+#line 1790 "parser.tab.c"
     break;
 
   case 28: /* unaryop: '+'  */
-#line 288 "parser.y"
+#line 182 "parser.y"
                {(yyval.operator) = '+';}
-#line 1788 "parser.tab.c"
+#line 1796 "parser.tab.c"
     break;
 
   case 29: /* unaryop: '-'  */
-#line 289 "parser.y"
+#line 183 "parser.y"
             {(yyval.operator) = '-';}
-#line 1794 "parser.tab.c"
+#line 1802 "parser.tab.c"
     break;
 
   case 30: /* unaryop: '~'  */
-#line 290 "parser.y"
+#line 184 "parser.y"
             {(yyval.operator) = '~';}
-#line 1800 "parser.tab.c"
+#line 1808 "parser.tab.c"
     break;
 
   case 31: /* unaryop: '!'  */
-#line 291 "parser.y"
+#line 185 "parser.y"
             {(yyval.operator) = '!';}
-#line 1806 "parser.tab.c"
+#line 1814 "parser.tab.c"
     break;
 
   case 33: /* unexp: PLUSPLUS unexp  */
-#line 294 "parser.y"
+#line 188 "parser.y"
                         {struct astnode *n = malloc(1024);
                             struct astnode *sub = malloc(1024);
                             struct number tempNum;
@@ -1816,11 +1824,11 @@ yyreduce:
                             setupAssignment(n,PLUSEQ, (yyvsp[0].astnode_p),sub );
                             (yyval.astnode_p) = n;
                         }
-#line 1820 "parser.tab.c"
+#line 1828 "parser.tab.c"
     break;
 
   case 34: /* unexp: MINUSMINUS unexp  */
-#line 303 "parser.y"
+#line 197 "parser.y"
                         {struct astnode *n = malloc(1024);
                         struct astnode *sub = malloc(1024);
                         struct number tempNum;
@@ -1830,58 +1838,58 @@ yyreduce:
                         setupAssignment(n,MINUSEQ, (yyvsp[0].astnode_p),sub );
                         (yyval.astnode_p) = n;
                         }
-#line 1834 "parser.tab.c"
+#line 1842 "parser.tab.c"
     break;
 
   case 35: /* unexp: unaryop castexp  */
-#line 312 "parser.y"
+#line 206 "parser.y"
                         {struct astnode *n = malloc(1024);
                         setupUnop(n,(yyvsp[-1].operator),(yyvsp[0].astnode_p));
                         (yyval.astnode_p) = n;
                         }
-#line 1843 "parser.tab.c"
+#line 1851 "parser.tab.c"
     break;
 
   case 36: /* unexp: '&' castexp  */
-#line 316 "parser.y"
+#line 210 "parser.y"
                         { struct astnode *n = malloc(1024);
                             setupGeneral(n,1,(yyvsp[0].astnode_p));
                             (yyval.astnode_p) = n;
                             }
-#line 1852 "parser.tab.c"
+#line 1860 "parser.tab.c"
     break;
 
   case 37: /* unexp: '*' castexp  */
-#line 320 "parser.y"
+#line 214 "parser.y"
                         { struct astnode *n = malloc(1024);
                             setupGeneral(n,0,(yyvsp[0].astnode_p));
                             (yyval.astnode_p)= n;
                             }
-#line 1861 "parser.tab.c"
+#line 1869 "parser.tab.c"
     break;
 
   case 38: /* unexp: SIZEOF unexp  */
-#line 324 "parser.y"
+#line 218 "parser.y"
                     {struct astnode *n = malloc(1024);
                         setupGeneral(n,2,(yyvsp[0].astnode_p));
                         (yyval.astnode_p) = n;
                         }
-#line 1870 "parser.tab.c"
+#line 1878 "parser.tab.c"
     break;
 
   case 39: /* unexp: SIZEOF '(' typename ')'  */
-#line 328 "parser.y"
+#line 222 "parser.y"
                             {struct astnode *n = malloc(1024);
                                 struct astnode *type = malloc(1024);
                                 setupType(type,(yyvsp[-1].operator),NULL);
                             setupGeneral(n,2,type);
                             (yyval.astnode_p) = n;
                             }
-#line 1881 "parser.tab.c"
+#line 1889 "parser.tab.c"
     break;
 
   case 41: /* multexp: multexp '*' castexp  */
-#line 336 "parser.y"
+#line 230 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'*',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1889,11 +1897,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1893 "parser.tab.c"
+#line 1901 "parser.tab.c"
     break;
 
   case 42: /* multexp: multexp '/' castexp  */
-#line 343 "parser.y"
+#line 237 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'/',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1901,11 +1909,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1905 "parser.tab.c"
+#line 1913 "parser.tab.c"
     break;
 
   case 43: /* multexp: multexp '%' castexp  */
-#line 350 "parser.y"
+#line 244 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'%',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1913,11 +1921,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1917 "parser.tab.c"
+#line 1925 "parser.tab.c"
     break;
 
   case 45: /* addexp: addexp '+' multexp  */
-#line 359 "parser.y"
+#line 253 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'+',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1925,11 +1933,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1929 "parser.tab.c"
+#line 1937 "parser.tab.c"
     break;
 
   case 46: /* addexp: addexp '-' multexp  */
-#line 366 "parser.y"
+#line 260 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'-',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1937,11 +1945,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1941 "parser.tab.c"
+#line 1949 "parser.tab.c"
     break;
 
   case 48: /* shiftexp: shiftexp SHL addexp  */
-#line 375 "parser.y"
+#line 269 "parser.y"
                            {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,SHL,(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1949,11 +1957,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1953 "parser.tab.c"
+#line 1961 "parser.tab.c"
     break;
 
   case 49: /* shiftexp: shiftexp SHR addexp  */
-#line 382 "parser.y"
+#line 276 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,SHR,(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -1961,71 +1969,71 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 1965 "parser.tab.c"
+#line 1973 "parser.tab.c"
     break;
 
   case 51: /* relexp: relexp '<' shiftexp  */
-#line 391 "parser.y"
+#line 285 "parser.y"
                           { struct astnode *n = malloc(1024);
                             setupCompop(n,'<', (yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
                             (yyval.astnode_p) = n;
 
                             }
-#line 1975 "parser.tab.c"
+#line 1983 "parser.tab.c"
     break;
 
   case 52: /* relexp: relexp '>' shiftexp  */
-#line 396 "parser.y"
+#line 290 "parser.y"
                             { struct astnode *n = malloc(1024);
                             setupCompop(n,'>', (yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
                             (yyval.astnode_p) = n;
 
                             }
-#line 1985 "parser.tab.c"
+#line 1993 "parser.tab.c"
     break;
 
   case 53: /* relexp: relexp LTEQ shiftexp  */
-#line 401 "parser.y"
+#line 295 "parser.y"
                             { struct astnode *n = malloc(1024);
                             setupCompop(n,LTEQ, (yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
                             (yyval.astnode_p) = n;
 
                             }
-#line 1995 "parser.tab.c"
+#line 2003 "parser.tab.c"
     break;
 
   case 54: /* relexp: relexp GTEQ shiftexp  */
-#line 406 "parser.y"
+#line 300 "parser.y"
                             { struct astnode *n = malloc(1024);
                             setupCompop(n,GTEQ, (yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
                             (yyval.astnode_p) = n;
 
                             }
-#line 2005 "parser.tab.c"
+#line 2013 "parser.tab.c"
     break;
 
   case 56: /* eqexp: eqexp EQEQ relexp  */
-#line 413 "parser.y"
+#line 307 "parser.y"
                         { struct astnode *n = malloc(1024);
                             setupCompop(n,EQEQ, (yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
                             (yyval.astnode_p) = n;
 
                             }
-#line 2015 "parser.tab.c"
+#line 2023 "parser.tab.c"
     break;
 
   case 57: /* eqexp: eqexp NOTEQ relexp  */
-#line 418 "parser.y"
+#line 312 "parser.y"
                             { struct astnode *n = malloc(1024);
                             setupCompop(n,NOTEQ, (yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
                             (yyval.astnode_p) = n;
 
                             }
-#line 2025 "parser.tab.c"
+#line 2033 "parser.tab.c"
     break;
 
   case 59: /* andexp: andexp '&' eqexp  */
-#line 425 "parser.y"
+#line 319 "parser.y"
                         {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'&',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -2033,11 +2041,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 2037 "parser.tab.c"
+#line 2045 "parser.tab.c"
     break;
 
   case 61: /* exorexp: exorexp '^' andexp  */
-#line 434 "parser.y"
+#line 328 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'^',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -2045,11 +2053,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 2049 "parser.tab.c"
+#line 2057 "parser.tab.c"
     break;
 
   case 63: /* inorexp: inorexp '|' exorexp  */
-#line 443 "parser.y"
+#line 337 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                 
                                 setupBinop(n,'|',(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -2057,11 +2065,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 2061 "parser.tab.c"
+#line 2069 "parser.tab.c"
     break;
 
   case 65: /* logandexp: logandexp LOGAND inorexp  */
-#line 452 "parser.y"
+#line 346 "parser.y"
                                 {  struct astnode *n = malloc(1024);
                                 
                                 setupLogop(n,LOGAND,(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -2069,11 +2077,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 2073 "parser.tab.c"
+#line 2081 "parser.tab.c"
     break;
 
   case 67: /* logorexp: logorexp LOGOR logandexp  */
-#line 461 "parser.y"
+#line 355 "parser.y"
                                 {  struct astnode *n = malloc(1024);
                                 
                                 setupLogop(n,LOGOR,(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -2081,11 +2089,11 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 2085 "parser.tab.c"
+#line 2093 "parser.tab.c"
     break;
 
   case 69: /* condexp: logorexp '?' expr ':' condexp  */
-#line 470 "parser.y"
+#line 364 "parser.y"
                                     {  struct astnode *n = malloc(1024);
                                         
                                         setupTernary(n,(yyvsp[-4].astnode_p),(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -2093,11 +2101,11 @@ yyreduce:
                                         (yyval.astnode_p)= n;
 
                                     }
-#line 2097 "parser.tab.c"
+#line 2105 "parser.tab.c"
     break;
 
   case 71: /* assexp: unexp assop assexp  */
-#line 479 "parser.y"
+#line 373 "parser.y"
                             {  struct astnode *n = malloc(1024);
                                         
                                 setupAssignment(n,(yyvsp[-1].operator),(yyvsp[-2].astnode_p),(yyvsp[0].astnode_p));
@@ -2105,77 +2113,77 @@ yyreduce:
                                 (yyval.astnode_p)= n;
 
                             }
-#line 2109 "parser.tab.c"
+#line 2117 "parser.tab.c"
     break;
 
   case 72: /* assop: '='  */
-#line 488 "parser.y"
+#line 382 "parser.y"
            {(yyval.operator) = '=';}
-#line 2115 "parser.tab.c"
+#line 2123 "parser.tab.c"
     break;
 
   case 73: /* assop: TIMESEQ  */
-#line 489 "parser.y"
+#line 383 "parser.y"
               {(yyval.operator) = TIMESEQ;}
-#line 2121 "parser.tab.c"
+#line 2129 "parser.tab.c"
     break;
 
   case 74: /* assop: DIVEQ  */
-#line 490 "parser.y"
+#line 384 "parser.y"
             {(yyval.operator) = DIVEQ;}
-#line 2127 "parser.tab.c"
+#line 2135 "parser.tab.c"
     break;
 
   case 75: /* assop: MODEQ  */
-#line 491 "parser.y"
+#line 385 "parser.y"
             {(yyval.operator) = MODEQ;}
-#line 2133 "parser.tab.c"
+#line 2141 "parser.tab.c"
     break;
 
   case 76: /* assop: PLUSEQ  */
-#line 492 "parser.y"
+#line 386 "parser.y"
              {(yyval.operator) = PLUSEQ;}
-#line 2139 "parser.tab.c"
+#line 2147 "parser.tab.c"
     break;
 
   case 77: /* assop: MINUSEQ  */
-#line 493 "parser.y"
+#line 387 "parser.y"
                 {(yyval.operator) = MINUSEQ;}
-#line 2145 "parser.tab.c"
+#line 2153 "parser.tab.c"
     break;
 
   case 78: /* assop: SHLEQ  */
-#line 494 "parser.y"
+#line 388 "parser.y"
             { (yyval.operator) = SHLEQ;}
-#line 2151 "parser.tab.c"
+#line 2159 "parser.tab.c"
     break;
 
   case 79: /* assop: SHREQ  */
-#line 495 "parser.y"
+#line 389 "parser.y"
             { (yyval.operator) = SHREQ;}
-#line 2157 "parser.tab.c"
+#line 2165 "parser.tab.c"
     break;
 
   case 80: /* assop: ANDEQ  */
-#line 496 "parser.y"
+#line 390 "parser.y"
             {(yyval.operator) = ANDEQ;}
-#line 2163 "parser.tab.c"
+#line 2171 "parser.tab.c"
     break;
 
   case 81: /* assop: XOREQ  */
-#line 497 "parser.y"
+#line 391 "parser.y"
             {(yyval.operator) = XOREQ;}
-#line 2169 "parser.tab.c"
+#line 2177 "parser.tab.c"
     break;
 
   case 82: /* assop: OREQ  */
-#line 498 "parser.y"
+#line 392 "parser.y"
             {(yyval.operator) = OREQ;}
-#line 2175 "parser.tab.c"
+#line 2183 "parser.tab.c"
     break;
 
 
-#line 2179 "parser.tab.c"
+#line 2187 "parser.tab.c"
 
       default: break;
     }
@@ -2399,7 +2407,7 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 503 "parser.y"
+#line 397 "parser.y"
 
 void printAST(struct astnode* n, int indent){
         char temp[1000];
@@ -2667,9 +2675,7 @@ void setupFunc(struct astnode *n, struct astnode *name, struct astnode *args){
 }
 int main(){
     int t;
-       while(!(t = yyparse())){
-
-       };
+       yyparse();
 
 
 

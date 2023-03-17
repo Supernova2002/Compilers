@@ -45,125 +45,18 @@
 extern int yydebug;
 #endif
 /* "%code requires" blocks.  */
-#line 46 "parser.y"
+#line 47 "parser.y"
 
-    struct astnode_ternop{
-        struct astnode *opIf;
-        struct astnode *opThen;
-        struct astnode *opElse;
-    };
-    struct astnode_binop{
-        int nodetype;
-        int operator;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_logop{
-        int operator;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_num{
-        int numtype;
-        long long int number;
-        long double realNum;
-    };
-    struct astnode_ident{
-        int nodetype;
-        char* ident;
-    };
-    struct astnode_string{
-        char* string;
-    };
-    struct astnode_assop{
-        int assType;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_unop{
-        int operator;
-        struct astnode *operand;
-       
-    };
-    struct astnode_compop{
-        int operator;
-        struct astnode *left;
-        struct astnode *right;
-    };
-    struct astnode_general{
-        int genType;
-        struct astnode *next;
-        // 0 is DEREF, 1 is ADDRESSOF, 2 is SIZEOF
-    };
-    struct astnode_select{
-        int indirectFlag;
-        //0 if direct, 1 if indirect
-        struct astnode *parent;
-        char* member;
-    };
-    struct astnode_type{
-        int type;
-        struct astnode *next;
-    };
-    struct astnode_funcarg{
-        struct astnode *current;
-        struct astnode *next;
-        struct astnode *head;
-        int argCount;
-    };
-    struct astnode_func{
-        struct astnode *name;
-        struct astnode *args;
-    };
-    struct astnode{
-        int nodetype;
-        union {
-            struct astnode_binop binop;
-            struct astnode_num num;
-            struct astnode_ident ident;
-            struct astnode_string string;
-            struct astnode_ternop ternop;
-            struct astnode_logop logop;
-            struct astnode_assop assop;
-            struct astnode_unop unop;
-            struct astnode_compop compop;
-            struct astnode_general general;
-            struct astnode_select select;
-            struct astnode_type type;
-            struct astnode_funcarg funcarg;
-            struct astnode_func func;
-        };
-
-    };
-    struct number{
-        unsigned long long integer;
-        enum types {
-                SIGNED_INT,
-                UNSIGNED_INT,
-                SIGNED_LONG,
-                UNSIGNED_LONG,
-                UNSIGNED_LONGLONG,
-                SIGNED_LONGLONG,
-                TYPE_DOUBLE,
-                LONG_DOUBLE,
-                TYPE_FLOAT,
-                TYPE_CHAR
-                
-
-        }type;    
+      
+        #include "parser.h"
         
-        union {
-                int charVal;
-                long int intVal;
-                long double realVal;
-        }value;
 
 
 
 
-    };
+    
 
-#line 167 "parser.tab.h"
+#line 60 "parser.tab.h"
 
 /* Token kinds.  */
 #ifndef YYTOKENTYPE
@@ -236,8 +129,9 @@ extern int yydebug;
     _COMPLEX = 317,                /* _COMPLEX  */
     _IMAGINARY = 318,              /* _IMAGINARY  */
     NAME = 319,                    /* NAME  */
-    IDENT = 320,                   /* IDENT  */
-    newString = 321                /* newString  */
+    ENDFILE = 320,                 /* ENDFILE  */
+    IDENT = 321,                   /* IDENT  */
+    newString = 322                /* newString  */
   };
   typedef enum yytokentype yytoken_kind_t;
 #endif
@@ -246,14 +140,14 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 163 "parser.y"
+#line 57 "parser.y"
 
     struct number number;
     char *string;
     struct astnode *astnode_p;
     int operator;
 
-#line 257 "parser.tab.h"
+#line 151 "parser.tab.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

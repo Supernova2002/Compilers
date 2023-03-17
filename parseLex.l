@@ -247,7 +247,8 @@ while {return WHILE;}
 _Bool {return _BOOL;}
 _Complex {return _COMPLEX;}
 _Imaginary {return _IMAGINARY;}
-\s 
+<<EOF>> {yyterminate();printf("test"); }
+
 \n      {line = line + 1;}
 <INITIAL>[\.\+\-\;\!\?\:\,\@\#\$\%\*\&\(\)\[\]\{\}\^\~\|\<\>\`\\\/\=] {
         
@@ -257,7 +258,7 @@ _Imaginary {return _IMAGINARY;}
        // printf("Punctuation is %i\n", returnVal);
         return returnVal;
         }
-<INITIAL>[a-zA-Z_][a-zA-Z0-9_]* {yylval.string = strdup(yytext);return IDENT;}
+<INITIAL>[a-zA-Z_][a-zA-Z0-9_]* {yylval.string = strdup(yytext); return IDENT;}
 [ ]+ 
 .       {fprintf(stderr, "Error: Unknown token %s\n", yytext);}
 
