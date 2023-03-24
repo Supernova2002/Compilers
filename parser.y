@@ -106,7 +106,10 @@
     struct symbolNode *base;
     struct symbolNode *last;
     struct symbolNode *funcHead;
+    struct symbolNode *scopeList[1024];
+    struct symbolNode *lastSymbol[1024];
     int lastType;
+    int scopeNum;
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
     
     
@@ -238,8 +241,9 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                 case 18: //n->funcDec.type = strdup(fullType);
                                                                                     s = generateSymbol(-1, 0, 0,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, base,1);
                                                                                     last = insertSymbol(base, s);
-                                                                                    last->subHead = funcHead;
-                                                                                    funcHead = NULL;
+                                                                                    last->subHead = scopeList[scopeNum+1];
+                                                                                    //scopeList[scopeNum+1] = NULL;
+                                                                                    //need to actually store the last pointer inserted in a given scope
                                                                                     break;
                                                                                 }
                                                                                 
@@ -403,31 +407,35 @@ function_specifier:  INLINE {$$ = INLINE;}
 
 
 compound_statement: '{' '}' 
-    |'{' decl_or_stmt_list '}' {printf("COMPOUND\n");}
+    | open_scope decl_or_stmt_list close_scope {printf("COMPOUND\n");}
 ;
 decl_or_stmt_list: decl_or_stmt
     | decl_or_stmt_list decl_or_stmt
 ;
-
+open_scope: '{' {scopeNum += 1; scopeList[scopeNum] = generateSymbol(0,0,1,1,"","","placeholder.c",-1,NULL, scopeList[scopeNum],1);}
+;
+close_scope: '}' {scopeNum-= 1;}
+;
 decl_or_stmt: declaration { struct symbolNode *s;
                             struct astnode *n = $1;
                             switch(structOrFunc){
                                 case 1: //last->subHead->scope = 1;
                                     switch(n->nodetype){
-                                        case 15: s = generateSymbol(-1,0,1,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, funcHead,0 );
-                                            last = insertSymbol(funcHead,s); 
+                                        case 15: s = generateSymbol(-1,0,1,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, scopeList[scopeNum],0 );
+                                            last = insertSymbol(scopeList[scopeNum],s); 
                                             break;
                                         case 16:// n->pointer.type = strdup(fullType);
-                                            s = generateSymbol(-1, 0, 1,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, funcHead,0);
-                                            last = insertSymbol(funcHead, s);
+                                            s = generateSymbol(-1, 0, 1,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, scopeList[scopeNum],0);
+                                            last = insertSymbol(scopeList[scopeNum], s);
                                             break;
                                         case 17: //n->array.type = strdup(fullType); 
-                                            s = generateSymbol(-1, 0, 1,0, n->array.type, n->array.name,"tempName.c",17, n, funcHead,0);
-                                            last = insertSymbol(funcHead, s);
+                                            s = generateSymbol(-1, 0, 1,0, n->array.type, n->array.name,"tempName.c",17, n, scopeList[scopeNum],0);
+                                            last = insertSymbol(scopeList[scopeNum], s);
                                             break;
                                         case 18: //n->funcDec.type = strdup(fullType);
-                                            s = generateSymbol(-1, 0, 1,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, funcHead,1);
-                                            last = insertSymbol(funcHead, s);
+                                            s = generateSymbol(-1, 0, 1,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, scopeList[scopeNum],1);
+                                            last = insertSymbol(scopeList[scopeNum+1], s);
+                                           
                                             break;
                                     }
                                     break;
@@ -1063,6 +1071,7 @@ int main(){
     last = NULL;
     lastType = -1;
     structOrFunc = -1;
+    scopeNum = -1;
     yyparse();
 
 
