@@ -69,6 +69,42 @@
         struct astnode *name;
         struct astnode *args;
     };
+    struct astnode_declarationType{
+        enum decTypes{
+            decVOID,
+            decCHAR,
+            decSHORT,
+            decINT,
+            decLONG,
+            decFLOAT,
+            decDOUBLE,
+            decSIGNED,
+            decUNSIGNED,
+            dec_BOOL,
+            dec_COMPLEX
+        }type;
+        struct astnode *nextType;
+
+    };
+    struct astnode_scalarVar{// need to store storage class(can assume extern for now), data type 
+        char* storageClass;
+        char* dataType;
+        char* name;
+
+    };
+    struct astnode_pointer{
+        struct astnode *member;
+        char* type;
+    };
+    struct astnode_array{
+        char* type;
+        int size;
+        char* name;
+    };
+    struct astnode_funcDec{
+        char* type;
+        char* name;
+    };
     struct astnode{
         int nodetype;
         union {
@@ -86,6 +122,11 @@
             struct astnode_type type;
             struct astnode_funcarg funcarg;
             struct astnode_func func;
+            struct astnode_declarationType decType; //14
+            struct astnode_scalarVar scalarVar; //15
+            struct astnode_pointer pointer ; //16
+            struct astnode_array array; //17
+            struct astnode_funcDec funcDec; //18
         };
 
     };
@@ -111,6 +152,34 @@
                 long double realVal;
         }value;
     };
+
+    struct symbolNode{
+        int declaredLine;
+        int scopeStart;
+        //int scope; 
+        enum scopes{
+            global,
+            function,
+            block,
+            prototype
+        }scope;
+        enum identTypes{
+            varName, //arrays here
+            funcName,
+            struct_union_tag,
+            label
+        }identType;
+        char* type;
+        char* identName;
+        char* fileName;
+        int astType;
+        struct astnode *member;
+        struct symbolNode *next;
+        struct symbolNode *head;
+        struct symbolNode *previousHead;
+        struct symbolNode *subHead;
+    };
+   
     
 void printAST(struct astnode *n, int indent);
 void setupBinop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
@@ -129,5 +198,9 @@ void setupFuncarg(struct astnode *n, struct astnode *current, struct astnode* he
 void setupFunc(struct astnode *n, struct astnode *name, struct astnode *args);
 int numberProcessing(int realCheck);
 
-
+void setupDecType(struct astnode *n, int type, struct astnode *next );
+void setupScalar(struct astnode *n, char* storage, char* type, char* name);
+void setupPointer(struct astnode *n, struct astnode *member);
+void setupArray(struct astnode *n, int size, char* name);
+void setupFuncDec(struct astnode *n, char* name);
 #endif

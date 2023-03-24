@@ -2,16 +2,16 @@
 %define parse.trace
 %{
     int yylex();
-    //#include "tokens-manual.h"
+    
     #include <stdio.h>
     #include <math.h>
     #include <ctype.h>
     #include <string.h>
-    
+    #include "parser.h"
     #define INTLONG 500
     #define LLU 501
     #define newline 600
-    #define PUNCTUATION 601
+    #define PUNCTUATION 601 
     
     const char *stringFromType(int type ){
         static const char *strings[] = { "integer",  "long", "longlong","double","float","charliteral" };
@@ -36,22 +36,85 @@
 
         
     }
+    const char *stringFromDecType(int type){
+        switch(type){
+            case 0: return "void";
+            case 1: return "char";
+            case 2: return "short";
+            case 3: return "int";
+            case 4: return "long";
+            case 5: return "float";
+            case 6: return "double";
+            case 7: return "signed";
+            case 8: return "unsigned";
+            case 9: return "_bool";
+            case 10: return "_complex";
+        }
+
+
+    }
+    struct symbolNode *generateSymbol(int decLine, int scopeStart, int scope,int identType, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head, int subFlag){
+        struct symbolNode *s = malloc(sizeof(struct symbolNode));
+        s->declaredLine = decLine;
+        s->scopeStart = scopeStart;
+        s->scope = scope;
+        s->identType = identType;
+        s->type = type;
+        
+        s->identName = name;
+        s->fileName = fileName;
+        s->astType = astType;
+        s->member  = member;
+        s->head = head;
+        if(subFlag){
+            s->subHead = generateSymbol(0,0,0,1,"","","placeholder.c",-1,NULL, s->subHead, 0);
+        }
+        else{
+            s->subHead = NULL;
+        }
+        
+    }
+    struct symbolNode *insertSymbol (struct symbolNode *head, struct symbolNode *newSymbol){
+        struct symbolNode *current = head;
+        while(current->next != NULL){
+            if(current->identName == newSymbol->identName){
+                printf("This name is already in use, not inserting\n");
+                return NULL;
+            }
+            current = current->next;
+
+        }
+        current->next = newSymbol;
+        return newSymbol;
+    }
+    struct symbolNode *findSymbol(struct symbolNode *head, char* ident){  //need to figure out how to search from bottom up
+        struct symbolNode *current = head;
+        while(current != NULL){
+            if(current->identName == ident){
+                return current;
+            }
+            current = current->next;
+        }
+        return NULL;
+
+    }
+    
     void yyerror(const char *str)
     {
         fprintf(stderr,"error: %s\n",str);
     }
+    struct symbolNode *base;
+    struct symbolNode *last;
+    struct symbolNode *funcHead;
+    int lastType;
+    int structOrFunc; //0 if struct, 1 if funct, -1 if neither
     
     
 %}
 //0 is binop, 1 is num, 2 is ident, 3 is string, 4 is ternary, 5 is logop, 6 is assignment, 7 is unary op, 8 is comparison op, 9 is general, 10 is select, 11 is type, 12 is funcarg and 13 is func
 %code requires {
-      
+       // struct symbolNode *base = generateSymbol(0,0,0,"","");
         #include "parser.h"
-        
-
-
-
-
     };
 
 %union{
@@ -70,17 +133,323 @@
 %token <string> newString;
 %left '+' '-' 
 %left '*' '/' '%'
-%type <astnode_p> start statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
-%type <operator> assop unaryop typename
+%type <astnode_p> start  statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
+%type <astnode_p> declaration declarator_list declaration_specifiers function_definition declarator compound_statement  direct_declarator struct_or_union_spec struct_declaration_list struct_declaration struct_declarator_list struct_declarator 
+%type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier
+%type <operator> assop unaryop typename storage_class_spec    struct_or_union function_specifier 
 %%
 
-start: statement
+/*start: statement
     | start statement
+;*/
+//start: declaration_or_fndef
+//    | start declaration_or_fndef
+//;
+//declaration_or_fndef: declaration
+start: dec_or_func
+    | start dec_or_func
+
+dec_or_func: declaration {  struct symbolNode *s = NULL;
+                                                            int insertCheck;
+                                                            struct astnode *n = $1;
+                                                            switch(n->nodetype){
+                                                                case 15: s = generateSymbol(-1,0,0,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, base,0 );
+                                                                    last = insertSymbol(base,s); 
+                                                                    break;
+                                                                case 16:// n->pointer.type = strdup(fullType);
+                                                                    s = generateSymbol(-1, 0, 0,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, base,0);
+                                                                    last = insertSymbol(base, s);
+                                                                    break;
+                                                                case 17: //n->array.type = strdup(fullType); 
+                                                                    s = generateSymbol(-1, 0, 0,0, n->array.type, n->array.name,"tempName.c",17, n, base,0);
+                                                                    last = insertSymbol(base, s);
+                                                                    break;
+                                                                case 18: //n->funcDec.type = strdup(fullType);
+                                                                    s = generateSymbol(-1, 0, 0,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, base,1);
+                                                                    last = insertSymbol(base, s);
+                                                                    break;
+                                                            }
+
+                            }//maybe move all symbol generation and type definition over here
+    | function_definition
 ;
-statement: expr ';'{
-                    printAST($1,0);}
+declaration:  declaration_specifiers declarator_list ';' { struct astnode *n = $2;
+                                                            //struct astnode *n = malloc(sizeof(struct astnode));
+                                                            char* fullType = malloc(1024);
+                                                            char* temp = malloc(1024);
+                                                            struct astnode *type = $1;
+                                                            while(type != NULL){
+                                                                sprintf(temp,"%s %s",stringFromDecType(type->decType.type), fullType);
+                                                                fullType = strdup(temp);
+                                                                type = type->decType.nextType;
+                                                            }
+                                                            //struct symbolNode *s = NULL;
+                                                            int insertCheck;
+                                                            switch(n->nodetype){
+                                                                case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
+                                                                        break;
+                                                                case 16: n->pointer.type = strdup(fullType);
+                                                                    //s = generateSymbol(-1, 0, 0,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, base);
+                                                                    //insertCheck = insertSymbol(base, s);
+                                                                    break;
+                                                                case 17: n->array.type = strdup(fullType); 
+                                                                    //s = generateSymbol(-1, 0, 0,0, n->array.type, n->array.name,"tempName.c",17, n, base);
+                                                                    //insertCheck = insertSymbol(base, s);
+                                                                   break;
+                                                                case 18: n->funcDec.type = strdup(fullType);
+                                                                   // s = generateSymbol(-1, 0, 0,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, base);
+                                                                   // insertCheck = insertSymbol(base, s);
+                                                                    break;
+                                                            }
+                                                           
+                                                            //lastType = -1;
+                                                            printf("DECLARATION HERE\n"); 
+                                                            $$ = n;
+                                                            } 
+                                                            
+    | declaration_specifiers ';' {printf("Just type here\n");} 
+;
+
+declarator_list: declarator
+    | declarator_list ',' declarator
+function_definition: declaration_specifiers declarator compound_statement { struct astnode *n = $2;
+                                                                            struct symbolNode *s = NULL;
+                                                                            char* fullType = malloc(1024);
+                                                                            char* temp = malloc(1024);
+                                                                            struct astnode *type = $1;
+                                                                            while(type != NULL){
+                                                                                sprintf(temp,"%s %s",stringFromDecType(type->decType.type), fullType);
+                                                                                fullType = strdup(temp);
+                                                                                type = type->decType.nextType;
+                                                                            }
+                                                                            switch(n->nodetype){
+                                                                                case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
+                                                                                    s = generateSymbol(-1,0,0,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, base,0 );
+                                                                                    last = insertSymbol(base,s); 
+                                                                                    break;
+                                                                                case 16:// n->pointer.type = strdup(fullType);
+                                                                                    s = generateSymbol(-1, 0, 0,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, base,0);
+                                                                                    last = insertSymbol(base, s);
+                                                                                    break;
+                                                                                case 17: //n->array.type = strdup(fullType); 
+                                                                                    s = generateSymbol(-1, 0, 0,0, n->array.type, n->array.name,"tempName.c",17, n, base,0);
+                                                                                    last = insertSymbol(base, s);
+                                                                                    break;
+                                                                                case 18: //n->funcDec.type = strdup(fullType);
+                                                                                    s = generateSymbol(-1, 0, 0,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, base,1);
+                                                                                    last = insertSymbol(base, s);
+                                                                                    last->subHead = funcHead;
+                                                                                    funcHead = NULL;
+                                                                                    break;
+                                                                                }
+                                                                                
+                                                                            }
+;
+
+
+declaration_specifiers: storage_class_spec  declaration_specifiers
+    | storage_class_spec 
+    | type_specifier   declaration_specifiers { struct astnode *n = $2;
+                                                    n->decType.nextType = $1;
+                                                printf("ALSO HERE\n");
+                                                $$ = n;}
+    | type_specifier { struct astnode *n = $1; 
+                        printf("HERE\n"); $$ = n;}
+    | function_specifier declaration_specifiers 
+    | function_specifier 
+;
+
+storage_class_spec: TYPEDEF {$$ = TYPEDEF;}
+    | EXTERN {$$ = EXTERN;}
+    | STATIC {$$ = STATIC;}
+    | AUTO { $$ = AUTO;}
+    | REGISTER { $$ = REGISTER;}
+;
+type_specifier: VOID {struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 0, NULL );
+                        $$ = n;}
+    | CHAR {struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 1, NULL );
+                        $$ = n;}
+    | SHORT { struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 2, NULL );
+                        $$ = n;}
+    | INT { struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 3, NULL );
+                        $$ = n;}
+    | LONG {struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 4, NULL );
+                        $$ = n;}
+    | FLOAT {struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 5, NULL );
+                        $$ = n;}
+    | DOUBLE {struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 6, NULL );
+                        $$ = n;}
+    | SIGNED { struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 7, NULL );
+                        $$ = n;}
+    | UNSIGNED { struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 8, NULL );
+                        $$ = n;}
+    | _BOOL {struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 9, NULL );
+                        $$ = n;}    
+    | _COMPLEX { struct astnode *n = malloc(sizeof(struct astnode));
+                        setupDecType(n, 10, NULL );
+                        $$ = n;}
+    | struct_or_union_spec
+;
+struct_or_union_spec: struct_or_union IDENT  '{' struct_declaration_list '}'
+    | struct_or_union  '{' struct_declaration_list '}'
+    | struct_or_union IDENT
+;
+struct_or_union: STRUCT {$$ = STRUCT;}
+    | UNION {$$ = UNION;}
+;
+struct_declaration_list: struct_declaration
+    | struct_declaration_list struct_declaration
+;
+struct_declaration: spec_qual_list struct_declarator_list ';'
+;
+spec_qual_list: type_specifier spec_qual_list
+    | type_specifier 
+;
+
+struct_declarator_list: struct_declarator
+    | struct_declarator_list ',' struct_declarator  
+;
+struct_declarator: declarator
+    | declarator ':' constexp 
+    | ':' constexp 
+;
+declarator:  pointer direct_declarator { struct astnode *n = malloc(sizeof(struct astnode));
+                                            setupPointer(n, $2);
+                                           // lastType = n->nodetype;
+                                            $$ = n;
+                                            }
+    |  direct_declarator  {
+                            //lastType = $1->nodetype;
+                            }
+;
+direct_declarator: IDENT { struct astnode *n = malloc(sizeof(struct astnode));
+                                        setupIdent(n,$1);
+                                        $$ = n;
+                           }
+    | '(' declarator ')'
+    | direct_declarator '[' assexp ']' { struct astnode *n = malloc(sizeof(struct astnode));
+                                            setupArray(n, $3->num.number, $1->ident.ident);
+                                            $$ = n;
+
+                                            }
+    | direct_declarator '[' ']' { struct astnode *n = malloc(sizeof(struct astnode));
+                                            setupArray(n, 0,$1->ident.ident);
+                                            $$ = n;
+
+                                            }
+    |  direct_declarator '[' STATIC assexp ']'
+    | direct_declarator '[' '*' ']'
+    //| direct_declarator '(' parameter_type_list ')'
+    | direct_declarator '(' identifier_list ')'
+    | direct_declarator '(' ')' { struct astnode *n = malloc(sizeof(struct astnode));
+                                    switch($1->nodetype){
+                                        case 2:  setupFuncDec(n, $1->ident.ident);
+                                        structOrFunc = 1;
+                                        funcHead = generateSymbol(0,0,1,1,"","","placeholder.c",-1,NULL, funcHead,1);
+                                        break;
+
+                                    }
+                                    $$ = n;
+                                    //setupFuncDec(n, $1)
+                                    }
+;
+
+identifier_list: IDENT
+    | identifier_list ',' IDENT
+;
+/*
+parameter_type_list: parameter_list
+    | parameter_list ',' ELLIPSIS
+;
+parameter_list: parameter_declaration
+    | parameter_list ',' parameter_declaration
+;
+parameter_declaration: declaration_specifiers declarator
+    | declaration_specifiers abstract_declarator
+    | declaration_specifiers
+;
+abstract_declarator: pointer
+    | pointer direct_abstract_declarator
+    | direct_abstract_declarator
+;
+direct_abstract_declarator: '(' abstract_declarator ')'
+    | direct_abstract_declarator '[' assexp ']'
+    | direct_abstract_declarator '[' ']'
+    | '[' assexp ']'
+    | '[' ']'
+    | direct_abstract_declarator '[' '*' ']'
+    | '[' '*' ']'
+    | direct_abstract_declarator '(' parameter_type_list ')'
+    | direct_abstract_declarator '('  ')'
+    | '(' parameter_type_list ')' 
+    | '(' ')'
+;*/
+pointer: '*' 
+    | '*' pointer
+;
+function_specifier:  INLINE {$$ = INLINE;}
+;
+
+
+
+compound_statement: '{' '}' 
+    |'{' decl_or_stmt_list '}' {printf("COMPOUND\n");}
+;
+decl_or_stmt_list: decl_or_stmt
+    | decl_or_stmt_list decl_or_stmt
+;
+
+decl_or_stmt: declaration { struct symbolNode *s;
+                            struct astnode *n = $1;
+                            switch(structOrFunc){
+                                case 1: //last->subHead->scope = 1;
+                                    switch(n->nodetype){
+                                        case 15: s = generateSymbol(-1,0,1,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, funcHead,0 );
+                                            last = insertSymbol(funcHead,s); 
+                                            break;
+                                        case 16:// n->pointer.type = strdup(fullType);
+                                            s = generateSymbol(-1, 0, 1,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, funcHead,0);
+                                            last = insertSymbol(funcHead, s);
+                                            break;
+                                        case 17: //n->array.type = strdup(fullType); 
+                                            s = generateSymbol(-1, 0, 1,0, n->array.type, n->array.name,"tempName.c",17, n, funcHead,0);
+                                            last = insertSymbol(funcHead, s);
+                                            break;
+                                        case 18: //n->funcDec.type = strdup(fullType);
+                                            s = generateSymbol(-1, 0, 1,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, funcHead,1);
+                                            last = insertSymbol(funcHead, s);
+                                            break;
+                                    }
+                                    break;
+                                
+
+                            }
+                            
+                            //ignore below, not an option because no actual direct function declaration before the compound statement. Need to instead bundled together astnodes
+                            }//keep pointer to last inserted symbol. Then when I get here, check type of that symbol to see what scope, then insert as needed
+
+                                 
+    | statement
 
 ;
+statement: compound_statement
+    | expr ';'  {printAST($1,0);}
+;
+
+//statement: expr ';'{
+//                    printAST($1,0);}
+
+//;
 expr: assexp 
     | expr ',' assexp {  struct astnode *n = malloc(1024);
                                 
@@ -125,6 +494,7 @@ postexp:  primexp
                             }
     | postexp '(' argexplist ')'    {   struct astnode *n = malloc(1024);
                                         setupFunc(n,$1,$3);
+                                        
                                         $$ = n;
                                         }
                                      //this is where the functions go
@@ -659,9 +1029,41 @@ void setupFunc(struct astnode *n, struct astnode *name, struct astnode *args){
     n->func.name = name;
     n->func.args = args;
 }
+void setupDecType(struct astnode *n, int type, struct astnode *next ){
+    n->nodetype = 14;
+    n->decType.type = type;
+    n->decType.nextType = next;
+}
+void setupScalar(struct astnode *n, char* storage, char* type, char* name){
+    n->nodetype = 15;
+    n->scalarVar.storageClass = storage;
+    n->scalarVar.dataType = type;
+    n->scalarVar.name = name;
+}
+void setupPointer(struct astnode *n, struct astnode *member){
+    n->nodetype = 16;
+    n->pointer.member = member;
+}
+void setupArray(struct astnode *n, int size, char* name){
+    n->nodetype = 17;
+    n->array.size = size;
+    n->array.name = name;
+}
+void setupFuncDec(struct astnode *n, char* name){
+    n->nodetype = 18;
+    n->funcDec.name = name;
+}
+
 int main(){
     int t;
-       yyparse();
+    
+    base = generateSymbol(0,0,0,1,"","","placeholder.c",-1,NULL, base,0);
+   // generateSymbol(int decLine, int scopeStart, int scope, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head)
+    funcHead = NULL;
+    last = NULL;
+    lastType = -1;
+    structOrFunc = -1;
+    yyparse();
 
 
 
