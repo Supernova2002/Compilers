@@ -156,7 +156,7 @@
     struct symbolNode{
         int declaredLine;
         int scopeStart;
-        //int scope; 
+        
         enum scopes{
             global,
             function,
@@ -178,9 +178,13 @@
         struct symbolNode *head;
         struct symbolNode *previousHead;
         struct symbolNode *subHead;
+        struct symbolNode *blockHead;
     };
    
-    
+extern int line;
+extern char name[1024];
+
+
 void printAST(struct astnode *n, int indent);
 void setupBinop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
 void setupLogop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
