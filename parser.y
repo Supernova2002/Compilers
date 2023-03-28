@@ -54,10 +54,10 @@
 
 
     }
-    struct symbolNode *generateSymbol(int decLine, int scopeStart, int scope,int identType, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head, int subFlag){
+    struct symbolNode *generateSymbol(int decLine, int localScopeStart, int scope,int identType, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head, int subFlag){
         struct symbolNode *s = malloc(sizeof(struct symbolNode));
         s->declaredLine = decLine;
-        s->scopeStart = scopeStart;
+        s->scopeStart = localScopeStart;
         s->scope = scope;
         s->identType = identType;
         s->type = type;
@@ -73,12 +73,7 @@
             s->head = head;
         }
         
-        if(subFlag){
-            s->subHead = generateSymbol(0,0,0,1,"","","placeholder.c",-1,NULL, s->subHead, 0);
-        }
-        else{
-            s->subHead = NULL;
-        }
+        s->subHead = NULL;
         
     }
     struct symbolNode *insertSymbol (struct symbolNode *head, struct symbolNode *newSymbol){
@@ -97,6 +92,7 @@
     struct symbolNode *findSymbol(struct symbolNode *head, char* ident){  //need to figure out how to search from bottom up
         struct symbolNode *current = head;
         while(current != NULL){
+            
             if(current->identName == ident){
                 return current;
             }
@@ -104,6 +100,30 @@
         }
         return NULL;
 
+    }
+    const char *scopeFromNum(int scope){
+        switch (scope){
+            case 0: return "global"; break;
+            case 1: return "function"; break;
+            case 2: return "block"; break;
+        }
+    }
+    const char *identTypeString(int type){
+        switch(type){
+            case 0: return "variable"; break;
+            case 1: return "function"; break;
+            case 2: return "struct/union"; break;
+            case 3: return "label"; break;
+        }
+    }
+    void printSymbol(struct symbolNode* symbol){
+        char *finalPrint = malloc(1028);
+        switch(symbol->identType){
+            case 0: sprintf(finalPrint,"%s is defined at %s:%d [in %s scope starting at %s:%d] as a \n %s with type:\n\t %s\t", symbol->identName, symbol->fileName, symbol->declaredLine, scopeFromNum(symbol->scope),symbol->fileName, symbol->scopeStart,identTypeString(symbol->identType), symbol->type );
+                break;
+        }
+        printf("%s", finalPrint);
+        
     }
     
     void yyerror(const char *str)
@@ -115,8 +135,10 @@
     struct symbolNode *funcHead;
     struct symbolNode *scopeList[1024];
     struct symbolNode *lastSymbol[1024];
+    struct symbolNode *structList[1024];
     int lastType;
     int scopeNum;
+    int structNum;
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
     
     
@@ -161,21 +183,23 @@ start: dec_or_func
 
 dec_or_func: declaration {  struct symbolNode *s = NULL;
                                                             int insertCheck;
+                                                            int localStart = lastSymbol[scopeNum+1]->head->scopeStart;
                                                             struct astnode *n = $1;
                                                             switch(n->nodetype){
-                                                                case 15: s = generateSymbol(-1,0,0,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, lastSymbol[scopeNum+1]->head,0 );
+                                                                case 15: s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0 );
                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                    printSymbol(lastSymbol[scopeNum+1]);
                                                                     break;
                                                                 case 16:// n->pointer.type = strdup(fullType);
-                                                                    s = generateSymbol(-1, 0, 0,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, lastSymbol[scopeNum+1]->head,0);
+                                                                    s = generateSymbol(line, localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0);
                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                     break;
                                                                 case 17: //n->array.type = strdup(fullType); 
-                                                                    s = generateSymbol(-1, 0, 0,0, n->array.type, n->array.name,"tempName.c",17, n, lastSymbol[scopeNum+1]->head,0);
+                                                                    s = generateSymbol(line, localStart, 0,0, n->array.type, n->array.name, name,17, n, lastSymbol[scopeNum+1]->head,0);
                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                     break;
                                                                 case 18: //n->funcDec.type = strdup(fullType);
-                                                                    s = generateSymbol(-1, 0, 0,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, lastSymbol[scopeNum+1]->head,1);
+                                                                    s = generateSymbol(line, localStart, 0,1, n->funcDec.type, n->funcDec.name,name,18, n, lastSymbol[scopeNum+1]->head,1);
                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                     break;
                                                             }
@@ -189,10 +213,18 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n = $
                                                             char* fullType = malloc(1024);
                                                             char* temp = malloc(1024);
                                                             struct astnode *type = $1;
-                                                            while(type != NULL){
-                                                                sprintf(temp,"%s %s",stringFromDecType(type->decType.type), fullType);
-                                                                fullType = strdup(temp);
-                                                                type = type->decType.nextType;
+                                                            if(lastSymbol[scopeNum+1]->identType == 2){
+                                                                //fullType = lastSymbol[scopeNum+1]->identName;
+                                                                sprintf(fullType, "struct %s", lastSymbol[scopeNum+1]->identName);
+                                                            }
+                                                            else{
+
+                                                            
+                                                                while(type != NULL){
+                                                                    sprintf(temp,"%s %s",stringFromDecType(type->decType.type), fullType);
+                                                                    fullType = strdup(temp);
+                                                                    type = type->decType.nextType;
+                                                                }
                                                             }
                                                             //struct symbolNode *s = NULL;
                                                             int insertCheck;
@@ -214,7 +246,7 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n = $
                                                             }
                                                            
                                                             //lastType = -1;
-                                                            printf("DECLARATION HERE\n"); 
+                                                            
                                                             $$ = n;
                                                             } 
                                                             
@@ -224,7 +256,8 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n = $
 declarator_list: declarator
     | declarator_list ',' declarator
 function_definition: declaration_specifiers declarator compound_statement { struct astnode *n = $2;
-                                                                            struct symbolNode *s = NULL;
+                                                                            struct symbolNode *s;
+                                                                            int localStart = lastSymbol[scopeNum+1]->head->scopeStart;
                                                                             char* fullType = malloc(1024);
                                                                             char* temp = malloc(1024);
                                                                             struct astnode *type = $1;
@@ -235,21 +268,21 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                             }
                                                                             switch(n->nodetype){
                                                                                 case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
-                                                                                    s = generateSymbol(-1,0,0,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, lastSymbol[scopeNum+1]->head,0 );
+                                                                                    s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0 );
                                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     break;
                                                                                 case 16:// n->pointer.type = strdup(fullType);
                                                                                     n->pointer.type = strdup(fullType);
-                                                                                    s = generateSymbol(-1, 0, 0,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, lastSymbol[scopeNum+1]->head,0);
+                                                                                    s = generateSymbol(line, localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0);
                                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     break;
                                                                                 case 17: //n->array.type = strdup(fullType); 
                                                                                     n->array.type = strdup(fullType);
-                                                                                    s = generateSymbol(-1, 0, 0,0, n->array.type, n->array.name,"tempName.c",17, n, lastSymbol[scopeNum+1]->head,0);
+                                                                                    s = generateSymbol(line, localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0);
                                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     break;
                                                                                 case 18: n->funcDec.type = strdup(fullType);
-                                                                                    s = generateSymbol(-1, 0, 0,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, lastSymbol[scopeNum+1]->head,1);
+                                                                                    s = generateSymbol(line, localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1);
                                                                                     lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     lastSymbol[scopeNum+1]->subHead = scopeList[scopeNum+1];
                                                                                     //scopeList[scopeNum+1] = NULL;
@@ -268,14 +301,20 @@ declaration_specifiers: storage_class_spec  declaration_specifiers
     | storage_class_spec 
     | type_specifier   declaration_specifiers { struct astnode *n = $2;
                                                     n->decType.nextType = $1;
-                                                printf("ALSO HERE\n");
+                                                
                                                 $$ = n;}
     | type_specifier { struct astnode *n = $1; 
-                        printf("HERE\n"); $$ = n;}
+                         $$ = n;}
+   // | type_qualifier declaration_specifiers
+   // | type_qualifier
     | function_specifier declaration_specifiers 
     | function_specifier 
 ;
 
+type_qualifier: CONST
+    | RESTRICT
+    | VOLATILE
+;
 storage_class_spec: TYPEDEF {$$ = TYPEDEF;}
     | EXTERN {$$ = EXTERN;}
     | STATIC {$$ = STATIC;}
@@ -317,20 +356,94 @@ type_specifier: VOID {struct astnode *n = malloc(sizeof(struct astnode));
                         $$ = n;}
     | struct_or_union_spec
 ;
-struct_or_union_spec: struct_or_union IDENT  '{' struct_declaration_list '}'
-    | struct_or_union  '{' struct_declaration_list '}'
-    | struct_or_union IDENT
+struct_or_union_spec: struct_or_union IDENT  open_struct struct_declaration_list close_struct {  //need to check if struct with given name exists first
+                                                                                struct symbolNode *s;
+                                                                                struct astnode *n = malloc(1024);
+                                                                                setupIdent(n,$2);
+                                                                                s = generateSymbol(line, lastSymbol[scopeNum+1]->head->scopeStart, scopeNum+1,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0);
+                                                                                lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head,s );
+                                                                       // printf("STRUCT\n");
+                                                                    }
+    | struct_or_union  open_struct struct_declaration_list close_struct  
+    | struct_or_union IDENT 
+;
+
+open_struct: '{' { structNum += 1;
+                    structList[structNum] = generateSymbol(line-1,line-1,2,1,"","",name,-1,NULL, NULL,1); 
+                    if(structNum > 0){
+                        structList[structNum-1]->subHead = structList[structNum];
+                    }
+                }
+;
+
+close_struct: '}' {structNum-=1;}
 ;
 struct_or_union: STRUCT {$$ = STRUCT;}
     | UNION {$$ = UNION;}
 ;
-struct_declaration_list: struct_declaration
+struct_declaration_list: struct_declaration { struct symbolNode *s = NULL;
+                                                struct symbolNode *lastStructMem = NULL;
+                                                            int insertCheck;
+                                                            int localStart = structList[structNum]->head->scopeStart;
+                                                            struct astnode *n = $1;
+                                                            switch(n->nodetype){
+                                                                case 15: s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, structList[structNum]->head,0 );
+                                                                    lastStructMem = insertSymbol(structList[structNum], s);
+                                                                    
+                                                                    break;
+                                                                case 16:// n->pointer.type = strdup(fullType);
+                                                                    s = generateSymbol(line, localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, structList[structNum]->head,0);
+                                                                    lastStructMem = insertSymbol(structList[structNum], s);
+                                                                    break;
+                                                                case 17: //n->array.type = strdup(fullType); 
+                                                                    s = generateSymbol(line, localStart, 0,0, n->array.type, n->array.name, name,17, n, structList[structNum]->head,0);
+                                                                    lastStructMem = insertSymbol(structList[structNum], s);
+                                                                    break;
+                                                                case 18: //n->funcDec.type = strdup(fullType);
+                                                                    s = generateSymbol(line, localStart, 0,1, n->funcDec.type, n->funcDec.name,name,18, n, structList[structNum]->head,1);
+                                                                    lastStructMem = insertSymbol(structList[structNum], s);
+                                                                    break;
+                                                            }
+                                                            //lastSymbol[scopeNum+2] = NULL;
+
+                                                }
     | struct_declaration_list struct_declaration
 ;
-struct_declaration: spec_qual_list struct_declarator_list ';'
+struct_declaration: spec_qual_list struct_declarator_list ';' { struct astnode *n = $2;
+                                                                char* fullType = malloc(1024);
+                                                                char* temp = malloc(1024);
+                                                                struct astnode *type = $1;
+                                                                while(type != NULL){
+                                                                    sprintf(temp,"%s %s",stringFromDecType(type->decType.type), fullType);
+                                                                    fullType = strdup(temp);
+                                                                    type = type->decType.nextType;
+                                                                }
+                                                                switch(n->nodetype){
+                                                                    case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
+                                                                            break;
+                                                                    case 16: n->pointer.type = strdup(fullType);
+                                                                        
+                                                                        break;
+                                                                    case 17: n->array.type = strdup(fullType); 
+                                                                        
+                                                                        break;
+                                                                    case 18: n->funcDec.type = strdup(fullType);
+                                                                        break;
+                                                                }
+                                                           
+                                                            
+                                                            
+                                                            $$ = n;
+
+                                                            }
 ;
-spec_qual_list: type_specifier spec_qual_list
+spec_qual_list: type_specifier spec_qual_list { struct astnode *n = $2;
+                                                    n->decType.nextType = $1;
+                                                
+                                                $$ = n;}
     | type_specifier 
+   // | type_qualifier spec_qual_list
+  //  | type_qualifier 
 ;
 
 struct_declarator_list: struct_declarator
@@ -420,40 +533,44 @@ function_specifier:  INLINE {$$ = INLINE;}
 
 
 compound_statement: '{' '}' 
-    | open_scope decl_or_stmt_list close_scope {printf("COMPOUND\n");}
+    | open_scope decl_or_stmt_list close_scope 
 ;
 decl_or_stmt_list: decl_or_stmt
     | decl_or_stmt_list decl_or_stmt
 ;
-open_scope: '{' {scopeNum += 1; scopeList[scopeNum] = generateSymbol(0,0,1,1,"","","placeholder.c",-1,NULL, NULL,1);}
+open_scope: '{' {   int test = line;
+                    scopeNum += 1; 
+                    scopeList[scopeNum] = generateSymbol(line-1,test-1,1,1,"","",name,-1,NULL, NULL,1); 
+                    lastSymbol[scopeNum+1] = scopeList[scopeNum];
+                    }
 ;
 close_scope: '}' {scopeNum-= 1;}
 ;
 decl_or_stmt: declaration { struct symbolNode *s;
                             struct astnode *n = $1;
                             int localScope;
-                            
+                            int localStart = scopeList[scopeNum]->declaredLine;
                             if(scopeNum ==0){
                                 localScope = 1;
                             }
                             else{
                                 localScope = 2;
-                                scopeList[scopeNum-1]->blockHead = scopeList[scopeNum];
+                                scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
                             }    
                             switch(n->nodetype){
-                                case 15: s = generateSymbol(-1,0,localScope,0,n->scalarVar.dataType,n->scalarVar.name, "tempName.c",15, n, scopeList[scopeNum],0 );
+                                case 15: s = generateSymbol(line,localStart,localScope,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum],0 );
                                     lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum],s); 
                                     break;
                                 case 16:// n->pointer.type = strdup(fullType);
-                                    s = generateSymbol(-1, 0, localScope,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, scopeList[scopeNum],0);
+                                    s = generateSymbol(line, localStart, localScope,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum],0);
                                     lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum], s);
                                     break;
                                 case 17: //n->array.type = strdup(fullType); 
-                                    s = generateSymbol(-1, 0, localScope,0, n->array.type, n->array.name,"tempName.c",17, n, scopeList[scopeNum],0);
+                                    s = generateSymbol(line, localStart, localScope,0, n->array.type, n->array.name,name,17, n, scopeList[scopeNum],0);
                                     lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum], s);
                                     break;
                                 case 18: //n->funcDec.type = strdup(fullType);
-                                    s = generateSymbol(-1, 0, localScope,1, n->funcDec.type, n->funcDec.name, "tempName.c",18, n, scopeList[scopeNum],1);
+                                    s = generateSymbol(line, localStart, localScope,1, n->funcDec.type, n->funcDec.name, name,18, n, scopeList[scopeNum],1);
                                     lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum+1], s);
                                     
                                     break;
@@ -1085,7 +1202,7 @@ void setupFuncDec(struct astnode *n, char* name){
 int main(){
     int t;
     
-    base = generateSymbol(0,0,0,0,"","",name,-1,NULL, base,0);
+    base = generateSymbol(0,1,0,0,"","",name,-1,NULL, base,0);
     lastSymbol[0] = base;
    // generateSymbol(int decLine, int scopeStart, int scope, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head)
     funcHead = NULL;
@@ -1093,6 +1210,7 @@ int main(){
     lastType = -1;
     structOrFunc = -1;
     scopeNum = -1;
+    structNum = -1;
     yyparse();
 
 

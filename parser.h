@@ -179,6 +179,7 @@
         struct symbolNode *previousHead;
         struct symbolNode *subHead;
         struct symbolNode *blockHead;
+        char* nameSpace;
     };
    
 extern int line;
