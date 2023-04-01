@@ -90,11 +90,13 @@
         char* storageClass;
         char* dataType;
         char* name;
+        
 
     };
     struct astnode_pointer{
         struct astnode *member;
         char* type;
+        char* name;
     };
     struct astnode_array{
         char* type;
@@ -104,6 +106,9 @@
     struct astnode_funcDec{
         char* type;
         char* name;
+        int astType;
+        int isSub;
+        struct astnode *decNode;
     };
     struct astnode{
         int nodetype;
@@ -167,6 +172,7 @@
             varName, //arrays here
             funcName,
             struct_union_tag,
+            struct_union_member,
             label
         }identType;
         char* type;
@@ -179,12 +185,13 @@
         struct symbolNode *previousHead;
         struct symbolNode *subHead;
         struct symbolNode *blockHead;
+        int structCompleteFlag;
         char* nameSpace;
     };
    
 extern int line;
 extern char name[1024];
-
+//extern struct symbolNode *base;
 
 void printAST(struct astnode *n, int indent);
 void setupBinop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
@@ -207,5 +214,5 @@ void setupDecType(struct astnode *n, int type, struct astnode *next );
 void setupScalar(struct astnode *n, char* storage, char* type, char* name);
 void setupPointer(struct astnode *n, struct astnode *member);
 void setupArray(struct astnode *n, int size, char* name);
-void setupFuncDec(struct astnode *n, char* name);
+void setupFuncDec(struct astnode *n, struct astnode *node);
 #endif
