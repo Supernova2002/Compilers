@@ -81,7 +81,10 @@
             decSIGNED,
             decUNSIGNED,
             dec_BOOL,
-            dec_COMPLEX
+            dec_COMPLEX,
+            decConst,
+            decRestrict,
+            decVolatile
         }type;
         struct astnode *nextType;
 
@@ -110,6 +113,10 @@
         int isSub;
         struct astnode *decNode;
     };
+    struct astnode_multDec{
+        struct astnode *current;
+        struct astnode *next;
+    };
     struct astnode{
         int nodetype;
         union {
@@ -132,8 +139,10 @@
             struct astnode_pointer pointer ; //16
             struct astnode_array array; //17
             struct astnode_funcDec funcDec; //18
-        };
+            struct astnode_multDec mulltDec; //19
 
+        };
+        struct astnode *next;
     };
     struct number{
         unsigned long long integer;
