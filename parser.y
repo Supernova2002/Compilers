@@ -180,9 +180,9 @@
                 printType(symbol->member );
                 if(strstr(symbol->type, "struct") != NULL){
                     structName = strtok(symbol->type, " ");
-                    while(strcmp(structName, "struct") == 0){
+                    //while(strcmp(structName, "struct") == 0){
                         structName = strtok(NULL, " ");
-                    }
+                    //}
                     
                     structNode = findSymbol(base, structName, 2);  
                    // printf("STRUCT NAME IS %s", structName);
@@ -321,10 +321,10 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n = $
                                                             struct astnode *type = $1;
                                                             //int localComp = strcmp(current->identName,newSymbol->identName);
                                                             if(lastSymbol[scopeNum+1]->identType == 2){
-                                                                //fullType = lastSymbol[scopeNum+1]->identName;
+                                                                
                                                                 printSymbol(lastSymbol[scopeNum+1]);
                                                                 sprintf(fullType, "struct %s", lastSymbol[scopeNum+1]->identName);
-                                                                //printf("DUPLICATE FROM HERE\n");
+                                                                
 
                                                             }
                                                             else{
@@ -613,7 +613,7 @@ struct_declaration: spec_qual_list struct_declarator_list ';' { struct astnode *
                                                                 char* temp = malloc(1024);
                                                                 struct astnode *type = $1;
                                                                 if(type->nodetype == 2){
-                                                                    sprintf(fullType, "struct %s", type->ident.ident);
+                                                                    sprintf(fullType, "%s", type->ident.ident);
                                                                 }
                                                                 else{
                                                                     while(type != NULL){
