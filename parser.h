@@ -195,7 +195,7 @@
         struct symbolNode *subHead;
         struct symbolNode *blockHead;
         int structCompleteFlag;
-        char* nameSpace;
+        int nameSpace;
     };
    
 extern int line;
