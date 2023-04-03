@@ -87,11 +87,16 @@
         else{
             s->head = head;
         }
-        s->structCompleteFlag = 0;
+       // s->structCompleteFlag = 0;
         s->subHead = NULL;
         s->nameSpace = nameSpace;
+        s->structCompleteFlag = -1;
     }
     struct symbolNode *insertSymbol (struct symbolNode *head, struct symbolNode *newSymbol){
+        //check for presence of struct with same name first
+        if(newSymbol->identType == 2){
+            
+        }
         struct symbolNode *current = head;
         while(current->next != NULL){
             int localComp = strcmp(current->identName,newSymbol->identName);
@@ -111,7 +116,7 @@
         return newSymbol;
     }
     //Need to figure out how to hide previous struct definitions with incomplete types
-    struct symbolNode *findSymbol(struct symbolNode *head, char* ident, int identType, int nameSpace, int scope){  //need to figure out how to search from bottom up
+    /*struct symbolNode *findSymbol(struct symbolNode *head, char* ident, int identType, int nameSpace, int scope){  //need to figure out how to search from bottom up
         struct symbolNode *current = head;
         while(current != NULL){
             if(current->subHead != NULL){
@@ -134,6 +139,46 @@
         }
         return NULL;
 
+    }*/
+    struct symbolNode *findInStruct(struct symbolNode *head, char* ident, int scope){
+        struct symbolNode *current = head;
+        while(current != NULL){
+            if(current->subHead != NULL){
+                struct symbolNode *temp = findInStruct(current->subHead, ident, scope);
+                if(temp != NULL){
+                    return temp;
+                }
+            }
+            int localComp = strcmp(current->identName,ident);
+            if(localComp == 0 ){
+                return current;
+            }
+            current = current->next;
+        }
+
+    }
+
+    struct symbolNode *findSymbol(struct symbolNode *head, char* ident, int scope){
+        struct symbolNode *current = head;
+        while(current != NULL){
+            int localComp = strcmp(current->identName, ident);
+            if(localComp == 0){
+                return current;
+            }
+            if(current->identType == 2 && current->subHead != NULL){
+                struct symbolNode *temp = findInStruct(current->subHead, ident, scope);
+                if(temp != NULL){
+                    return temp;
+                }
+            }
+            if(current->next == NULL && current->head->previousHead != current && current->head->previousHead != NULL){
+                struct symbolNode *temp = findSymbol(head->previousHead, ident, scope);
+                if(temp != NULL){
+                    return temp;
+                }
+            }
+            current = current->next;
+        }
     }
     const char *scopeFromNum(int scope){
         switch (scope){
@@ -195,13 +240,20 @@
                         structName = strtok(NULL, " ");
                     //}
                     
-                    structNode = findSymbol(base, structName, 2, symbol->nameSpace, symbol->scope);  
+                    //structNode = findSymbol(base, structName, 2, symbol->nameSpace, symbol->scope);  
+                    structNode = findSymbol(symbol->head, structName, symbol->scope);
                    // printf("STRUCT NAME IS %s", structName);
                     if(structNode == NULL){
                         printf("\t\tincomplete\n");
                     }
                     else{
-                        printf("\t\t(Defined at %s:%d)\n{\t", symbol->fileName, structNode->declaredLine);
+                        if(structNode->structCompleteFlag == 0){
+                            printf("\t\tincomplete\n");
+                        }
+                        else{
+                            printf("\t\t(Defined at %s:%d)\n{\t", symbol->fileName, structNode->declaredLine);
+                        }
+                        
                     }
                 }
             }
@@ -266,7 +318,7 @@
 %left '*' '/' '%'
 %type <astnode_p> start  statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
 %type <astnode_p> declaration declarator_list declaration_specifiers function_definition declarator compound_statement  direct_declarator struct_or_union_spec struct_declaration_list struct_declaration struct_declarator_list struct_declarator 
-%type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier type_qualifier
+%type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier type_qualifier open_scope  open_struct
 %type <operator> assop unaryop typename storage_class_spec    struct_or_union function_specifier 
 %%
 
@@ -290,12 +342,31 @@ dec_or_func: declaration {  struct symbolNode *s = NULL;
                                                             struct astnode *n = bigN;
                                                             while(n != NULL){
                                                                     switch(n->nodetype){
-                                                                    case 15: s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace );
+                                                                    case 15:
+                                                                        if(strcmp(n->scalarVar.dataType,"incomplete type" ) == 0){
+                                                                          s= generateSymbol(line, localStart, 0, 2,"", n->scalarVar.name, name, -2, NULL, NULL, 0, lastSymbol[scopeNum+1]->nameSpace );
+                                                                          s->structCompleteFlag = 0; 
+                                                                          tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                          if(tempInserted!= 0){
+                                                                                lastSymbol[scopeNum+1] = tempInserted;
+                                                                                //printSymbol(lastSymbol[scopeNum+1]);
+                                                                            }
+                                                                        
+                                                                        } 
+                                                                        else{
+                                                                            s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace );
+                                                                            tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                            if(tempInserted!= 0){
+                                                                                lastSymbol[scopeNum+1] = tempInserted;
+                                                                                printSymbol(lastSymbol[scopeNum+1]);
+                                                                            }
+                                                                        }
+                                                                      /*  s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace );
                                                                         tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                         if(tempInserted!= 0){
                                                                             lastSymbol[scopeNum+1] = tempInserted;
                                                                             printSymbol(lastSymbol[scopeNum+1]);
-                                                                        }
+                                                                        }*/
                                                                         break;
                                                                     case 16:// n->pointer.type = strdup(fullType);
                                                                         s = generateSymbol(line, localStart, 0,0, n->pointer.type, n->pointer.name,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace);
@@ -401,16 +472,28 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                             } 
                                                             
     | declaration_specifiers ';' {  struct astnode *n = $1;
+                                    struct symbolNode *s;
                                     char *temp;
+                                    char *structName;
                                    // switch(n->nodetype){
                                     //    case 2: temp
                                   //  }
         
-        
+         
                                     if(lastSymbol[scopeNum+1]->identType == 2){
                                     printSymbol(lastSymbol[scopeNum+1]);
                                     }
+                                    else{
+                                        if(strstr(n->ident.ident, "struct") != NULL){
+                                            structName = strtok(n->ident.ident, " ");
+                                            //while(strcmp(structName, "struct") == 0){
+                                            structName = strtok(NULL, " ");
+                                            setupScalar(n,"", "incomplete type",structName);
+                                            $$ = n;
+                                        }
+                                    }
                                     //printf("Just type here\n");
+                                    
                                     } 
 ;
 
@@ -433,7 +516,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                             }
                                                                             switch(n->nodetype){
                                                                                 case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
-                                                                                    s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace );
+                                                                                    s = generateSymbol(atoi($3->ident.ident),localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace );
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
@@ -442,7 +525,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     break;
                                                                                 case 16:// n->pointer.type = strdup(fullType);
                                                                                     n->pointer.type = strdup(fullType);
-                                                                                    s = generateSymbol(line, localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                                    s = generateSymbol(atoi($3->ident.ident), localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace);
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
@@ -451,7 +534,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     break;
                                                                                 case 17: //n->array.type = strdup(fullType); 
                                                                                     n->array.type = strdup(fullType);
-                                                                                    s = generateSymbol(line, localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                                    s = generateSymbol(atoi($3->ident.ident), localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace);
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
@@ -459,10 +542,11 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     }
                                                                                     break;
                                                                                 case 18: n->funcDec.type = strdup(fullType);
-                                                                                    s = generateSymbol(line, localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace);
+                                                                                    s = generateSymbol(atoi($3->ident.ident), localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace);
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
+                                                                                        scopeList[scopeNum+1]->previousHead = lastSymbol[scopeNum+1]->head;
                                                                                         lastSymbol[scopeNum+1]->subHead = scopeList[scopeNum+1];
                                                                                         printSymbol(lastSymbol[scopeNum+1]);
                                                                                         
@@ -557,14 +641,15 @@ struct_or_union_spec: struct_or_union IDENT  open_struct struct_declaration_list
                                                                                 struct symbolNode *lastStructMem = NULL;
                                                                                 struct astnode *n = malloc(sizeof(struct astnode));
                                                                                 setupIdent(n,$2);
+                                                                                int tempNum = atoi($3->ident.ident);
                                                                                 //NEED TO FIX SCOPING HERE
                                                                                 if(scopeNum == -1){
-                                                                                    s = generateSymbol(line, lastSymbol[0]->head->scopeStart, 0,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                                    s = generateSymbol(tempNum, lastSymbol[0]->head->scopeStart, 0,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace);
                                                                                 }
                                                                                 else{
-                                                                                    s = generateSymbol(line, lastSymbol[scopeNum+1]->head->scopeStart, lastSymbol[scopeNum+1]->scope,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                                    s = generateSymbol(tempNum, lastSymbol[scopeNum+1]->head->scopeStart, lastSymbol[scopeNum+1]->scope,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace);
                                                                                 }
-                                                                    
+                                                                                scopeList[scopeNum+1]->previousHead = s->head;
                                                                                 s->subHead  = scopeList[scopeNum+1];
                                                                                 if(scopeNum>0){
                                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
@@ -594,9 +679,16 @@ struct_or_union_spec: struct_or_union IDENT  open_struct struct_declaration_list
 open_struct: '{' { scopeNum += 1;
                     nameSpaceNum +=1;
                     char temp[1024];
+                    char buffer[100];
+                    struct astnode *n = malloc(sizeof(struct astnode));
                    // sprintf(temp, "nameSpace %d", nameSpaceNum);
+
                     scopeList[scopeNum] = generateSymbol(line,line,lastSymbol[scopeNum]->scope,3,"","",name,-1,NULL, NULL,1, nameSpaceNum); 
+                                       
                     lastSymbol[scopeNum+1] = scopeList[scopeNum];
+                    sprintf(buffer, "%d", line);
+                    setupIdent(n,buffer );
+                    $$ = n;
                     /*if(scopeNum > 0){
                         scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
                     }*/
@@ -810,9 +902,14 @@ decl_or_stmt_list: decl_or_stmt
     | decl_or_stmt_list decl_or_stmt
 ;
 open_scope: '{' {   int test = line;
+                    char buffer[100];
                     scopeNum += 1; 
+                    struct astnode *n = malloc(sizeof(struct astnode));
                     scopeList[scopeNum] = generateSymbol(line-1,test-1,1,1,"","",name,-1,NULL, NULL,1, lastSymbol[scopeNum]->nameSpace); 
                     lastSymbol[scopeNum+1] = scopeList[scopeNum];
+                    sprintf(buffer, "%d", line);
+                    setupIdent(n, buffer);
+                    $$ = n;
                     }
 ;
 close_scope: '}' {scopeNum-= 1;}
@@ -828,16 +925,32 @@ decl_or_stmt: declaration { struct symbolNode *s;
                             }
                             else{
                                 localScope = 2;
+                                scopeList[scopeNum]->previousHead = scopeList[scopeNum-1]->head;
                                 scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
                             }    
                             switch(n->nodetype){
-                                case 15: s = generateSymbol(line,localStart,localScope,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace );
+                                
+                                case 15:
+                                if(strcmp(n->scalarVar.dataType,"incomplete type" ) == 0){
+                                    s= generateSymbol(line, localStart, localScope, 2,"", n->scalarVar.name, name, -2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace );
+                                    s->structCompleteFlag = 0; 
+                                    tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                    if(tempInserted!= 0){
+                                        lastSymbol[scopeNum+1] = tempInserted;
+                                        //printSymbol(lastSymbol[scopeNum+1]);
+                                    }
+                                
+                                } 
+                                else{
+                                    s = generateSymbol(line,localStart,localScope,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace );
                                     //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum],s); 
                                     tempInserted= insertSymbol(scopeList[scopeNum], s);
                                     if(tempInserted!= 0){
                                         lastSymbol[scopeNum+1] = tempInserted;
                                         //printSymbol(lastSymbol[scopeNum+1]);
                                     }
+                                    break;
+                                }
                                     break;
                                 case 16:// n->pointer.type = strdup(fullType);
                                     s = generateSymbol(line, localStart, localScope,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace);

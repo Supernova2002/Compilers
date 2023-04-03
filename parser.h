@@ -93,7 +93,7 @@
         char* storageClass;
         char* dataType;
         char* name;
-        
+       // int structCompleteFlag; // only used if 0, meaning it is incomplete
 
     };
     struct astnode_pointer{
@@ -194,7 +194,7 @@
         struct symbolNode *previousHead;
         struct symbolNode *subHead;
         struct symbolNode *blockHead;
-        int structCompleteFlag;
+        int structCompleteFlag; // 0 if struct incomplete, 1 if complete, not touched if neither of those
         int nameSpace;
     };
    
