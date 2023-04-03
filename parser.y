@@ -211,7 +211,7 @@
             printSymbol(symbol->subHead);
             
         }
-        if(symbol->scope >0 && symbol->next!= NULL){
+        if(symbol->next!= NULL){
             printSymbol(symbol->next);
         }
 
@@ -562,7 +562,7 @@ struct_or_union_spec: struct_or_union IDENT  open_struct struct_declaration_list
                                                                                     s = generateSymbol(line, lastSymbol[0]->head->scopeStart, 0,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace);
                                                                                 }
                                                                                 else{
-                                                                                    s = generateSymbol(line, lastSymbol[scopeNum+1]->head->scopeStart, 2,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                                    s = generateSymbol(line, lastSymbol[scopeNum+1]->head->scopeStart, lastSymbol[scopeNum+1]->scope,2, "", n->ident.ident, name,-2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace);
                                                                                 }
                                                                     
                                                                                 s->subHead  = scopeList[scopeNum+1];
@@ -595,7 +595,7 @@ open_struct: '{' { scopeNum += 1;
                     nameSpaceNum +=1;
                     char temp[1024];
                    // sprintf(temp, "nameSpace %d", nameSpaceNum);
-                    scopeList[scopeNum] = generateSymbol(line,line,2,3,"","",name,-1,NULL, NULL,1, nameSpaceNum); 
+                    scopeList[scopeNum] = generateSymbol(line,line,lastSymbol[scopeNum]->scope,3,"","",name,-1,NULL, NULL,1, nameSpaceNum); 
                     lastSymbol[scopeNum+1] = scopeList[scopeNum];
                     /*if(scopeNum > 0){
                         scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
@@ -614,20 +614,20 @@ struct_declaration_list: struct_declaration { struct symbolNode *s = NULL;
                                                             int localStart = scopeList[scopeNum]->head->scopeStart;
                                                             struct astnode *n = $1;
                                                             switch(n->nodetype){
-                                                                case 15: s = generateSymbol(line,localStart,2,3,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace );
+                                                                case 15: s = generateSymbol(line,localStart,lastSymbol[scopeNum+1]->scope,3,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace );
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     
                                                                     break;
                                                                 case 16:// n->pointer.type = strdup(fullType);
-                                                                    s = generateSymbol(line, localStart,2,3, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                    s = generateSymbol(line, localStart,lastSymbol[scopeNum+1]->scope,3, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     break;
                                                                 case 17: //n->array.type = strdup(fullType); 
-                                                                    s = generateSymbol(line, localStart, 2,3, n->array.type, n->array.name, name,17, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                    s = generateSymbol(line, localStart, lastSymbol[scopeNum+1]->scope,3, n->array.type, n->array.name, name,17, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     break;
                                                                 case 18: //n->funcDec.type = strdup(fullType);
-                                                                    s = generateSymbol(line, localStart, 2,1, n->funcDec.type, n->funcDec.name,name,18, n, scopeList[scopeNum]->head,1, lastSymbol[scopeNum+1]->nameSpace);
+                                                                    s = generateSymbol(line, localStart, lastSymbol[scopeNum+1]->scope,1, n->funcDec.type, n->funcDec.name,name,18, n, scopeList[scopeNum]->head,1, lastSymbol[scopeNum+1]->nameSpace);
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     break;
                                                             }
@@ -641,20 +641,20 @@ struct_declaration_list: struct_declaration { struct symbolNode *s = NULL;
                                                             int localStart = scopeList[scopeNum]->head->scopeStart;
                                                             struct astnode *n = $2;
                                                             switch(n->nodetype){
-                                                                case 15: s = generateSymbol(line,localStart,2,3,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace );
+                                                                case 15: s = generateSymbol(line,localStart,lastSymbol[scopeNum+1]->scope,3,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace );
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     
                                                                     break;
                                                                 case 16:// n->pointer.type = strdup(fullType);
-                                                                    s = generateSymbol(line, localStart,2,3, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                    s = generateSymbol(line, localStart,lastSymbol[scopeNum+1]->scope,3, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     break;
                                                                 case 17: //n->array.type = strdup(fullType); 
-                                                                    s = generateSymbol(line, localStart, 2,3, n->array.type, n->array.name, name,17, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
+                                                                    s = generateSymbol(line, localStart, lastSymbol[scopeNum+1]->scope,3, n->array.type, n->array.name, name,17, n, scopeList[scopeNum]->head,0, lastSymbol[scopeNum+1]->nameSpace);
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     break;
                                                                 case 18: //n->funcDec.type = strdup(fullType);
-                                                                    s = generateSymbol(line, localStart, 2,1, n->funcDec.type, n->funcDec.name,name,18, n, scopeList[scopeNum]->head,1, lastSymbol[scopeNum+1]->nameSpace);
+                                                                    s = generateSymbol(line, localStart, lastSymbol[scopeNum+1]->scope,1, n->funcDec.type, n->funcDec.name,name,18, n, scopeList[scopeNum]->head,1, lastSymbol[scopeNum+1]->nameSpace);
                                                                     lastStructMem = insertSymbol(scopeList[scopeNum], s);
                                                                     break;
                                                             }
