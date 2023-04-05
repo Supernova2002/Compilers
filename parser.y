@@ -28,7 +28,7 @@
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
     const char *stringFromType(int type ){
         static const char *strings[] = { "integer",  "long", "longlong","double","float","charliteral" };
-        if(type <2){
+        if(type <2){`
             return strings[0];
         }
         else if (type<4){
@@ -318,8 +318,8 @@
 %left '*' '/' '%'
 %type <astnode_p> start  statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
 %type <astnode_p> declaration declarator_list declaration_specifiers function_definition declarator compound_statement  direct_declarator struct_or_union_spec struct_declaration_list struct_declaration struct_declarator_list struct_declarator 
-%type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier type_qualifier open_scope  open_struct actually_opening direct_abstract_declarator abstract_declarator
-%type <operator> assop unaryop typename storage_class_spec    struct_or_union function_specifier 
+%type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier type_qualifier open_scope  open_struct actually_opening direct_abstract_declarator abstract_declarator storage_class_spec
+%type <operator> assop unaryop typename     struct_or_union function_specifier 
 %%
 
 /*start: statement
@@ -409,6 +409,7 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                             char* fullType = malloc(1024);
                                                             char* temp = malloc(1024);
                                                             struct astnode *type = $1;
+                                                            int storeType;
                                                             //int localComp = strcmp(current->identName,newSymbol->identName);
                                                             if(lastSymbol[scopeNum+1]->identType == 2){
                                                                 if(scopeNum== -1){
@@ -421,23 +422,31 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                             }
                                                             else{
 
-                                                                if(type->nodetype == 14){
+                                                                if(type->nodetype == 14 || type->nodetype == 21){
                                                                     while(type != NULL){
-                                                                        sprintf(temp,"%s %s",fullType, stringFromDecType(type->decType.type));
-                                                                        fullType = strdup(temp);
-                                                                        type = type->decType.nextType;
+                                                                        if(type->nodetype != 21){
+                                                                            sprintf(temp,"%s %s",fullType, stringFromDecType(type->decType.type));
+                                                                            fullType = strdup(temp);
+                                                                            type = type->decType.nextType;
+                                                                        }
+                                                                        else{
+                                                                            storeType = type->storageType.storageType;
+                                                                            type = type->storageType.nextType;
+                                                                        }
+                                                                        
                                                                     }
                                                                 }
                                                                 else if(type->nodetype == 2){
                                                                             sprintf(fullType, "%s", type->ident.ident);
                                                                 }
                                                                 
+                                                                
                                                             }
                                                             //struct symbolNode *s = NULL;
                                                             while(n != NULL){
                                                                 int insertCheck;
                                                                 switch(n->nodetype){
-                                                                    case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
+                                                                    case 2: setupScalar(n,storeType, strdup(fullType),strdup(n->ident.ident));
                                                                             break;
                                                                     case 16: n->pointer.type = strdup(fullType);
                                                                         switch(n->pointer.member->nodetype){
@@ -488,7 +497,7 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                             structName = strtok(n->ident.ident, " ");
                                             //while(strcmp(structName, "struct") == 0){
                                             structName = strtok(NULL, " ");
-                                            setupScalar(n,"", "incomplete type",structName);
+                                            setupScalar(n,0, "incomplete type",structName);
                                             $$ = n;
                                         }
                                         
@@ -510,13 +519,23 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                             char* fullType = malloc(1024);
                                                                             char* temp = malloc(1024);
                                                                             struct astnode *type = $1;
-                                                                            while(type != NULL){
-                                                                                sprintf(temp,"%s %s",fullType, stringFromDecType(type->decType.type));
-                                                                                fullType = strdup(temp);
-                                                                                type = type->decType.nextType;
+                                                                            int storeType;
+                                                                            if(type->nodetype == 14 || type->nodetype == 21){
+                                                                                while(type != NULL){
+                                                                                    if(type->nodetype != 21){
+                                                                                        sprintf(temp,"%s %s",fullType, stringFromDecType(type->decType.type));
+                                                                                        fullType = strdup(temp);
+                                                                                        type = type->decType.nextType;
+                                                                                    }
+                                                                                    else{
+                                                                                        storeType = type->storageType.storageType;
+                                                                                        type = type->storageType.nextType;
+                                                                                    }
+                                                                                    
+                                                                                }
                                                                             }
                                                                             switch(n->nodetype){
-                                                                                case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
+                                                                                case 2: setupScalar(n,storeType, strdup(fullType),strdup(n->ident.ident));
                                                                                     s = generateSymbol(atoi($3->ident.ident),localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace );
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
@@ -565,7 +584,11 @@ function_definition: declaration_specifiers declarator compound_statement { stru
 ;
 
 
-declaration_specifiers: storage_class_spec  declaration_specifiers
+declaration_specifiers: storage_class_spec  declaration_specifiers { struct astnode *n = $1;
+                                                                    n->storageType.nextType = $2;
+                                                
+                                                                    $$ = n;
+                                                }
     | storage_class_spec 
     | type_specifier   declaration_specifiers { struct astnode *n = $1;
                                                     n->decType.nextType = $2;
@@ -596,11 +619,25 @@ type_qualifier: CONST { struct astnode *n = malloc(sizeof(struct astnode));
                         $$ = n;
                         }
 ;
-storage_class_spec: TYPEDEF {$$ = TYPEDEF;}
-    | EXTERN {$$ = EXTERN;}
-    | STATIC {$$ = STATIC;}
-    | AUTO { $$ = AUTO;}
-    | REGISTER { $$ = REGISTER;}
+storage_class_spec: EXTERN {
+                struct astnode *n = malloc(sizeof(struct astnode));
+                                setupStorage(n, 0);
+                                $$ = n;
+                }
+    | STATIC {
+                struct astnode *n = malloc(sizeof(struct astnode));
+                                setupStorage(n, 1);
+                                $$ = n;}
+    | AUTO { 
+            struct astnode *n = malloc(sizeof(struct astnode));
+                                setupStorage(n, 2);
+                                $$ = n;
+            }
+    | REGISTER { 
+                struct astnode *n = malloc(sizeof(struct astnode));
+                                setupStorage(n, 3);
+                                $$ = n;
+                }
 ;
 type_specifier: VOID {struct astnode *n = malloc(sizeof(struct astnode));
                         setupDecType(n, 0, NULL );
@@ -842,7 +879,7 @@ struct_declaration: spec_qual_list struct_declarator_list ';' { //struct astnode
                                                                 }
                                                                 while(n!= NULL){
                                                                     switch(n->nodetype){
-                                                                        case 2: setupScalar(n,"Extern", strdup(fullType),strdup(n->ident.ident));
+                                                                        case 2: setupScalar(n,4, strdup(fullType),strdup(n->ident.ident));
                                                                                 break;
                                                                         case 16: n->pointer.type = strdup(fullType);
                                                                             
@@ -1712,7 +1749,7 @@ void setupDecType(struct astnode *n, int type, struct astnode *next ){
     n->decType.type = type;
     n->decType.nextType = next;
 }
-void setupScalar(struct astnode *n, char* storage, char* type, char* name){
+void setupScalar(struct astnode *n, int storage, char* type, char* name){
     n->nodetype = 15;
     n->scalarVar.storageClass = storage;
     n->scalarVar.dataType = type;
@@ -1760,6 +1797,11 @@ void setupStructDec(struct astnode *n, char* name, char* line){
     n->nodetype = 20;
     n->structDec.name = name;
     n->structDec.lineNum = line;
+}
+
+void setupStorage(struct astnode *n, int storageType){
+    n->nodetype = 21;
+    n->storageType.storageType = storageType;
 }
 
 int main(){

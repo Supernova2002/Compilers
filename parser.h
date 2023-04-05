@@ -89,8 +89,10 @@
         struct astnode *nextType;
 
     };
+
     struct astnode_scalarVar{// need to store storage class(can assume extern for now), data type 
-        char* storageClass;
+        //char* storageClass;
+        int storageClass;
         char* dataType;
         char* name;
        // int structCompleteFlag; // only used if 0, meaning it is incomplete
@@ -121,6 +123,16 @@
         char* name;
         char* lineNum;
     };
+    struct astnode_storage{
+        enum astStorage{
+            astExtern,
+            astStatic,
+            astAuto,
+            astRegister,
+            astElse
+        }storageType;
+        struct astnode *nextType;
+    };
     struct astnode{
         int nodetype;
         union {
@@ -145,6 +157,7 @@
             struct astnode_funcDec funcDec; //18
             struct astnode_multDec mulltDec; //19
             struct astnode_structDec structDec; //20
+            struct astnode_storage storageType; //21
 
         };
         struct astnode *next;
@@ -189,6 +202,12 @@
             struct_union_member,
             label
         }identType;
+        enum storageClass{
+            externStore,
+            staticStore,
+            autoStore,
+            registerStore
+        }storageType;
         char* type;
         char* identName;
         char* fileName;
@@ -225,10 +244,11 @@ void setupFunc(struct astnode *n, struct astnode *name, struct astnode *args);
 int numberProcessing(int realCheck);
 
 void setupDecType(struct astnode *n, int type, struct astnode *next );
-void setupScalar(struct astnode *n, char* storage, char* type, char* name);
+void setupScalar(struct astnode *n, int storage, char* type, char* name);
 void setupPointer(struct astnode *n, struct astnode *member);
 void setupArray(struct astnode *n, int size, char* name);
 void setupFuncDec(struct astnode *n, struct astnode *node);
 
 void setupStructDec(struct astnode *n, char* name, char* line);
+void setupStorage(struct astnode *n, int storageType);
 #endif
