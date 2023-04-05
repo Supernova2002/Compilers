@@ -102,11 +102,13 @@
         struct astnode *member;
         char* type;
         char* name;
+        int storageClass;
     };
     struct astnode_array{
         char* type;
         int size;
         char* name;
+        int storageClass;
     };
     struct astnode_funcDec{
         char* type;
@@ -206,7 +208,8 @@
             externStore,
             staticStore,
             autoStore,
-            registerStore
+            registerStore,
+            elseStore
         }storageType;
         char* type;
         char* identName;
