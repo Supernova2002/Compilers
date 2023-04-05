@@ -117,6 +117,10 @@
         struct astnode *current;
         struct astnode *next;
     };
+    struct astnode_structDec{
+        char* name;
+        char* lineNum;
+    };
     struct astnode{
         int nodetype;
         union {
@@ -140,6 +144,7 @@
             struct astnode_array array; //17
             struct astnode_funcDec funcDec; //18
             struct astnode_multDec mulltDec; //19
+            struct astnode_structDec structDec; //20
 
         };
         struct astnode *next;
@@ -224,4 +229,6 @@ void setupScalar(struct astnode *n, char* storage, char* type, char* name);
 void setupPointer(struct astnode *n, struct astnode *member);
 void setupArray(struct astnode *n, int size, char* name);
 void setupFuncDec(struct astnode *n, struct astnode *node);
+
+void setupStructDec(struct astnode *n, char* name, char* line);
 #endif
