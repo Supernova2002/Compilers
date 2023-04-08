@@ -368,9 +368,12 @@
 %token <string> newString;
 %left '+' '-' 
 %left '*' '/' '%'
+%left IF
+%left ELSE
 %type <astnode_p> start  statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
 %type <astnode_p> declaration declarator_list declaration_specifiers function_definition declarator compound_statement  direct_declarator struct_or_union_spec struct_declaration_list struct_declaration struct_declarator_list struct_declarator 
 %type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier type_qualifier open_scope  open_struct actually_opening direct_abstract_declarator abstract_declarator storage_class_spec
+%type <astnode_p> labeled_statement selection_statement iteration_statement jump_statement
 %type <operator> assop unaryop typename     struct_or_union function_specifier 
 %%
 
@@ -593,6 +596,8 @@ declarator_list: declarator { $$ = $1;}
 function_definition: declaration_specifiers declarator compound_statement { struct astnode *n = $2;
                                                                             struct symbolNode *s;
                                                                             struct symbolNode *tempInserted = NULL;
+                                                                            struct astnode *exprChain = $3->multDec.right;
+                                                                            
                                                                             int localStart = lastSymbol[scopeNum+1]->head->scopeStart;
                                                                             char* fullType = malloc(1024);
                                                                             char* temp = malloc(1024);
@@ -614,7 +619,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                             }
                                                                             switch(n->nodetype){
                                                                                 case 2: setupScalar(n,storeType, strdup(fullType),strdup(n->ident.ident));
-                                                                                    s = generateSymbol(atoi($3->ident.ident),localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4 );
+                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident),localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4 );
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
@@ -623,7 +628,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     break;
                                                                                 case 16:// n->pointer.type = strdup(fullType);
                                                                                     n->pointer.type = strdup(fullType);
-                                                                                    s = generateSymbol(atoi($3->ident.ident), localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
+                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
@@ -632,7 +637,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     break;
                                                                                 case 17: //n->array.type = strdup(fullType); 
                                                                                     n->array.type = strdup(fullType);
-                                                                                    s = generateSymbol(atoi($3->ident.ident), localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
+                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
@@ -640,7 +645,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     }
                                                                                     break;
                                                                                 case 18: n->funcDec.type = strdup(fullType);
-                                                                                    s = generateSymbol(atoi($3->ident.ident), localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
+                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
                                                                                     tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                     if(tempInserted!= 0){
                                                                                         lastSymbol[scopeNum+1] = tempInserted;
@@ -657,7 +662,10 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     
                                                                                 }
                                                                                 lastSymbol[scopeNum+2] = NULL;
-                                                                                
+                                                                                while(exprChain != NULL){
+                                                                                    printAST(exprChain,0);
+                                                                                    exprChain = exprChain->next;
+                                                                                }
                                                                             }
 ;
 
@@ -1149,10 +1157,22 @@ function_specifier:  INLINE {$$ = INLINE;}
 
 
 compound_statement: '{' '}' 
-    | open_scope decl_or_stmt_list close_scope 
+    | open_scope decl_or_stmt_list close_scope  { struct astnode *n = malloc(sizeof(struct astnode));
+                                                    setupMult(n, $1, $2);
+                                                    
+        
+        
+                                                    $$ = n;}
 ;
 decl_or_stmt_list: decl_or_stmt
-    | decl_or_stmt_list decl_or_stmt
+    | decl_or_stmt_list decl_or_stmt {struct astnode *n = $1;
+                                        struct astnode *littleN = n;
+                                        while(littleN->next != NULL){
+                                            littleN = littleN->next;
+                                        }
+                                        littleN->next = $2;
+                                        $$ = n;
+                                        }
 ;
 open_scope: '{' {   int test = line;
                     char buffer[100];
@@ -1249,12 +1269,53 @@ decl_or_stmt: declaration { struct symbolNode *s;
                             }//keep pointer to last inserted symbol. Then when I get here, check type of that symbol to see what scope, then insert as needed
 
                                  
-    | statement
+    | statement {struct astnode *n = $1;
+                    $$ = n;
+                    }
 
 ;
 statement: compound_statement
-    | expr ';'  {printAST($1,0);}
+    | labeled_statement
+    | selection_statement
+    | iteration_statement
+    | jump_statement
+    | expr ';' // {printAST($1,0);}
 ;
+
+labeled_statement: IDENT ':' statement
+    | CASE constexp ':' statement
+    | DEFAULT ':' statement
+
+
+selection_statement: IF '(' expr ')' statement %prec IF
+    | IF '(' expr ')' statement ELSE statement
+    | SWITCH '(' expr ')' statement
+
+
+iteration_statement: WHILE '(' expr ')' statement
+    | DO statement WHILE '(' expr ')' ';'
+    | FOR '(' expr ';' expr ';' expr  ')' statement     { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            setupIterator(n,$3,$5,$7,$9);
+                                                            $$ = n;
+
+                                                        }
+    | FOR '(' expr ';' expr ';'   ')' statement
+    | FOR '(' expr ';'  ';' expr ')' statement
+    | FOR '('  ';' expr ';' expr ')' statement
+    | FOR '(' expr ';'  ';'   ')' statement
+    | FOR '('  ';' expr ';'   ')' statement
+    | FOR '('  ';'  ';' expr  ')' statement
+    | FOR '(' declaration expr ';' expr ')' statement
+    | FOR '(' declaration expr ';'  ')' statement
+    | FOR '(' declaration  ';' expr ')' statement
+    | FOR '(' declaration  ';'  ')' statement
+
+
+jump_statement: GOTO IDENT ';'
+    | CONTINUE ';'
+    | BREAK ';'
+    | RETURN expr ';'
+    | RETURN ';'
 
 //statement: expr ';'{
 //                    printAST($1,0);}
@@ -1740,6 +1801,26 @@ void printAST(struct astnode* n, int indent){
 
 
                 break;
+            case 22: 
+                printf("FOR\n");
+                if(n->iterator.first != NULL){
+                    printf("INIT:\n");
+                    printAST(n->iterator.first,indent+1);
+                }
+                if(n->iterator.second != NULL){
+                    printf("CONDITION:\n");
+                    printAST(n->iterator.second, indent + 1);
+                }
+                if(n->iterator.body != NULL){
+                    printf("BODY:\n");
+                    printAST(n->iterator.body, indent + 1);
+                }
+                if(n->iterator.third != NULL){
+                    printf("ITERATOR:\n");
+                    printAST(n->iterator.third, indent+1);
+                }
+                break;
+                
             
         }
 }
@@ -1891,7 +1972,11 @@ void setupFuncDec(struct astnode *n, struct astnode *node){
     }
     
 }
-
+void setupMult(struct astnode *n, struct astnode *left, struct astnode *right){
+    n->nodetype = 19;
+    n->multDec.left = left;
+    n->multDec.right = right;
+}
 void setupStructDec(struct astnode *n, char* name, char* line){
     n->nodetype = 20;
     n->structDec.name = name;
@@ -1902,6 +1987,16 @@ void setupStorage(struct astnode *n, int storageType){
     n->nodetype = 21;
     n->storageType.storageType = storageType;
 }
+
+void setupIterator(struct astnode *n, struct astnode *first, struct astnode *second, struct astnode *third, struct astnode *body){
+    n->nodetype = 22;
+    n->iterator.first = first;
+    n->iterator.second = second;
+    n->iterator.third = third;
+    n->iterator.body = body;
+}
+
+
 
 int main(){
     int t;

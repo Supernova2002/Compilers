@@ -118,8 +118,8 @@
         struct astnode *decNode;
     };
     struct astnode_multDec{
-        struct astnode *current;
-        struct astnode *next;
+        struct astnode *left;
+        struct astnode *right;
     };
     struct astnode_structDec{
         char* name;
@@ -134,6 +134,17 @@
             astElse
         }storageType;
         struct astnode *nextType;
+    };
+    struct astnode_iterator{
+        enum iterType{
+            iterWhile,
+            iterDoWhile,
+            iterFor
+        }iterType;
+        struct astnode *first;
+        struct astnode *second;
+        struct astnode *third;
+        struct astnode *body;
     };
     struct astnode{
         int nodetype;
@@ -157,9 +168,10 @@
             struct astnode_pointer pointer ; //16
             struct astnode_array array; //17
             struct astnode_funcDec funcDec; //18
-            struct astnode_multDec mulltDec; //19
+            struct astnode_multDec multDec; //19
             struct astnode_structDec structDec; //20
             struct astnode_storage storageType; //21
+            struct astnode_iterator iterator; //22
 
         };
         struct astnode *next;
@@ -221,6 +233,7 @@
         struct symbolNode *previousHead;
         struct symbolNode *subHead;
         struct symbolNode *blockHead;
+        struct astnode *firstStatement;
         char* parentName;
         int structCompleteFlag; // 0 if struct incomplete, 1 if complete, not touched if neither of those
         int nameSpace;
@@ -255,4 +268,7 @@ void setupFuncDec(struct astnode *n, struct astnode *node);
 
 void setupStructDec(struct astnode *n, char* name, char* line);
 void setupStorage(struct astnode *n, int storageType);
+void setupMult(struct astnode *n, struct astnode *left, struct astnode *right);
+
+void setupIterator(struct astnode *n, struct astnode *first, struct astnode *second, struct astnode *third, struct astnode *body);
 #endif
