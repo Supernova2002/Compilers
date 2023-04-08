@@ -221,6 +221,7 @@
         struct symbolNode *previousHead;
         struct symbolNode *subHead;
         struct symbolNode *blockHead;
+        char* parentName;
         int structCompleteFlag; // 0 if struct incomplete, 1 if complete, not touched if neither of those
         int nameSpace;
     };
