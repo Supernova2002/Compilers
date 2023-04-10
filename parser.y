@@ -264,7 +264,7 @@
         char *structName;
         struct symbolNode *structNode;
         struct symbolNode *lastChecked;
-        if(symbol->identName != ""){
+        if(symbol->identName != "" && symbol->astType != 24 ){
             if(symbol->identType ==2){
                 printf("struct/union %s definition at %s:%d \n", symbol->identName,symbol->fileName, symbol->declaredLine);
             }
@@ -597,7 +597,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                             struct symbolNode *s;
                                                                             struct symbolNode *tempInserted = NULL;
                                                                             struct astnode *exprChain = $3->multDec.right;
-                                                                            
+                                                                            struct symbolNode *symbolTemp;
                                                                             int localStart = lastSymbol[scopeNum+1]->head->scopeStart;
                                                                             char* fullType = malloc(1024);
                                                                             char* temp = malloc(1024);
@@ -645,15 +645,29 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     }
                                                                                     break;
                                                                                 case 18: n->funcDec.type = strdup(fullType);
+                                                                                    
                                                                                     s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
-                                                                                    tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
-                                                                                    if(tempInserted!= 0){
-                                                                                        lastSymbol[scopeNum+1] = tempInserted;
-                                                                                        scopeList[scopeNum+1]->previousHead = lastSymbol[scopeNum+1]->head;
-                                                                                        lastSymbol[scopeNum+1]->subHead = scopeList[scopeNum+1];
-                                                                                        printSymbol(lastSymbol[scopeNum+1]);
-                                                                                        
+                                                                                    symbolTemp = findSymbol(lastSymbol[scopeNum+1]->head, s->identName, 0);
+                                                                                    if(symbolTemp == NULL){
+                                                                                        tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                        if(tempInserted!= 0){
+                                                                                            lastSymbol[scopeNum+1] = tempInserted;
+                                                                                            scopeList[scopeNum+1]->previousHead = lastSymbol[scopeNum+1]->head;
+                                                                                            lastSymbol[scopeNum+1]->subHead = scopeList[scopeNum+1];
+                                                                                            
+                                                                                            
+                                                                                            printSymbol(lastSymbol[scopeNum+1]);
+                                                                                            
+                                                                                        }
                                                                                     }
+                                                                                    else{
+                                                                                        symbolTemp = s;
+                                                                                        
+                                                                                        scopeList[scopeNum+1]->previousHead = symbolTemp->head;
+                                                                                        symbolTemp->subHead = scopeList[scopeNum+1];
+                                                                                        printSymbol(symbolTemp);
+                                                                                    }
+                                                                                    
                                                                                     
                                                                                     //scopeList[scopeNum+1] = NULL;
                                                                                     //need to actually store the last pointer inserted in a given scope
@@ -662,10 +676,11 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                     
                                                                                 }
                                                                                 lastSymbol[scopeNum+2] = NULL;
-                                                                                while(exprChain != NULL){
-                                                                                    printAST(exprChain,0);
+                                                                                printAST(exprChain,0,s->subHead);
+                                                                                /*while(exprChain != NULL){
+                                                                                    printAST(exprChain,0,lastSymbol[scopeNum+1]->subHead);
                                                                                     exprChain = exprChain->next;
-                                                                                }
+                                                                                }*/
                                                                             }
 ;
 
@@ -760,7 +775,7 @@ type_specifier: VOID {struct astnode *n = malloc(sizeof(struct astnode));
                         $$ = n;}
     | struct_or_union_spec
 ;
-struct_or_union_spec: struct_or_union actually_opening struct_declaration_list close_struct {  //need to check if struct with given name exists first
+struct_or_union_spec: struct_or_union actually_opening struct_declaration_list close_struct {  
                                                                                 struct symbolNode *temp;
                                                                                 struct symbolNode *secondTemp;
                                                                                 struct astnode *n = $2;
@@ -1180,6 +1195,7 @@ open_scope: '{' {   int test = line;
                     struct astnode *n = malloc(sizeof(struct astnode));
                     scopeList[scopeNum] = generateSymbol(line-1,test-1,1,1,"","",name,-1,NULL, NULL,1, lastSymbol[scopeNum]->nameSpace,4); 
                     lastSymbol[scopeNum+1] = scopeList[scopeNum];
+                    
                     sprintf(buffer, "%d", line);
                     setupIdent(n, buffer);
                     $$ = n;
@@ -1282,40 +1298,321 @@ statement: compound_statement
     | expr ';' // {printAST($1,0);}
 ;
 
-labeled_statement: IDENT ':' statement
-    | CASE constexp ':' statement
-    | DEFAULT ':' statement
+labeled_statement: IDENT ':' statement  {  //need to allow for forward declarations, i.e use in a goto before actual def, which installs it as incomplete
+                                            //similar to how I handled structs
+                                         struct symbolNode *temp;
+                                         struct symbolNode *secondTemp;
+                                         struct astnode *n = malloc(sizeof(struct astnode));
+                                         setupLabel(n,$1,$3);
+                                         struct symbolNode *s = generateSymbol(line,lastSymbol[scopeNum+1]->scopeStart, lastSymbol[scopeNum+1]->scope, 4, "", $1, name, 24, n, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace, 2);
+
+                                         lastSymbol[scopeNum+1] = insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                         temp = findSymbol(scopeList[scopeNum], n->label.name, scopeList[scopeNum]->scope);
+                                         if(temp == lastSymbol[scopeNum+1]){
+                                            temp->structCompleteFlag = 1;
+                                            secondTemp = findSymbol(lastSymbol[scopeNum+1]->head->previousHead, n->structDec.name,lastSymbol[scopeNum+1]->scope);
+                                            if(secondTemp!= NULL && secondTemp->scope == lastSymbol[scopeNum+1]->scope){
+                                                secondTemp->structCompleteFlag = 1;
+                                                secondTemp->member->label.labeled  = temp->member->label.labeled;
+                                                secondTemp->declaredLine = temp->declaredLine;
+                                            }
+                                        }
+                                        else if(temp != NULL){
+                                            temp->structCompleteFlag = 1;
+                                            
+                                        }
+                                        
+                                        
+                                         
+
+                                         $$ = n;
+                                            }
+    | CASE constexp ':' statement  {  struct astnode *n = malloc(sizeof(struct astnode));
+                                        if($4->nodetype == 19){
+                                            setupCase(n,$2,$4->multDec.right);
+                                        }
+                                        else{
+                                            setupCase(n,$2, $4 );
+                                        }
+                                        $$ = n;
+                                        }
+
+    | DEFAULT ':' statement  {  struct astnode *n = malloc(sizeof(struct astnode));
+                                        if($3->nodetype == 19){
+                                            setupCase(n,NULL,$3->multDec.right);
+                                        }
+                                        else{
+                                            setupCase(n,NULL, $3 );
+                                        }
+                                        $$ = n;
+                                        }
 
 
-selection_statement: IF '(' expr ')' statement %prec IF
-    | IF '(' expr ')' statement ELSE statement
-    | SWITCH '(' expr ')' statement
+
+selection_statement: IF '(' expr ')' statement %prec IF   { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $5;
+                                                            if(temp->nodetype == 19){
+                                                                setupIf(n,$3,$5->multDec.right,NULL);
+                                                            }
+                                                            else{
+                                                                setupIf(n,$3,$5,NULL);
+                                                            }
+                                                            
+                                                            $$ = n;
+
+                                                                }
+    | IF '(' expr ')' statement ELSE statement{ struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $5;
+                                                            if(temp->nodetype == 19){
+                                                                setupIf(n,$3,$5->multDec.right,$7->multDec.right);
+                                                            }
+                                                            else{
+                                                                setupIf(n,$3,$5,$7->multDec.right);
+                                                            }
+                                                            
+                                                            $$ = n;
+
+                                                                }
+    | SWITCH '(' expr ')' statement {  struct astnode *n = malloc(sizeof(struct astnode));
+                                        if($5->nodetype == 19){
+                                            setupSwitch(n,$3,$5->multDec.right);
+                                        }
+                                        else{
+                                            setupSwitch(n,$3, $5 );
+                                        }
+                                        $$ = n;
+                                        }
 
 
-iteration_statement: WHILE '(' expr ')' statement
-    | DO statement WHILE '(' expr ')' ';'
+iteration_statement: WHILE '(' expr ')' statement { struct astnode *n = malloc(sizeof(struct astnode));
+                                            struct astnode *temp = $5;
+                                            if(temp->nodetype == 19){
+                                                setupIterator(n,$3, NULL,NULL, $5->multDec.right,2 );
+                                            }
+                                            else{
+                                                setupIterator(n,$3, NULL,NULL, $5,1 );
+                                            }
+                                            
+                                            $$ = n;
+
+                                            }
+    | DO statement WHILE '(' expr ')' ';' { struct astnode *n = malloc(sizeof(struct astnode));
+                                            struct astnode *temp = $2;
+                                            if(temp->nodetype == 19){
+                                                setupIterator(n,$2->multDec.right,NULL ,NULL, $5,1 );
+                                            }
+                                            else{
+                                                setupIterator(n,$2, NULL,NULL, $5,1 );
+                                            }
+                                            
+                                            $$ = n;
+
+                                            }
     | FOR '(' expr ';' expr ';' expr  ')' statement     { struct astnode *n = malloc(sizeof(struct astnode));
-                                                            setupIterator(n,$3,$5,$7,$9);
+                                                            struct astnode *temp = $9;
+                                                            if(temp->nodetype == 19){
+                                                               setupIterator(n,$3,$5,$7,$9->multDec.right, 0); 
+                                                            }
+                                                            else{
+                                                                setupIterator(n,$3,$5,$7,$9, 0);
+                                                            }
                                                             $$ = n;
 
                                                         }
-    | FOR '(' expr ';' expr ';'   ')' statement
-    | FOR '(' expr ';'  ';' expr ')' statement
-    | FOR '('  ';' expr ';' expr ')' statement
-    | FOR '(' expr ';'  ';'   ')' statement
-    | FOR '('  ';' expr ';'   ')' statement
-    | FOR '('  ';'  ';' expr  ')' statement
-    | FOR '(' declaration expr ';' expr ')' statement
+    | FOR '(' expr ';' expr ';'   ')' statement { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $8;
+                                                            if(temp->nodetype == 19){
+                                                               setupIterator(n,$3,$5,NULL,$8->multDec.right, 0); 
+                                                            }
+                                                            else{
+                                                                setupIterator(n,$3,$5,NULL,$8, 0);
+                                                            }
+                                                            $$ = n;
+
+                                                        }
+    | FOR '(' expr ';'  ';' expr ')' statement { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $8;
+                                                            if(temp->nodetype == 19){
+                                                               setupIterator(n,$3,NULL,$6,$8->multDec.right, 0); 
+                                                            }
+                                                            else{
+                                                                setupIterator(n,$3,NULL,$6,$8, 0);
+                                                            }
+                                                            $$ = n;
+
+                                                        }
+    | FOR '('  ';' expr ';' expr ')' statement { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $8;
+                                                            if(temp->nodetype == 19){
+                                                               setupIterator(n,NULL,$4,$6,$8->multDec.right, 0); 
+                                                            }
+                                                            else{
+                                                                setupIterator(n,NULL,$4,$6,$8, 0);
+                                                            }
+                                                            $$ = n;
+
+                                                        }
+    | FOR '(' expr ';'  ';'   ')' statement { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $7;
+                                                            if(temp->nodetype == 19){
+                                                               setupIterator(n,$3,NULL,NULL,$7->multDec.right, 0); 
+                                                            }
+                                                            else{
+                                                                setupIterator(n,$3,NULL,NULL,$7, 0);
+                                                            }
+                                                            $$ = n;
+
+                                                        }
+    | FOR '('  ';' expr ';'   ')' statement { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $7;
+                                                            if(temp->nodetype == 19){
+                                                               setupIterator(n,NULL,$4,NULL,$7->multDec.right, 0); 
+                                                            }
+                                                            else{
+                                                                setupIterator(n,NULL,$4,NULL,$7, 0);
+                                                            }
+                                                            $$ = n;
+
+                                                        }
+    | FOR '('  ';'  ';' expr  ')' statement { struct astnode *n = malloc(sizeof(struct astnode));
+                                                            struct astnode *temp = $7;
+                                                            if(temp->nodetype == 19){
+                                                               setupIterator(n,NULL,NULL,$5,$7->multDec.right, 0); 
+                                                            }
+                                                            else{
+                                                                setupIterator(n,NULL,NULL,$5,$7, 0);
+                                                            }
+                                                            $$ = n;
+
+                                                        }
+   //might be dropping support for below as only seems to work with initialized declarations
+   /* | FOR '(' declaration expr ';' expr ')' statement  { struct symbolNode *s;
+                            struct astnode *bigN = $1;
+                            //struct astnode *n = $1;
+                            struct astnode *n = bigN;
+                            struct symbolNode *tempInserted;
+                            int localScope;
+                            int localStart = scopeList[scopeNum]->declaredLine;
+                            //int typeStore = 2;
+                            if(scopeNum ==0){
+                                localScope = 1;
+                            }
+                            else{
+                                localScope = 2;
+                                scopeList[scopeNum]->previousHead = scopeList[scopeNum-1]->head;
+                                scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
+                            } 
+                            while(n != NULL){
+                                switch(n->nodetype){
+                                
+                                    case 15:
+                                    if(strcmp(n->scalarVar.dataType,"incomplete type" ) == 0){
+                                        s= generateSymbol(line, localStart, localScope, 2,"", n->scalarVar.name, name, -2, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace,4 );
+                                        s->structCompleteFlag = 0; 
+                                        tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                        if(tempInserted!= 0){
+                                            lastSymbol[scopeNum+1] = tempInserted;
+                                            printSymbol(lastSymbol[scopeNum+1]);
+                                        }
+                                    
+                                    } 
+                                    else{
+                                        s = generateSymbol(line,localStart,localScope,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace,n->scalarVar.storageClass );
+                                        //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum],s); 
+                                        tempInserted= insertSymbol(scopeList[scopeNum], s);
+                                        if(tempInserted!= 0){
+                                            lastSymbol[scopeNum+1] = tempInserted;
+                                            printSymbol(lastSymbol[scopeNum+1]);
+                                        }
+                                        break;
+                                    }
+                                        break;
+                                    case 16:// n->pointer.type = strdup(fullType);
+                                        s = generateSymbol(line, localStart, localScope,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace,n->pointer.storageClass);
+                                        //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum], s);
+                                        tempInserted= insertSymbol(scopeList[scopeNum], s);
+                                        if(tempInserted!= 0){
+                                            lastSymbol[scopeNum+1] = tempInserted;
+                                            printSymbol(lastSymbol[scopeNum+1]);
+                                        }
+                                        break;
+                                    case 17: //n->array.type = strdup(fullType); 
+                                        s = generateSymbol(line, localStart, localScope,0, n->array.type, n->array.name,name,17, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace, n->array.storageClass);
+                                        //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum], s);
+                                        tempInserted= insertSymbol(scopeList[scopeNum], s);
+                                        if(tempInserted!= 0){
+                                            lastSymbol[scopeNum+1] = tempInserted;
+                                            printSymbol(lastSymbol[scopeNum+1]);
+                                        }
+                                        break;
+                                    case 18: //n->funcDec.type = strdup(fullType);
+                                        s = generateSymbol(line, localStart, localScope,1, n->funcDec.type, n->funcDec.name, name,18, n, scopeList[scopeNum],1, lastSymbol[scopeNum+1]->nameSpace,4);
+                                        //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum+1], s);
+                                        tempInserted= insertSymbol(scopeList[scopeNum], s);
+                                        if(tempInserted!= 0){
+                                            lastSymbol[scopeNum+1] = tempInserted;
+                                            printSymbol(lastSymbol[scopeNum+1]);
+                                        }
+                                        
+                                        break;
+                                }
+                                n = n->next;
+                            }   
+                            struct astnode *newN = malloc(sizeof(struct astnode));
+                            struct astnode *temp = $7;
+                            if(temp->nodetype == 19){
+                                setupIterator(n,$4,NULL,$5,$7->multDec.right); 
+                            }
+                            else{
+                                setupIterator(n,NULL,NULL,$5,$7);
+                            }
+                            $$ = n;
+                        }
     | FOR '(' declaration expr ';'  ')' statement
     | FOR '(' declaration  ';' expr ')' statement
-    | FOR '(' declaration  ';'  ')' statement
+    | FOR '(' declaration  ';'  ')' statement */
 
 
-jump_statement: GOTO IDENT ';'
-    | CONTINUE ';'
-    | BREAK ';'
-    | RETURN expr ';'
-    | RETURN ';'
+jump_statement: GOTO IDENT ';' { struct astnode *n = malloc(sizeof(struct astnode));
+                                int labelLine;
+                                struct symbolNode *labelSymbol = findSymbol(scopeList[scopeNum],$2,0);
+                                if(labelSymbol == NULL){
+                                    labelLine = -1;
+                                    struct symbolNode *s = generateSymbol(line,lastSymbol[scopeNum+1]->scopeStart, lastSymbol[scopeNum+1]->scope, 4, "", $2, name, 24, NULL, lastSymbol[scopeNum+1]->head, 0, lastSymbol[scopeNum+1]->nameSpace, 2);
+                                    lastSymbol[1] = insertSymbol(lastSymbol[1]->head, s);
+                                }
+                                else{
+                                    labelLine = labelSymbol->declaredLine;
+                                }
+                                setupJump(n, 0, $2, NULL,labelLine);
+
+                                $$ = n;
+
+                                    }
+    | CONTINUE ';' { struct astnode *n = malloc(sizeof(struct astnode));
+                                setupJump(n, 1, NULL, NULL,-1);
+                                
+                                $$ = n;
+
+                                    }
+    | BREAK ';' { struct astnode *n = malloc(sizeof(struct astnode));
+                                setupJump(n, 2, NULL, NULL,-1);
+                                
+                                $$ = n;
+
+                                    }
+    | RETURN expr ';' { struct astnode *n = malloc(sizeof(struct astnode));
+                                setupJump(n, 3, NULL, $2,-1);
+                                
+                                $$ = n;
+
+                                    }
+    | RETURN ';'{ struct astnode *n = malloc(sizeof(struct astnode));
+                                setupJump(n, 4, NULL, NULL,-1);
+                                
+                                $$ = n;
+
+                                    }
 
 //statement: expr ';'{
 //                    printAST($1,0);}
@@ -1364,6 +1661,13 @@ postexp:  primexp
 
                             }
     | postexp '(' argexplist ')'    {   struct astnode *n = malloc(1024);
+                                        struct symbolNode *s;
+                                        struct symbolNode *varSymbol = findSymbol(lastSymbol[0]->head,$1->ident.ident,0);
+                                        if(varSymbol == NULL){
+                                            s = generateSymbol(line, lastSymbol[scopeNum+1]->declaredLine, 0,1, "int", $1->ident.ident, name ,18, NULL, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
+                                            lastSymbol[0]= insertSymbol(lastSymbol[0]->head, s);
+                                        }
+                                        
                                         setupFunc(n,$1,$3);
                                         
                                         $$ = n;
@@ -1640,7 +1944,7 @@ assop: '=' {$$ = '=';}
 constexp: condexp
 ;
 %%
-void printAST(struct astnode* n, int indent){
+void printAST(struct astnode* n, int indent, struct symbolNode *head){
         char temp[1000];
         strcpy(temp, "");
         for (int i = 0; i<indent; i++){
@@ -1660,8 +1964,8 @@ void printAST(struct astnode* n, int indent){
                     printf("BINARY OP %c\n", n->binop.operator);
                 }
                 
-                printAST(n->binop.left, indent+1);
-                printAST(n->binop.right, indent+1);
+                printAST(n->binop.left, indent+1,head);
+                printAST(n->binop.right, indent+1,head);
                 break;
             case 1:
                 if(n->num.numtype <6){
@@ -1675,16 +1979,23 @@ void printAST(struct astnode* n, int indent){
                 }
                 break;
             case 2:
-                printf("IDENT %s\n", n->ident.ident); break;
+                struct symbolNode *varSymbol = findSymbol(head,n->ident.ident,0);
+                if(varSymbol == NULL){
+                    printf("variable %s\n", n->ident.ident);
+                }
+                else{
+                    printf("variable %s def @ <%s>:%d\n",n->ident.ident,varSymbol->fileName,varSymbol->declaredLine);
+                }
+                 break;
             case 3: 
                 printf("STRING %s\n", n->string.string); break;
             case 4:
                 printf("TERNARY OP, IF\n");
-                printAST(n->ternop.opIf,indent+1);
+                printAST(n->ternop.opIf,indent+1,head);
                 printf("THEN\n");
-                printAST(n->ternop.opThen,indent+1);
+                printAST(n->ternop.opThen,indent+1,head);
                 printf("ELSE\n");
-                printAST(n->ternop.opElse,indent+1);
+                printAST(n->ternop.opElse,indent+1,head);
                 break;
             case 5:
                 
@@ -1693,8 +2004,8 @@ void printAST(struct astnode* n, int indent){
                     case LOGOR: strcpy(temp, "||"); break;
                 }
                 printf("LOGICAL OP %s\n", temp);
-                printAST(n->logop.left, indent+1);
-                printAST(n->logop.right, indent+1);
+                printAST(n->logop.left, indent+1,head);
+                printAST(n->logop.right, indent+1,head);
                 break;
             case 6:
                 
@@ -1718,8 +2029,8 @@ void printAST(struct astnode* n, int indent){
                     }
                     printf("ASSIGNMENT COMPOUND (%s)\n", temp);
                 }
-                printAST(n->assop.left, indent+1);
-                printAST(n->assop.right, indent+1);
+                printAST(n->assop.left, indent+1,head);
+                printAST(n->assop.right, indent+1,head);
                 break;
             case 7:
                 if(n->unop.operator <= 255){
@@ -1734,7 +2045,7 @@ void printAST(struct astnode* n, int indent){
                 }
                 
 
-                printAST(n->unop.operand,indent+1);
+                printAST(n->unop.operand,indent+1,head);
                 break;
             case 8: 
                 if(n->compop.operator<=255){
@@ -1749,8 +2060,8 @@ void printAST(struct astnode* n, int indent){
                     }
                     printf("COMPARISON OP %s\n",temp);
                 }
-                printAST(n->compop.left, indent+1);
-                printAST(n->compop.right,indent+1);
+                printAST(n->compop.left, indent+1,head);
+                printAST(n->compop.right,indent+1,head);
 
                 break;
             case 9: 
@@ -1759,14 +2070,14 @@ void printAST(struct astnode* n, int indent){
                     case 1: printf("ADDRESSOF\n"); break;
                     case 2: printf("SIZEOF\n"); break;
                 }
-                printAST(n->general.next, indent + 1);
+                printAST(n->general.next, indent + 1,head);
                 break;
             case 10:
                 switch(n->select.indirectFlag){
                     case 0: printf("SELECT, MEMBER %s\n", n->select.member); break;
                     case 1: printf("INDIRECT SELECT, MEMBER %s\n", n->select.member); break;
                 }
-                printAST(n->select.parent,indent+1);
+                printAST(n->select.parent,indent+1,head);
                 break;
             case 11: 
                 switch(n->type.type){
@@ -1780,18 +2091,21 @@ void printAST(struct astnode* n, int indent){
                 
                 if(n->type.next != NULL){
                     
-                    printAST(n->type.next, indent + 1);
+                    printAST(n->type.next, indent + 1,head);
                 }
                 break;
             case 13:    
                 printf("FUNCTION CALL,%i arguments\n",n->func.args->funcarg.argCount);
-                printAST(n->func.name, indent + 1);
+                printAST(n->func.name, indent + 1,head);
                 int i;
                 i = 1;
                 struct astnode *copy = n->func.args->funcarg.head;
                 while (copy!= NULL){
+                    for (int i = 0; i<indent; i++){
+                                printf("\t");
+                    }
                     printf("arg #%i=\n",i);
-                    printAST(copy->funcarg.current,indent+1);
+                    printAST(copy->funcarg.current,indent+1,head);
                     copy = copy->funcarg.next;
                     i++;
                 }
@@ -1802,26 +2116,164 @@ void printAST(struct astnode* n, int indent){
 
                 break;
             case 22: 
-                printf("FOR\n");
-                if(n->iterator.first != NULL){
-                    printf("INIT:\n");
-                    printAST(n->iterator.first,indent+1);
+                printf("LIST {\n");
+                switch(n->iterator.iterType){
+            
+                    case 0: 
+                        printf("FOR\n");
+                        if(n->iterator.first != NULL){
+                            printf("INIT:\n");
+                            printAST(n->iterator.first,indent+1,head);
+                        }
+                        if(n->iterator.second != NULL){
+                            for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                            printf("CONDITION:\n");
+                            printAST(n->iterator.second, indent + 1,head);
+                        }
+                        if(n->iterator.body != NULL){
+                            for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                            printf("BODY:\n");
+                            printAST(n->iterator.body, indent + 1,head);
+                        }
+                        if(n->iterator.third != NULL){
+                            for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                            printf("INCR:\n");
+                            printAST(n->iterator.third, indent+1,head);
+                        }
+                        break;
+                    case 1: 
+                        printf("DO:\n");
+                        printAST(n->iterator.first,indent+1,head);
+                        for (int i = 0; i<indent; i++){
+                                printf("\t");
+                        }
+                        printf("WHILE:\n");
+                        printAST(n->iterator.body, indent+1, head);
+                        break;
+                    case 2: 
+                        printf("WHILE:\n");
+                        for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                        printf("COND:\n");
+                        printAST(n->iterator.first,indent+1,head);
+                        for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                        printf("BODY:\n");
+                        for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                        printAST(n->iterator.body, indent+1, head);
+                        
                 }
-                if(n->iterator.second != NULL){
-                    printf("CONDITION:\n");
-                    printAST(n->iterator.second, indent + 1);
+                printf("}\n");
+                break;
+            case 23: 
+                printf("LIST {\n");
+                for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                printf("IF\n");
+                for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                printf("COND:\n");
+                printAST(n->ifNode.condition,indent+1, head);
+                for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                printf("THEN:\n");
+                printAST(n->ifNode.body,indent+1,head);
+                if(n->ifNode.elseBody != NULL){
+                    for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                    printf("ELSE:\n");
+                    printAST(n->ifNode.elseBody, indent+1, head);
                 }
-                if(n->iterator.body != NULL){
-                    printf("BODY:\n");
-                    printAST(n->iterator.body, indent + 1);
-                }
-                if(n->iterator.third != NULL){
-                    printf("ITERATOR:\n");
-                    printAST(n->iterator.third, indent+1);
-                }
+                printf("}\n");
                 break;
                 
+            case 24:
+                printf("LABEL(%s):\n", n->label.name);
+                printAST(n->label.labeled, indent+1, head);
+                break;
+            case 25:
+                switch(n->jump.jumpType){
+                    
+                    
+                    case 0: 
+                        if(n->jump.labelLine < 0){
+                            printf("GOTO %s (DEF)\n", n->jump.label);
+                        }
+                        else{
+                            printf("GOTO %s (DEF @ <%s>:%d)\n", n->jump.label,name,n->jump.labelLine);
+                        }
+                        break;
+                        
+                    case 1:
+                        printf("CONTINUE\n");
+                        break;
+                    case 2:  printf("BREAK\n");
+                        break;
+                    case 3: 
+                        printf("RETURN:\n");
+                        printAST(n->jump.returnNode, indent+1, head);
+                        break;
+                    case 4:
+                        printf("RETURN\n");
+                        break;
+                    
+                }
+                break;
+            case 26: 
+                printf("SWITCH,EXPR\n");
+                printAST(n->switchNode.expression,indent+1,head);
+                for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                printf("BODY:\n");
+                for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                printf("LIST {\n");
+                printAST(n->switchNode.statement, indent+1, head);
+                for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                printf("}\n");
+                break;
+            case 27:
+                if(n->caseNode.expression == NULL){
+                    printf("DEFAULT\n");
+                    printAST(n->caseNode.statement, indent+1, head);
+                }
+                else{
+                    printf("CASE, EXPR: \n");
+                    printAST(n->caseNode.expression, indent+1, head);
+                    for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                    printf("STATEMENT {\n");
+                    printAST(n->caseNode.statement, indent+1, head);
+                    for (int i = 0; i<indent; i++){
+                                printf("\t");
+                            }
+                    printf("}\n");
+                }
+                
+                break;
             
+        }
+        if(n->next != NULL){
+            printAST(n->next, indent, head);
         }
 }
 
@@ -1988,14 +2440,47 @@ void setupStorage(struct astnode *n, int storageType){
     n->storageType.storageType = storageType;
 }
 
-void setupIterator(struct astnode *n, struct astnode *first, struct astnode *second, struct astnode *third, struct astnode *body){
+void setupIterator(struct astnode *n, struct astnode *first, struct astnode *second, struct astnode *third, struct astnode *body, int type){
     n->nodetype = 22;
+    n->iterator.iterType = type;
     n->iterator.first = first;
     n->iterator.second = second;
     n->iterator.third = third;
     n->iterator.body = body;
 }
 
+void setupIf(struct astnode *n, struct astnode *condition, struct astnode *body, struct astnode *elseNode){
+    n->nodetype = 23;
+    n->ifNode.condition = condition;
+    n->ifNode.body = body;
+    n->ifNode.elseBody = elseNode;
+}
+
+void setupLabel(struct astnode *n, char* name, struct astnode *labeled){
+    n->nodetype = 24;
+    n->label.name = name;
+    n->label.labeled = labeled;
+}
+
+void setupJump(struct astnode *n, int jumpType, char* label, struct astnode *returnNode, int labelLine ){
+    n->nodetype = 25;
+    n->jump.jumpType = jumpType;
+    n->jump.label = label;
+    n->jump.returnNode = returnNode;
+    n->jump.labelLine = labelLine;
+}
+
+void setupSwitch(struct astnode *n, struct astnode *expression, struct astnode *statement){
+    n->nodetype = 26;
+    n->switchNode.expression = expression;
+    n->switchNode.statement = statement;
+}
+
+void setupCase(struct astnode *n, struct astnode *expression, struct astnode *statement){
+    n->nodetype = 27;
+    n->caseNode.expression = expression;
+    n->caseNode.statement = statement;
+}
 
 
 int main(){

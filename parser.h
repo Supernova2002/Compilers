@@ -137,14 +137,44 @@
     };
     struct astnode_iterator{
         enum iterType{
-            iterWhile,
+            iterFor,
             iterDoWhile,
-            iterFor
+            iterWhile
         }iterType;
         struct astnode *first;
         struct astnode *second;
         struct astnode *third;
         struct astnode *body;
+    };
+    struct astnode_if{
+        struct astnode *condition;
+        struct astnode *body;
+        struct astnode *elseBody;
+    };
+    struct astnode_label{
+        char* name;
+        struct astnode *labeled;
+    };
+    struct astnode_jump{
+        enum jump_type{
+            gotoJump,
+            continueJump,
+            breakJump,
+            returnExpJump,
+            returnJump
+        }jumpType;
+        char* label;
+        int labelLine;
+        struct astnode *returnNode;
+    };
+    struct astnode_switchNode{
+        struct astnode *expression;
+        struct astnode *statement;
+        
+    };
+    struct astnode_caseNode{
+        struct astnode *expression;
+        struct astnode *statement;
     };
     struct astnode{
         int nodetype;
@@ -172,7 +202,11 @@
             struct astnode_structDec structDec; //20
             struct astnode_storage storageType; //21
             struct astnode_iterator iterator; //22
-
+            struct astnode_if ifNode;//23
+            struct astnode_label label; //24
+            struct astnode_jump jump;//25
+            struct astnode_switchNode switchNode; //26
+            struct astnode_caseNode caseNode; //27
         };
         struct astnode *next;
     };
@@ -243,7 +277,7 @@ extern int line;
 extern char name[1024];
 //extern struct symbolNode *base;
 
-void printAST(struct astnode *n, int indent);
+void printAST(struct astnode* n, int indent, struct symbolNode *head);
 void setupBinop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
 void setupLogop(struct astnode *n, int operator,struct astnode* left, struct astnode* right);
 void setupNumber(struct astnode *n,struct number number);
@@ -270,5 +304,17 @@ void setupStructDec(struct astnode *n, char* name, char* line);
 void setupStorage(struct astnode *n, int storageType);
 void setupMult(struct astnode *n, struct astnode *left, struct astnode *right);
 
-void setupIterator(struct astnode *n, struct astnode *first, struct astnode *second, struct astnode *third, struct astnode *body);
+void setupIterator(struct astnode *n, struct astnode *first, struct astnode *second, struct astnode *third, struct astnode *body, int type);
+
+void setupIf(struct astnode *n, struct astnode *condition, struct astnode *body, struct astnode *elseNode);
+
+void setupJump(struct astnode *n, int jumpType, char* label, struct astnode *returnNode, int labelLine  );
+
+void setupLabel(struct astnode *n, char* name, struct astnode *labeled);
+
+
+void setupSwitch(struct astnode *n, struct astnode *expression, struct astnode *statement);
+
+void setupCase(struct astnode *n, struct astnode *expression, struct astnode *statement);
+
 #endif
