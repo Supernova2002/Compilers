@@ -25,6 +25,7 @@
     int scopeNum;
     int scopeNum;
     int nameSpaceNum;
+    int isFunction;
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
     const char *stringFromType(int type ){
         static const char *strings[] = { "integer",  "long", "longlong","double","float","charliteral" };
@@ -231,10 +232,8 @@
             return "";   
         }
         else{
-            if(scope == 0 && identType == 0 ){
-                return " with stgclass extern ";
-            }
-            else{
+            
+            
                 switch(storageClass){
                     case 0: return " with stgclass extern ";
                     break;
@@ -245,7 +244,7 @@
                     case 3: return " with stgclass register ";
                     break;
                 }
-            }
+            
         }
     }
     char *getParent(char *parentName){
@@ -373,7 +372,7 @@
 %type <astnode_p> start  statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
 %type <astnode_p> declaration declarator_list declaration_specifiers function_definition declarator compound_statement  direct_declarator struct_or_union_spec struct_declaration_list struct_declaration struct_declarator_list struct_declarator 
 %type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier type_qualifier open_scope  open_struct actually_opening direct_abstract_declarator abstract_declarator storage_class_spec
-%type <astnode_p> labeled_statement selection_statement iteration_statement jump_statement
+%type <astnode_p> labeled_statement selection_statement iteration_statement jump_statement open_function_param
 %type <operator> assop unaryop typename     struct_or_union function_specifier 
 %%
 
@@ -1213,6 +1212,7 @@ decl_or_stmt: declaration { struct symbolNode *s;
                             //int typeStore = 2;
                             if(scopeNum ==0){
                                 localScope = 1;
+                                scopeList[scopeNum]->previousHead = base;
                             }
                             else{
                                 localScope = 2;
@@ -1630,10 +1630,19 @@ expr: assexp
 ;
 
 
-primexp: IDENT { struct astnode *n = malloc(1024);
+primexp: IDENT {
+                if(!isFunction){
+
+  
+                struct symbolNode *varSymbol = findSymbol(scopeList[scopeNum],$1,0);
+                    if(varSymbol == NULL){
+                        exit(0);
+                    }
+                } 
+                struct astnode *n = malloc(1024);
                  setupIdent(n,$1);
                  $$ = n;
-
+                isFunction = 0;
                 }    
     | NUMBER   {struct astnode *n = malloc(1024);
                          setupNumber(n,$1);
@@ -1660,7 +1669,7 @@ postexp:  primexp
                                 $$= n;
 
                             }
-    | postexp '(' argexplist ')'    {   struct astnode *n = malloc(1024);
+    | open_function_param argexplist ')'    {   struct astnode *n   = malloc(1024);
                                         struct symbolNode *s;
                                         struct symbolNode *varSymbol = findSymbol(lastSymbol[0]->head,$1->ident.ident,0);
                                         if(varSymbol == NULL){
@@ -1668,7 +1677,7 @@ postexp:  primexp
                                             lastSymbol[0]= insertSymbol(lastSymbol[0]->head, s);
                                         }
                                         
-                                        setupFunc(n,$1,$3);
+                                        setupFunc(n,$1,$2);
                                         
                                         $$ = n;
                                         }
@@ -1695,6 +1704,10 @@ postexp:  primexp
 
 
 ;
+open_function_param: postexp '(' {  isFunction = 1;
+                                    $$ = $1;
+                            }
+
 argexplist : assexp     { struct astnode *n = malloc(1024);
                             setupFuncarg(n,$1,n);
                             n->funcarg.head = n;
@@ -1946,6 +1959,7 @@ constexp: condexp
 %%
 void printAST(struct astnode* n, int indent, struct symbolNode *head){
         char temp[1000];
+        struct symbolNode *varSymbol;
         strcpy(temp, "");
         for (int i = 0; i<indent; i++){
             printf("\t");
@@ -1979,7 +1993,7 @@ void printAST(struct astnode* n, int indent, struct symbolNode *head){
                 }
                 break;
             case 2:
-                struct symbolNode *varSymbol = findSymbol(head,n->ident.ident,0);
+                varSymbol = findSymbol(head,n->ident.ident,0);
                 if(varSymbol == NULL){
                     printf("variable %s\n", n->ident.ident);
                 }
@@ -2496,6 +2510,7 @@ int main(){
     scopeNum = -1;
     scopeNum = -1;
     nameSpaceNum = 0;
+    isFunction = 0;
     yyparse();
 
 
