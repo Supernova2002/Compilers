@@ -272,6 +272,14 @@
         int structCompleteFlag; // 0 if struct incomplete, 1 if complete, not touched if neither of those
         int nameSpace;
     };
+
+    struct quad{
+        char *target;
+        char *opcode;
+        char *left;
+        char *right;
+        struct quad *nextQuad;
+    };
    
 extern int line;
 extern char name[1024];
@@ -316,5 +324,28 @@ void setupLabel(struct astnode *n, char* name, struct astnode *labeled);
 void setupSwitch(struct astnode *n, struct astnode *expression, struct astnode *statement);
 
 void setupCase(struct astnode *n, struct astnode *expression, struct astnode *statement);
+
+char *gen_rvalue(struct astnode *node, char *target);
+
+void emit(char *opcode, char *left, char *right, char *target);
+
+char *new_temp();
+
+char *getOpcode(struct astnode *node);
+
+char *gen_lvalue(struct astnode *node, int *mode);
+
+
+char *gen_assign(struct astnode *node);
+
+void gen_quad(struct astnode *node);
+
+
+struct quad *setup_quad(char *target, char *opcode, char *left, char *right);
+
+void insertQuad(struct quad *quad, struct quad *newQuad);
+
+
+char *getSize(char *type);
 
 #endif

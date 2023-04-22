@@ -18,6 +18,7 @@
     struct symbolNode *base;
     struct symbolNode *last;
     struct symbolNode *funcHead;
+    struct quad *firstQuad;
     struct symbolNode *scopeList[1024];
     struct symbolNode *lastSymbol[1024];
     struct symbolNode *scopeList[1024];
@@ -26,7 +27,9 @@
     int scopeNum;
     int nameSpaceNum;
     int isFunction;
+    int tempVarCountNum; //number of temporary variable for quads list
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
+    
     const char *stringFromType(int type ){
         static const char *strings[] = { "integer",  "long", "longlong","double","float","charliteral" };
         if(type <2){
@@ -676,6 +679,8 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                 }
                                                                                 lastSymbol[scopeNum+2] = NULL;
                                                                                 printAST(exprChain,0,s->subHead);
+                                                                                
+                                                                                gen_quad(exprChain);
                                                                                 /*while(exprChain != NULL){
                                                                                     printAST(exprChain,0,lastSymbol[scopeNum+1]->subHead);
                                                                                     exprChain = exprChain->next;
@@ -1197,6 +1202,13 @@ open_scope: '{' {   int test = line;
                     
                     sprintf(buffer, "%d", line);
                     setupIdent(n, buffer);
+                    if(scopeNum == 0){
+                        scopeList[scopeNum]->previousHead = base;
+                    }
+                    else{
+                        scopeList[scopeNum]->previousHead = scopeList[scopeNum-1]->head;
+                                scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
+                    }
                     $$ = n;
                     }
 ;
@@ -1212,12 +1224,11 @@ decl_or_stmt: declaration { struct symbolNode *s;
                             //int typeStore = 2;
                             if(scopeNum ==0){
                                 localScope = 1;
-                                scopeList[scopeNum]->previousHead = base;
+                                
                             }
                             else{
                                 localScope = 2;
-                                scopeList[scopeNum]->previousHead = scopeList[scopeNum-1]->head;
-                                scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
+                                
                             } 
                             while(n != NULL){
                                 switch(n->nodetype){
@@ -2496,11 +2507,234 @@ void setupCase(struct astnode *n, struct astnode *expression, struct astnode *st
     n->caseNode.statement = statement;
 }
 
+char *gen_rvalue(struct astnode *node, char *target){
+    char *buffer = malloc(100);
+    //target is the destination astnode, so if it's NULL it's an intermediate expression
+    if(node->nodetype == 2 ){
+        return node->ident.ident;
+    }
+    if(node->nodetype == 1){
+        
+        sprintf(buffer, "%d", node->num.number);
+        
+        return buffer;
+    }
+    if(node->nodetype == 0){
+        char *left = gen_rvalue(node->binop.left,NULL);
+        char *right = gen_rvalue(node->binop.right,NULL);
+        if(!target){
+            target = new_temp();
+        }
+        emit(getOpcode(node), left, right, target);
+        return target;
+    }
+    if(node->nodetype == 9){
+        if(node->general.genType == 0){
+            if(node->general.next->nodetype == 0){
+                char *temp = new_temp();
+                //get the symbol corresponding to the name of the array, then get type from that, and then perform needed operations
+                struct symbolNode *localSymbol = findSymbol(scopeList[0],node->general.next->binop.left->ident.ident , 0);
+                if(localSymbol && localSymbol->member != NULL && localSymbol->member->nodetype == 17){
+                    
+                    char *size = getSize(localSymbol->member->array.type);
+                    emit("LEA",node->general.next->binop.left->ident.ident, NULL, temp);
+                    char *offset = malloc(1024);
+                    sprintf(offset, "%lld", node->general.next->binop.right->num.number);
+                    char *secondTemp = new_temp();
+                    emit("MUL",offset, size, secondTemp);
+                    char *thirdTemp = new_temp();
+                    emit("ADD", node->general.next->binop.left->ident.ident, secondTemp, thirdTemp);
+                    return secondTemp;
+                }
+                
+                
+                
+                
+            }
+            else{
+                char *addr = gen_rvalue(node->general.next, NULL);
+                if(!target){
+                    target = new_temp();
+                }
+                emit("LOAD", addr, NULL, target);
+            }
+            
+        }
+        return target;
+    }
+   
+    
+}
+
+void gen_quad(struct astnode *node){
+    if(node->nodetype == 6){
+        gen_assign(node);
+    }
+    else{
+        gen_rvalue(node, NULL);
+    }
+    if(node->next != NULL){
+        gen_quad(node->next);
+    }
+}
+
+char *getSize(char *type){
+    char *intCheck = strstr(type, "int");
+    if(intCheck){
+        return "4";
+    }
+    char *charCheck = strstr(type, "char");
+    if(charCheck){
+        return "1";
+    }
+    char *longCheck = strstr(type, "long");
+    if(longCheck){
+        return "8";
+    }
+    return "0";
+    
+}
+
+char *gen_assign(struct astnode *node){
+    int dstmode = -1;
+    char *temp = malloc(1024);
+    char *dst = gen_lvalue(node->assop.left,&dstmode);
+    if(dstmode == -1){
+        exit(0);
+    }
+    if(dstmode == 1){
+        if(node->assop.assType == '='){
+           temp = gen_rvalue(node->assop.right,dst);
+           if(temp != dst){
+                emit("LOAD",temp,NULL,dst);
+            }
+           
+        }
+        else{
+            
+            temp = gen_rvalue(node->assop.right,NULL);
+            
+        }
+        
+        if(node->assop.assType != '='){
+            char *newTemp = new_temp();
+            switch(node->assop.assType){
+                case TIMESEQ: emit("MUL",temp,dst,newTemp); break;
+                case DIVEQ: emit("DIV", temp, dst, newTemp); break;
+                case MODEQ: emit("MOD", temp, dst, newTemp); break;
+                case PLUSEQ: emit("ADD", temp, dst, newTemp); break;
+                case MINUSEQ: emit("SUB", temp, dst, newTemp); break;
+            }
+            temp = newTemp;
+            emit("MOV", temp, NULL,dst);
+        }
+        
+      /*  if(node->assop.right->nodetype == 1 || node->assop.right->nodetype == 2){
+            emit("STORE", temp, NULL,dst);
+        }*/
+        
+    }
+    else{
+        char *t1 = gen_rvalue(node->assop.right, NULL);
+        
+        emit("STORE",t1,dst,NULL);
+    }
+    
+    
+}
+
+
+char *gen_lvalue(struct astnode *node, int *mode){
+    if(node->nodetype == 2){
+        *mode = 1;
+        return node->ident.ident;
+    }
+    if(node->nodetype == 1){
+        return NULL;
+    }
+    if(node->nodetype == 9){
+        if(node->general.genType == 0){
+            *mode = 0;
+            if(node->general.next->nodetype == 0){
+                return gen_rvalue(node, NULL);
+            }
+            else{
+                return gen_rvalue(node->general.next, NULL);
+            }
+            
+        }
+    }
+}
+
+char *new_temp(){
+    
+    char *temp = malloc(10);
+    sprintf(temp, "T%d", tempVarCountNum);
+    tempVarCountNum = tempVarCountNum + 1;
+    return temp;
+    //do I make it an assignment operator? Seems like it would make the most sense
+}
+
+void emit(char *opcode, char *left, char *right, char *target){
+    if(!right){
+        right = malloc(1024);
+        sprintf(right, "");
+    }
+    if(!left){
+        left = malloc(1024);
+        sprintf(left, "");
+    }
+    if(!target){
+        printf("\t%s %s %s\n",opcode,left, right );
+    }
+    else{
+        printf("%s= \t %s %s %s\n", target,opcode,left, right );
+    }
+    struct quad *newQuad= setup_quad(target, opcode, left, right);
+    if(firstQuad == NULL){
+        firstQuad = newQuad;
+    }
+    else{
+        insertQuad(firstQuad, newQuad);
+    }
+    
+    
+
+}
+
+char *getOpcode(struct astnode *node){
+    if(node->nodetype == 0){
+        switch(node->binop.operator){
+            case '+' : return "ADD";break;
+            case '-' : return "SUB";break;
+            case '*' : return "MUL";break;
+            case '/' : return "DIV";break;
+        }
+    }
+}
+
+struct quad *setup_quad(char *target, char *opcode, char *left, char *right){
+    struct quad *newQuad = malloc(sizeof(struct quad));
+    newQuad->target = target;
+    newQuad->opcode = opcode;
+    newQuad->left = left;
+    newQuad->right =  right;
+    return newQuad;
+}
+
+void insertQuad(struct quad *quad, struct quad *newQuad){
+    while(quad->nextQuad != NULL){
+        quad = quad->nextQuad;
+    }
+    quad->nextQuad = newQuad;
+}
+
 
 int main(){
     int t;
     
     base = generateSymbol(0,1,0,0,"","",name,-1,NULL, base,0, 0, 4);
+    firstQuad = NULL;
     lastSymbol[0] = base;
    // generateSymbol(int decLine, int scopeStart, int scope, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head)
     funcHead = NULL;
@@ -2511,6 +2745,7 @@ int main(){
     scopeNum = -1;
     nameSpaceNum = 0;
     isFunction = 0;
+    tempVarCountNum = 1;
     yyparse();
 
 
