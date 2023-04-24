@@ -109,6 +109,7 @@
         int size;
         char* name;
         int storageClass;
+        struct astnode *nextDimension;
     };
     struct astnode_funcDec{
         char* type;
@@ -347,5 +348,10 @@ void insertQuad(struct quad *quad, struct quad *newQuad);
 
 
 char *getSize(char *type);
+
+
+char *new_bb();
+
+void gen_if(struct astnode *if_node);
 
 #endif

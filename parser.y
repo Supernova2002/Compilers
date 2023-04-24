@@ -18,16 +18,25 @@
     struct symbolNode *base;
     struct symbolNode *last;
     struct symbolNode *funcHead;
+    char *lastOpcode;
+    char *lastSize;
     struct quad *firstQuad;
     struct symbolNode *scopeList[1024];
     struct symbolNode *lastSymbol[1024];
     struct symbolNode *scopeList[1024];
+    struct quad *quadList[1024];
     int lastType;
+    struct astnode *lastDim;
+    struct astnode *rightOp;
+    char *cur_bb;
+    int numDim;
     int scopeNum;
     int scopeNum;
     int nameSpaceNum;
     int isFunction;
+    int isDeref;
     int tempVarCountNum; //number of temporary variable for quads list
+    int branchNum; //number of branches 
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
     
     const char *stringFromType(int type ){
@@ -214,7 +223,14 @@
                     printType(member->pointer.member);
                 }
                 break;
-            case 17: printf("\tarray of %d elements of type\n\t %s\t\n", member->array.size, member->array.type );
+            case 17: 
+                if(member->array.nextDimension != NULL){
+                    printf("\tarray of %d elements of type\n", member->array.size );
+                    printType(member->array.nextDimension);
+                }
+                else{
+                    printf("\tarray of %d elements of type\n\t %s\t\n", member->array.size, member->array.type );
+                }
                 break;
             case 18: //printf("\t%s returning unknown arguments", member->funcDec.type);
                 if(member->funcDec.decNode->nodetype == 2){
@@ -375,8 +391,8 @@
 %type <astnode_p> start  statement expr primexp postexp castexp unexp multexp addexp shiftexp relexp eqexp andexp exorexp inorexp logandexp logorexp condexp assexp constexp argexplist
 %type <astnode_p> declaration declarator_list declaration_specifiers function_definition declarator compound_statement  direct_declarator struct_or_union_spec struct_declaration_list struct_declaration struct_declarator_list struct_declarator 
 %type <astnode_p> spec_qual_list pointer decl_or_stmt_list decl_or_stmt identifier_list type_specifier type_qualifier open_scope  open_struct actually_opening direct_abstract_declarator abstract_declarator storage_class_spec
-%type <astnode_p> labeled_statement selection_statement iteration_statement jump_statement open_function_param
-%type <operator> assop unaryop typename     struct_or_union function_specifier 
+%type <astnode_p> labeled_statement selection_statement iteration_statement jump_statement open_function_param typename
+%type <operator> assop unaryop      struct_or_union function_specifier 
 %%
 
 /*start: statement
@@ -512,7 +528,12 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                                         switch(n->pointer.member->nodetype){
                                                                             case 2: n->pointer.name = n->pointer.member->ident.ident;
                                                                                 break;
-                                                                            case 17: n->pointer.member->array.type = strdup(fullType); 
+                                                                            case 17: //n->pointer.member->array.type = strdup(fullType); 
+                                                                                    struct astnode *tempArray = n->pointer.member;
+                                                                                    while(tempArray != NULL){
+                                                                                        tempArray->array.type = strdup(fullType);
+                                                                                        tempArray = tempArray->array.nextDimension;
+                                                                                    }
                                                                                     n->pointer.name = n->pointer.member->array.name;
                                                                                     break;
                                                                             case 18: n->pointer.member->funcDec.type = strdup(fullType);
@@ -522,8 +543,14 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                                         //s = generateSymbol(-1, 0, 0,0, n->pointer.type, n->pointer.member->ident.ident,"tempName.c",16, n, base);
                                                                         //insertCheck = insertSymbol(base, s);
                                                                         break;
-                                                                    case 17: n->array.type = strdup(fullType); 
-                                                                            n->array.storageClass = storeType;
+                                                                    case 17:
+                                                                        struct astnode *tempArray = n;
+                                                                        while(tempArray != NULL){
+                                                                            tempArray->array.type = strdup(fullType); 
+                                                                            tempArray->array.storageClass = storeType;
+                                                                            tempArray = tempArray->array.nextDimension;
+                                                                        }
+                                                                             
                                                                         //s = generateSymbol(-1, 0, 0,0, n->array.type, n->array.name,"tempName.c",17, n, base);
                                                                         //insertCheck = insertSymbol(base, s);
                                                                     break;
@@ -1046,8 +1073,14 @@ struct_declarator: declarator
 ;
 declarator:  pointer direct_declarator { struct astnode *n = malloc(sizeof(struct astnode));
                                         struct astnode *temp = $2;
+                                        if(temp->nodetype == 17){
+                                            
+                                        }
+                                        else{
                                             setupPointer(n, temp);
                                             n->pointer.member = temp;
+                                        }
+                                            
                                            // lastType = n->nodetype;
                                             $$ = n;
                                             }
@@ -1066,8 +1099,20 @@ direct_declarator: IDENT { struct astnode *n = malloc(sizeof(struct astnode));
 
                                             }
     | direct_declarator '[' assexp ']' { struct astnode *n = malloc(sizeof(struct astnode));
-                                            setupArray(n, $3->num.number, $1->ident.ident);
-                                            $$ = n;
+                                            if($1->nodetype ==17){
+                                                struct astnode *previous = $1;
+                                                while(previous->array.nextDimension != NULL){
+                                                    previous = previous->array.nextDimension;
+                                                }
+                                                setupArray(n, $3->num.number, $1->array.name);
+                                                previous->array.nextDimension = n;
+                                                $$ = previous;
+                                            }
+                                            else{
+                                               setupArray(n, $3->num.number, $1->ident.ident); 
+                                               $$ = n;
+                                            }
+                                            
 
                                             }
     | direct_declarator '[' ']' { struct astnode *n = malloc(sizeof(struct astnode));
@@ -1672,7 +1717,7 @@ primexp: IDENT {
 ;
 postexp:  primexp
     | postexp '[' expr ']' {  struct astnode *sub = malloc(1024);
-                                //Need to add in a dereference AST node above the binop.
+                                
                                 setupBinop(sub,'+',$1,$3);
                                 struct astnode *n = malloc(1024);
                                 setupGeneral(n, 0, sub);
@@ -1793,9 +1838,10 @@ unexp: postexp
                         $$ = n;
                         }
     | SIZEOF '('typename')' {struct astnode *n = malloc(1024);
+                                struct astnode *typeView = $3;
                                 struct astnode *type = malloc(1024);
-                                setupType(type,$3,NULL);
-                            setupGeneral(n,2,type);
+                                //setupType(type,$3,NULL);
+                            setupGeneral(n,2,typeView);
                             $$ = n;
                             }
 ;
@@ -2139,6 +2185,12 @@ void printAST(struct astnode* n, int indent, struct symbolNode *head){
 
 
 
+            case 14:
+                sprintf(temp, stringFromDecType(n->decType.type));
+                printf("%s\n",temp);
+                if(n->decType.nextType != NULL){
+                    printAST(n->decType.nextType, indent+1,head);
+                } 
                 break;
             case 22: 
                 printf("LIST {\n");
@@ -2422,6 +2474,7 @@ void setupArray(struct astnode *n, int size, char* name){
     n->array.size = size;
     n->array.name = name;
     n->array.type = "";
+    n->array.nextDimension = NULL;
 }
 void setupFuncDec(struct astnode *n, struct astnode *node){
     n->nodetype = 18;
@@ -2511,7 +2564,41 @@ char *gen_rvalue(struct astnode *node, char *target){
     char *buffer = malloc(100);
     //target is the destination astnode, so if it's NULL it's an intermediate expression
     if(node->nodetype == 2 ){
-        return node->ident.ident;
+        struct symbolNode *localSymbol = findSymbol(scopeList[0],node->ident.ident , 0);
+        
+        if(localSymbol && localSymbol->member != NULL && localSymbol->member->nodetype == 16 && !isDeref){
+            lastSize = getSize(localSymbol->type);
+            if(!target){
+                target = new_temp();
+            }
+            
+            emit("LEA", node->ident.ident, NULL, target);
+            
+            //printf("POINTER\n");
+            return target;
+        }
+        else if(localSymbol && localSymbol->member && localSymbol->member->nodetype == 17){
+            lastSize = getSize(localSymbol->type);
+            if(!target){//char *temp = new_temp();
+                target = new_temp();
+            }
+            
+            emit("LEA", node->ident.ident, NULL, target);
+            //then if numDim>1, call gen_rvalue on localSymbol->member->nextDimension to get new offset, then need to figure
+            //out how to chain that up to the previous addition (might just store that value in a global and do the addition here)
+            if(numDim > 1 && lastDim){
+
+                char *newTemp = gen_rvalue(localSymbol->member->array.nextDimension,NULL);
+                char *newerTemp = new_temp();
+                emit("ADD",newTemp,target,newerTemp);
+                target = newerTemp;
+            }
+            return target;
+        }
+        else{
+            return node->ident.ident;
+        }
+        
     }
     if(node->nodetype == 1){
         
@@ -2519,9 +2606,57 @@ char *gen_rvalue(struct astnode *node, char *target){
         
         return buffer;
     }
+    if(node->nodetype == 17){
+        //for 2d arrays
+        if(!target){
+            target = new_temp();
+        }
+        int typeSize = atoi(getSize(node->array.type));
+        int totalSize = typeSize * node->array.size;
+        char *bufferSize = malloc(1024);
+        sprintf(bufferSize,"%d",totalSize);
+        if(rightOp->nodetype == 1){
+            char *numBuffer = malloc(1024);
+            sprintf(numBuffer,"%d",rightOp->num.number);
+            emit("MUL",numBuffer,bufferSize,target);
+        }
+        if(rightOp->nodetype == 2){
+            emit("MUL",node->ident.ident,bufferSize,target);
+        }
+        return target;
+        
+
+    }
     if(node->nodetype == 0){
+        rightOp = node->binop.right;
+        sprintf(lastSize,"1");
+        int isLeft = 0; //checks whether pointer is left operand or not
         char *left = gen_rvalue(node->binop.left,NULL);
-        char *right = gen_rvalue(node->binop.right,NULL);
+        
+        if(strcmp(lastSize, "1") != 0){
+            isLeft = 1;
+        }
+        char *right = malloc(1024);
+        if(lastDim->nodetype != -1){
+            right = gen_rvalue(lastDim,NULL);
+            //printf("2d array\n");
+        }
+        else{
+            right = gen_rvalue(node->binop.right,NULL);
+        }
+        
+        if(isLeft){
+            char *multTemp = new_temp();
+            emit("MUL", lastSize, right, multTemp);
+            right = multTemp;
+        }
+        else{
+            if(strcmp(lastSize, "1") != 0){
+                char *multTemp = new_temp();
+                emit("MUL", lastSize, right, multTemp);
+                left = multTemp;
+            }
+        }
         if(!target){
             target = new_temp();
         }
@@ -2531,10 +2666,28 @@ char *gen_rvalue(struct astnode *node, char *target){
     if(node->nodetype == 9){
         if(node->general.genType == 0){
             if(node->general.next->nodetype == 0){
-                char *temp = new_temp();
+                //char *temp = new_temp();
+                
+                if(node->general.next->binop.left->nodetype == 9){
+                    lastDim = node->general.next->binop.right;
+                    numDim++;
+                    target = gen_rvalue(node->general.next->binop.left,NULL);
+                    return target;
+                }
+                else{
+                    target = gen_rvalue(node->general.next,NULL);
+                    return target;
+                }
+                
+                //for 2d arrays I need to make it so if more than one binop, it cuts off the case where the left of the binop is 
+                //just an ident
+
+
                 //get the symbol corresponding to the name of the array, then get type from that, and then perform needed operations
-                struct symbolNode *localSymbol = findSymbol(scopeList[0],node->general.next->binop.left->ident.ident , 0);
+                /*struct symbolNode *localSymbol = findSymbol(scopeList[0],node->general.next->binop.left->ident.ident , 0);
                 if(localSymbol && localSymbol->member != NULL && localSymbol->member->nodetype == 17){
+
+
                     
                     char *size = getSize(localSymbol->member->array.type);
                     emit("LEA",node->general.next->binop.left->ident.ident, NULL, temp);
@@ -2543,20 +2696,19 @@ char *gen_rvalue(struct astnode *node, char *target){
                     char *secondTemp = new_temp();
                     emit("MUL",offset, size, secondTemp);
                     char *thirdTemp = new_temp();
-                    emit("ADD", node->general.next->binop.left->ident.ident, secondTemp, thirdTemp);
-                    return secondTemp;
-                }
-                
-                
-                
-                
+                    emit("ADD", temp, secondTemp, thirdTemp);
+                    return thirdTemp;
+                }  */
             }
             else{
+                isDeref = 1;
                 char *addr = gen_rvalue(node->general.next, NULL);
+                isDeref = 0;
                 if(!target){
                     target = new_temp();
                 }
                 emit("LOAD", addr, NULL, target);
+                return target;
             }
             
         }
@@ -2567,6 +2719,9 @@ char *gen_rvalue(struct astnode *node, char *target){
 }
 
 void gen_quad(struct astnode *node){
+    if(node->nodetype == 17){
+        gen_if(node)
+    }
     if(node->nodetype == 6){
         gen_assign(node);
     }
@@ -2579,23 +2734,46 @@ void gen_quad(struct astnode *node){
 }
 
 char *getSize(char *type){
+    int placeholder = 0;
+    char *tempString = malloc(1024);
     char *intCheck = strstr(type, "int");
     if(intCheck){
-        return "4";
+        //return "4";
+        if(placeholder == 0){
+            placeholder = 1;
+        }
+        placeholder *=4;
     }
     char *charCheck = strstr(type, "char");
     if(charCheck){
-        return "1";
+        if(placeholder == 0){
+            placeholder = 1;
+        }
+        //return "1";
+        
     }
     char *longCheck = strstr(type, "long");
     if(longCheck){
-        return "8";
+       // return "8";
+       if(placeholder == 0){
+            placeholder = 1;
+        }
+        placeholder *=8;
     }
-    return "0";
+    if(placeholder == 0){
+        return "0";
+    }
+    else{
+        sprintf(tempString, "%d", placeholder);
+        return tempString;
+    }
+    
+    
     
 }
 
 char *gen_assign(struct astnode *node){
+    numDim = 1;
     int dstmode = -1;
     char *temp = malloc(1024);
     char *dst = gen_lvalue(node->assop.left,&dstmode);
@@ -2606,8 +2784,10 @@ char *gen_assign(struct astnode *node){
         if(node->assop.assType == '='){
            temp = gen_rvalue(node->assop.right,dst);
            if(temp != dst){
+                
                 emit("LOAD",temp,NULL,dst);
             }
+            
            
         }
         else{
@@ -2675,7 +2855,16 @@ char *new_temp(){
     //do I make it an assignment operator? Seems like it would make the most sense
 }
 
+char *new_bb(){
+    char *temp = malloc(10);
+    sprintf(temp, "BB%d", branchNum);
+    branchNum++;
+    return temp;
+}
+
+
 void emit(char *opcode, char *left, char *right, char *target){
+    sprintf(lastOpcode,"%s",opcode);
     if(!right){
         right = malloc(1024);
         sprintf(right, "");
@@ -2729,6 +2918,28 @@ void insertQuad(struct quad *quad, struct quad *newQuad){
     quad->nextQuad = newQuad;
 }
 
+//handles generating the basic blocks
+void gen_if(struct astnode *if_node){
+    char *bt = new_bb();
+    char *bf = new_bb();
+    char *bn = malloc(1024);
+    if(if_node->ifNode.elseStatement){
+        bn = new_bb();
+    }
+    else{
+        bn = bf;
+    }
+    //this 
+    gen_condexpr(if_node->ifNode.condition,bt,bf);
+    cur_bb = bt;
+
+
+}
+
+
+void gen_condexpr(struct astnode *condition, char *bt, char *bf){
+    
+}
 
 int main(){
     int t;
@@ -2736,6 +2947,9 @@ int main(){
     base = generateSymbol(0,1,0,0,"","",name,-1,NULL, base,0, 0, 4);
     firstQuad = NULL;
     lastSymbol[0] = base;
+    lastOpcode = malloc(1024);
+    lastSize = malloc(1024);
+    sprintf(lastSize,"1");
    // generateSymbol(int decLine, int scopeStart, int scope, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head)
     funcHead = NULL;
     last = NULL;
@@ -2745,7 +2959,15 @@ int main(){
     scopeNum = -1;
     nameSpaceNum = 0;
     isFunction = 0;
+    isDeref = 0;
     tempVarCountNum = 1;
+    numDim = 1;
+    branchNum = 0;
+    lastDim = malloc(sizeof(struct astnode));
+    lastDim->nodetype = -1;
+    rightOp = malloc(sizeof(struct astnode));
+    rightOp->nodetype = -1;
+    cur_bb = malloc(1024);
     yyparse();
 
 
