@@ -528,13 +528,23 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                                         switch(n->pointer.member->nodetype){
                                                                             case 2: n->pointer.name = n->pointer.member->ident.ident;
                                                                                 break;
-                                                                            case 17: //n->pointer.member->array.type = strdup(fullType); 
+                                                                            case 17: //n->pointer.member->array.type = strdup(fullType);
+                                                                                    struct astnode *tempNext = n->next; 
+                                                                                    
                                                                                     struct astnode *tempArray = n->pointer.member;
                                                                                     while(tempArray != NULL){
-                                                                                        tempArray->array.type = strdup(fullType);
+                                                                                        char *pointerTemp = malloc(1024);
+                                                                                        sprintf(pointerTemp,"pointer to %s", strdup(fullType));
+                                                                                       // strcat(tempArray->array.type, strdup(fullType))
+                                                                                        tempArray->array.storageClass = storeType;
+                                                                                        tempArray->array.type = strdup(pointerTemp);
                                                                                         tempArray = tempArray->array.nextDimension;
                                                                                     }
-                                                                                    n->pointer.name = n->pointer.member->array.name;
+                                                                                    
+                                                                                    n = n->pointer.member;
+                                                                                    n->next = tempNext;
+                                                                                    bigN = n;
+                                                                                    //n->pointer.name = n->pointer.member->array.name;
                                                                                     break;
                                                                             case 18: n->pointer.member->funcDec.type = strdup(fullType);
                                                                                     n->pointer.name = n->pointer.member->funcDec.name;
@@ -1073,13 +1083,11 @@ struct_declarator: declarator
 ;
 declarator:  pointer direct_declarator { struct astnode *n = malloc(sizeof(struct astnode));
                                         struct astnode *temp = $2;
-                                        if(temp->nodetype == 17){
-                                            
-                                        }
-                                        else{
+                                        
+                                    
                                             setupPointer(n, temp);
                                             n->pointer.member = temp;
-                                        }
+                                        
                                             
                                            // lastType = n->nodetype;
                                             $$ = n;
@@ -2720,7 +2728,7 @@ char *gen_rvalue(struct astnode *node, char *target){
 
 void gen_quad(struct astnode *node){
     if(node->nodetype == 17){
-        gen_if(node)
+        gen_if(node);
     }
     if(node->nodetype == 6){
         gen_assign(node);
@@ -2923,7 +2931,7 @@ void gen_if(struct astnode *if_node){
     char *bt = new_bb();
     char *bf = new_bb();
     char *bn = malloc(1024);
-    if(if_node->ifNode.elseStatement){
+    if(if_node->ifNode.elseBody){
         bn = new_bb();
     }
     else{
