@@ -350,8 +350,13 @@ void insertQuad(struct quad *quad, struct quad *newQuad);
 char *getSize(char *type);
 
 
-char *new_bb();
+int new_bb();
 
 void gen_if(struct astnode *if_node);
+
+void gen_condexpr(struct astnode *condition, char *bt, char *bf);
+
+void gen_while(struct astnode *while_node);
+
 
 #endif
