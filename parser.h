@@ -279,6 +279,9 @@
         char *opcode;
         char *left;
         char *right;
+        int leftScope;
+        int rightScope;
+        int targetScope;
         struct quad *nextQuad;
     };
    
@@ -342,7 +345,7 @@ char *gen_assign(struct astnode *node);
 void gen_quad(struct astnode *node);
 
 
-struct quad *setup_quad(char *target, char *opcode, char *left, char *right);
+struct quad *setup_quad(char *target, char *opcode, char *left, char *right, int leftScope, int rightScope, int targetScope);
 
 void insertQuad(struct quad *quad, struct quad *newQuad);
 
@@ -358,5 +361,8 @@ void gen_condexpr(struct astnode *condition, char *bt, char *bf);
 
 void gen_while(struct astnode *while_node);
 
+void print_quads(struct quad **blocks, int numBuckets, int *numList);
+
+int checkBB(int *bbList,int bbToCheck);
 
 #endif

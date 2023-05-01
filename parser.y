@@ -26,19 +26,23 @@
     struct symbolNode *scopeList[1024];
     struct symbolNode *allScopes[1024];
     struct quad *blockList[1024];
+    int blockNums[1024];
     int lastType;
     struct astnode *lastDim;
     struct astnode *rightOp;
     int cur_bb;
+    int bbToInsert;
     int start_loop;
     int end_loop;
     int numDim;
+    int lastScopeType;
     int scopeNum;
     int scopeTotal;
     int quadScopeCount;
     int nameSpaceNum;
     int isFunction;
     int isDeref;
+    int isPointer;
     int tempVarCountNum; //number of temporary variable for quads list
     int branchNum; //number of branches 
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
@@ -721,7 +725,12 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                 lastSymbol[scopeNum+2] = NULL;
                                                                                 printAST(exprChain,0,s->subHead);
                                                                                 
+                                                                                branchNum++;
+                                                                                cur_bb++;
+                                                                                bbToInsert++;
                                                                                 gen_quad(exprChain);
+                                                                                emit("RET",NULL,NULL,NULL);
+                                                                                print_quads(blockList,branchNum,blockNums);
                                                                                 //printf("GET ME THE FUCK OUT OF HERE\n");
                                                                                 /*while(exprChain != NULL){
                                                                                     printAST(exprChain,0,lastSymbol[scopeNum+1]->subHead);
@@ -1110,7 +1119,7 @@ direct_declarator: IDENT { struct astnode *n = malloc(sizeof(struct astnode));
                                         setupIdent(n,$1);
                                         $$ = n;
                            }
-    | '(' declarator ')'
+    | '(' declarator ')' {$$ = $2; }
     | direct_declarator '[' STATIC assexp ']' { struct astnode *n = malloc(sizeof(struct astnode));
                                             setupArray(n, $4->num.number, $1->ident.ident);
                                             $$ = n;
@@ -2591,7 +2600,11 @@ char *gen_rvalue(struct astnode *node, char *target){
     //target is the destination astnode, so if it's NULL it's an intermediate expression
     if(node->nodetype == 2 ){
         struct symbolNode *localSymbol = findSymbol(allScopes[quadScopeCount],node->ident.ident , 0);
-        
+        lastScopeType = localSymbol->scope;
+        if(localSymbol && localSymbol->member !=NULL && localSymbol->member->nodetype == 15 && isPointer ){
+            lastSize = getSize(localSymbol->type);
+        }
+
         if(localSymbol && localSymbol->member != NULL && localSymbol->member->nodetype == 16 && !isDeref){
             lastSize = getSize(localSymbol->type);
             if(!target){
@@ -2625,6 +2638,13 @@ char *gen_rvalue(struct astnode *node, char *target){
             return node->ident.ident;
         }
         
+    }
+    if(node->nodetype == 3){
+        if(!target){
+            target = new_temp();
+        }
+        emit 
+        return node->string.string;
     }
     if(node->nodetype == 1){
         
@@ -2673,14 +2693,14 @@ char *gen_rvalue(struct astnode *node, char *target){
         
         if(isLeft){
             char *multTemp = new_temp();
-            emit("MUL", lastSize, right, multTemp);
+            emit("MUL", strdup(lastSize), right, multTemp);
             sprintf(lastSize,"");
             right = multTemp;
         }
         else{
             if(strcmp(lastSize, "1") != 0){
                 char *multTemp = new_temp();
-                emit("MUL", lastSize, right, multTemp);
+                emit("MUL", strdup(lastSize), right, multTemp);
                 sprintf(lastSize,"");
                 left = multTemp;
             }
@@ -2703,7 +2723,12 @@ char *gen_rvalue(struct astnode *node, char *target){
                     return target;
                 }
                 else{
-                    target = gen_rvalue(node->general.next,NULL); 
+                    char *temp_target = gen_rvalue(node->general.next,NULL); 
+                   // target = gen_rvalue(node->general.next,NULL); 
+                    if(!target){
+                        target = new_temp();
+                    }
+                    emit("LOAD",temp_target,NULL,target);
                     return target;
                 }
                 
@@ -2731,6 +2756,8 @@ char *gen_rvalue(struct astnode *node, char *target){
             else{
                 isDeref = 1;
                 char *addr = gen_rvalue(node->general.next, NULL);
+                
+                
                 isDeref = 0;
                 if(!target){
                     target = new_temp();
@@ -2739,6 +2766,21 @@ char *gen_rvalue(struct astnode *node, char *target){
                 return target;
             }
             
+        }
+        if(node->general.genType == 1){
+            if(node->general.next->nodetype == 2){
+                isPointer = 1;
+            }
+            
+            char *addresse = gen_rvalue(node->general.next,NULL);
+            isPointer = 0;
+            //need to set lastSize here
+
+            if(!target){
+                target = new_temp();
+            }
+            emit("LEA",addresse,NULL,target);
+            return target;
         }
         return target;
     }
@@ -2752,7 +2794,19 @@ char *gen_rvalue(struct astnode *node, char *target){
             sprintf(tempBB,"BB%d",start_loop);
             emit("BR",tempBB,NULL,NULL);
         }
-        
+        if(node->jump.jumpType == 3 || node->jump.jumpType == 4){ //return
+            
+            
+            char *retValue = malloc(1024);
+            if(node->jump.returnNode){
+                retValue = gen_rvalue(node->jump.returnNode,NULL);
+            }
+            else{
+                sprintf(retValue,"");
+            }
+            emit("RET",retValue,NULL,NULL);
+            return target;
+        } 
         
         
     }
@@ -2764,25 +2818,27 @@ char *gen_rvalue(struct astnode *node, char *target){
         struct astnode *arg = malloc(sizeof(struct astnode));
         char *num_arg = malloc(1024);
         if(node->func.args){
+            
             sprintf(num_arg,"%d",node->func.args->funcarg.argCount);
-            arg = node->func.args;
+            arg = node->func.args->funcarg.head;
         }
         else{
             sprintf(num_arg,"");
         }
         emit("ARGBEGIN",num_arg, NULL, NULL);
         
-        int argNum = 1;
+        int argNum = 0;
         char *arg_num = malloc(1024);
-         
+        sprintf(arg_num,"%d",argNum);
         while(arg){
-            
+            argNum++;
             sprintf(arg_num,"%d",argNum);
-
-            emit("ARG",arg_num,gen_rvalue(arg->funcarg.current,NULL),NULL);
-            arg = arg->next;
+            char *tempArgValue = gen_rvalue(arg->funcarg.current,NULL);
+            emit("ARG",strdup(arg_num),tempArgValue,NULL);
+            arg = arg->funcarg.next;
+            
         }
-        emit("CALL",gen_rvalue(node->func.name,NULL),NULL,target);
+        emit("CALL",gen_rvalue(node->func.name,NULL),strdup(arg_num),target);
         int callBB = new_bb();
         char *bbName = malloc(1024);
         sprintf(bbName, "BB%d",callBB);
@@ -2793,6 +2849,7 @@ char *gen_rvalue(struct astnode *node, char *target){
     if(node->nodetype == 7){
         if(node->unop.operator == PLUSPLUS){
             char *operand = gen_rvalue(node->unop.operand,NULL);
+            
             emit("ADD",operand,"1",operand);
         }
         if(node->unop.operator == MINUSMINUS){
@@ -2800,15 +2857,41 @@ char *gen_rvalue(struct astnode *node, char *target){
             emit("SUB",operand,"1",operand);
         }
     }
-    if(node->nodetype == 8){
-        
+    if(node->nodetype == 8 || node->nodetype == 5){
+        if(!target){
+            target = new_temp();
+        }
+        int bt = new_bb();
+        char *btName = malloc(1024);
+        sprintf(btName, "BB%d",bt);
+        int bf = new_bb();
+        char *bfName = malloc(1024);
+        sprintf(bfName, "BB%d",bf);
+        int be = new_bb();
+        char *beName = malloc(1024);
+        sprintf(beName, "BB%d",be);
+        gen_condexpr(node, btName,bfName);
+        cur_bb = bt;
+        emit("MOV","1",NULL,target);
+        emit("BR",beName,NULL,NULL);
+        cur_bb = bf;
+        emit("MOV","0",NULL,target);
+        emit("BR",beName,NULL,NULL);
+        cur_bb = be;
+        return target;
+        //gen_localcond(node->compop,btName,bfName);
     }
+   
    
     
 }
 
+
+
+
 void gen_quad(struct astnode *node){
     if(node->nodetype == 23){
+        printf("If statement");
         gen_if(node);
     }
     else if(node->nodetype == 6){
@@ -2825,6 +2908,7 @@ void gen_quad(struct astnode *node){
     if(node->next != NULL){
         gen_quad(node->next);
     }
+    
 }
 
 char *getSize(char *type){
@@ -2879,7 +2963,7 @@ char *gen_assign(struct astnode *node){
            temp = gen_rvalue(node->assop.right,dst);
            if(temp != dst){
                 
-                emit("LOAD",temp,NULL,dst);
+                emit("MOV",temp,NULL,dst);
             }
             
            
@@ -2969,27 +3053,58 @@ void emit(char *opcode, char *left, char *right, char *target){
         left = malloc(1024);
         sprintf(left, "");
     }
-    struct quad *newQuad= setup_quad(target, opcode, left, right);
-    if(blockList[cur_bb] == NULL){
-        printf("BB%d:",cur_bb);
-        blockList[cur_bb] = newQuad;
+    if(!target){
+        target = malloc(1024);
+        sprintf(target,"");
+    }
+    struct symbolNode *leftSymbol = findSymbol(allScopes[quadScopeCount],left , 0);
+    int leftScope=-1;
+    if(leftSymbol){
+        leftScope = leftSymbol->scope;
+    }
+    struct symbolNode *rightSymbol = findSymbol(allScopes[quadScopeCount],right , 0);
+    int rightScope=-1;
+    if(rightSymbol){
+        rightScope = rightSymbol->scope;
+    }
+    struct symbolNode *targetSymbol = findSymbol(allScopes[quadScopeCount],target , 0);
+    int targetScope=-1;
+    if(targetSymbol){
+        targetScope = targetSymbol->scope;
+    }
+    
+    struct quad *newQuad= setup_quad(target, opcode, left, right, leftScope, rightScope, targetScope);
+    //if(blockList[cur_bb] == NULL){
+    //if(blockList[bbToInsert] == NULL){
+    if(!checkBB( blockNums, cur_bb)){  
+        blockList[bbToInsert] = newQuad;
+        blockNums[bbToInsert] = cur_bb;
+        bbToInsert++;
     }
     else{
-        insertQuad(blockList[cur_bb], newQuad);
+        insertQuad(blockList[checkBB( blockNums, cur_bb)], newQuad);
     }
-    if(!target){
+    /*if(!target){
         printf("\t\t%s %s %s\n",opcode,left, right );
     }
     else{
         printf("\t%s= \t %s %s %s\n", target,opcode,left, right );
-    }
+    }*/
     
     
     
     
 
 }
-
+int checkBB(int *bbList,int bbToCheck){
+    int current = bbList[0];
+    for (int i =0;i<bbToInsert; i++){
+        if(bbList[i] == bbToCheck){
+            return i;
+        }
+    }
+    return 0;
+}
 char *getOpcode(struct astnode *node){
     if(node->nodetype == 0){
         switch(node->binop.operator){
@@ -3013,20 +3128,30 @@ char *getOpcode(struct astnode *node){
     
 }
 
-struct quad *setup_quad(char *target, char *opcode, char *left, char *right){
+struct quad *setup_quad(char *target, char *opcode, char *left, char *right, int leftScope, int rightScope, int targetScope){
     struct quad *newQuad = malloc(sizeof(struct quad));
     newQuad->target = target;
     newQuad->opcode = opcode;
     newQuad->left = left;
     newQuad->right =  right;
+    newQuad->leftScope = leftScope;
+    newQuad->rightScope = rightScope;
+    newQuad->targetScope = targetScope;
     return newQuad;
 }
 
 void insertQuad(struct quad *quad, struct quad *newQuad){
-    while(quad->nextQuad != NULL){
-        quad = quad->nextQuad;
+    if(quad){
+        while(quad->nextQuad != NULL){
+            quad = quad->nextQuad;
+        }
+        quad->nextQuad = newQuad;
     }
-    quad->nextQuad = newQuad;
+    else{
+        
+        blockList[cur_bb] = newQuad;
+    }
+    
 }
 
 //handles generating the basic blocks
@@ -3071,11 +3196,11 @@ void gen_while(struct astnode *while_node){
     char *curName = malloc(1024);
     sprintf(curName, "BB%d",cur_bb);
     int bt = new_bb();
-    start_loop = bt;
+    int start_loop = bt;
     char *btName = malloc(1024);
     sprintf(btName, "BB%d",bt);
     int bf = new_bb();
-    end_loop = bf;
+    int end_loop = bf;
     char *bfName = malloc(1024);
     sprintf(bfName, "BB%d",bf);
     gen_condexpr(while_node->iterator.first,btName,bfName);
@@ -3122,6 +3247,38 @@ void gen_condexpr(struct astnode *condition, char *bt, char *bf){
     }
    // branchNum+=2;
 }
+void print_quads(struct quad **blocks, int numBuckets, int *numList){
+    
+    for (int i = 1; i<=numBuckets ;i++){
+        struct quad *currentQuad = blocks[i];
+        printf("BB%d:",numList[i]);
+        while(currentQuad){
+            char *targetPrint = currentQuad->target;
+            char *leftPrint = currentQuad->left;
+            char *rightPrint = currentQuad->right;
+            char *tempScope = malloc(1024);
+            if(currentQuad->leftScope !=-1 && strcmp(currentQuad->left,"") != 0){
+                sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->leftScope));
+                strcat(leftPrint, tempScope );
+            }
+            if(currentQuad->rightScope !=-1  && strcmp(currentQuad->right,"") != 0){
+                sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->rightScope));
+                strcat(rightPrint, tempScope);
+            }
+            if(currentQuad->targetScope !=-1  && strcmp(currentQuad->target,"") != 0 ){
+                sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->targetScope));
+                strcat(targetPrint, tempScope);
+            }
+            if(strcmp(currentQuad->target,"") == 0){
+                printf("\t\t%s %s %s\n",currentQuad->opcode,leftPrint, rightPrint);
+            }
+            else{
+                printf("\t%s= \t %s %s %s\n", targetPrint,currentQuad->opcode,leftPrint,rightPrint);
+            }
+            currentQuad = currentQuad->nextQuad;
+        }
+    }
+}
 
 int main(){
     int t;
@@ -3144,17 +3301,20 @@ int main(){
     nameSpaceNum = 0;
     isFunction = 0;
     isDeref = 0;
+    isPointer = 0;
     tempVarCountNum = 1;
     numDim = 1;
-    branchNum = 1;
-    cur_bb = 1;
+    lastScopeType = -1;
+    branchNum = 0;
+    cur_bb = 0;
     lastDim = malloc(sizeof(struct astnode));
     lastDim->nodetype = -1;
     rightOp = malloc(sizeof(struct astnode));
     rightOp->nodetype = -1;
+    bbToInsert = 0;
     //cur_bb = malloc(1024);
     yyparse();
-
+    //print_quads(blockList,branchNum);
 
 
 }
