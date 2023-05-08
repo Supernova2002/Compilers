@@ -538,7 +538,6 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                                                 break;
                                                                             case 17: //n->pointer.member->array.type = strdup(fullType);
                                                                                     struct astnode *tempNext = n->next; 
-                                                                                    
                                                                                     struct astnode *tempArray = n->pointer.member;
                                                                                     while(tempArray != NULL){
                                                                                         char *pointerTemp = malloc(1024);
@@ -562,6 +561,7 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                                         //insertCheck = insertSymbol(base, s);
                                                                         break;
                                                                     case 17:
+                                                                    
                                                                         struct astnode *tempArray = n;
                                                                         while(tempArray != NULL){
                                                                             tempArray->array.type = strdup(fullType); 
