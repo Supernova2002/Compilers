@@ -18,7 +18,7 @@
     struct symbolNode *base;
     struct symbolNode *last;
     struct symbolNode *funcHead;
-    char *lastOpcode;
+    int lastOpcode;
     char *lastSize;
     struct quad *firstQuad;
     struct symbolNode *scopeList[1024];
@@ -46,7 +46,7 @@
     int tempVarCountNum; //number of temporary variable for quads list
     int branchNum; //number of branches 
     int structOrFunc; //0 if struct, 1 if funct, -1 if neither
-    
+    FILE *fp;
     const char *stringFromType(int type ){
         static const char *strings[] = { "integer",  "long", "longlong","double","float","charliteral" };
         if(type <2){
@@ -361,7 +361,31 @@
         printf("%s", finalPrint);*/
         
     }
-
+    char *getOpcodeString(int opcode){
+        switch(opcode){
+            case opLEA: return "LEA";
+            case opADD: return "ADD";
+            case opSUB: return "SUB";
+            case opMUL: return "MUL";
+            case opDIV: return "DIV";
+            case opMOD: return "MOD";
+            case opLOAD: return "LOAD";
+            case opBR: return "BR";
+            case opBRGE: return "BRGE";
+            case opBRLE: return "BRLE";
+            case opBRNE: return "BRNE";
+            case opBREQ: return "BREQ";
+            case opBRGT: return "BRGT";
+            case opBRLT: return "BRLT";
+            case opRET: return "RET";
+            case opARGBEGIN: return "ARGBEGIN";
+            case opARG: return "ARG";
+            case opCALL: return "CALL";
+            case opMOV: return "MOV";
+            case opSTORE: return "STORE";
+            case opCMP: return "CMP";
+        }
+    }
     
     
     void yyerror(const char *str)
@@ -643,100 +667,178 @@ declarator_list: declarator { $$ = $1;}
 function_definition: declaration_specifiers declarator compound_statement { struct astnode *n = $2;
                                                                             struct symbolNode *s;
                                                                             struct symbolNode *tempInserted = NULL;
-                                                                            struct astnode *exprChain = $3->multDec.right;
+                                                                            
                                                                             struct symbolNode *symbolTemp;
                                                                             int localStart = lastSymbol[scopeNum+1]->head->scopeStart;
                                                                             char* fullType = malloc(1024);
                                                                             char* temp = malloc(1024);
                                                                             struct astnode *type = $1;
                                                                             int storeType=2;
-                                                                            if(type->nodetype == 14 || type->nodetype == 21){
-                                                                                while(type != NULL){
-                                                                                    if(type->nodetype != 21){
-                                                                                        sprintf(temp,"%s %s",fullType, stringFromDecType(type->decType.type));
-                                                                                        fullType = strdup(temp);
-                                                                                        type = type->decType.nextType;
+                                                                            if($3){
+                                                                                struct astnode *exprChain = $3->multDec.right;
+                                                                                if(type->nodetype == 14 || type->nodetype == 21){
+                                                                                    while(type != NULL){
+                                                                                        if(type->nodetype != 21){
+                                                                                            sprintf(temp,"%s %s",fullType, stringFromDecType(type->decType.type));
+                                                                                            fullType = strdup(temp);
+                                                                                            type = type->decType.nextType;
+                                                                                        }
+                                                                                        else{
+                                                                                            storeType = type->storageType.storageType;
+                                                                                            type = type->storageType.nextType;
+                                                                                        }
+                                                                                        
                                                                                     }
-                                                                                    else{
-                                                                                        storeType = type->storageType.storageType;
-                                                                                        type = type->storageType.nextType;
-                                                                                    }
-                                                                                    
                                                                                 }
-                                                                            }
-                                                                            switch(n->nodetype){
-                                                                                case 2: setupScalar(n,storeType, strdup(fullType),strdup(n->ident.ident));
-                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident),localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4 );
-                                                                                    tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
-                                                                                    if(tempInserted!= 0){
-                                                                                        lastSymbol[scopeNum+1] = tempInserted;
-                                                                                        printSymbol(lastSymbol[scopeNum+1]);
-                                                                                    }
-                                                                                    break;
-                                                                                case 16:// n->pointer.type = strdup(fullType);
-                                                                                    n->pointer.type = strdup(fullType);
-                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
-                                                                                    tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
-                                                                                    if(tempInserted!= 0){
-                                                                                        lastSymbol[scopeNum+1] = tempInserted;
-                                                                                        printSymbol(lastSymbol[scopeNum+1]);
-                                                                                    }
-                                                                                    break;
-                                                                                case 17: //n->array.type = strdup(fullType); 
-                                                                                    n->array.type = strdup(fullType);
-                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
-                                                                                    tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
-                                                                                    if(tempInserted!= 0){
-                                                                                        lastSymbol[scopeNum+1] = tempInserted;
-                                                                                        printSymbol(lastSymbol[scopeNum+1]);
-                                                                                    }
-                                                                                    break;
-                                                                                case 18: n->funcDec.type = strdup(fullType);
-                                                                                    
-                                                                                    s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
-                                                                                    symbolTemp = findSymbol(lastSymbol[scopeNum+1]->head, s->identName, 0);
-                                                                                    if(symbolTemp == NULL){
+                                                                                switch(n->nodetype){
+                                                                                    case 2: setupScalar(n,storeType, strdup(fullType),strdup(n->ident.ident));
+                                                                                        s = generateSymbol(atoi($3->multDec.left->ident.ident),localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4 );
                                                                                         tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                                                                         if(tempInserted!= 0){
                                                                                             lastSymbol[scopeNum+1] = tempInserted;
-                                                                                            scopeList[scopeNum+1]->previousHead = lastSymbol[scopeNum+1]->head;
-                                                                                            lastSymbol[scopeNum+1]->subHead = scopeList[scopeNum+1];
-                                                                                            
-                                                                                            
                                                                                             printSymbol(lastSymbol[scopeNum+1]);
-                                                                                            
                                                                                         }
-                                                                                    }
-                                                                                    else{
-                                                                                        symbolTemp = s;
+                                                                                        break;
+                                                                                    case 16:// n->pointer.type = strdup(fullType);
+                                                                                        n->pointer.type = strdup(fullType);
+                                                                                        s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
+                                                                                        tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                        if(tempInserted!= 0){
+                                                                                            lastSymbol[scopeNum+1] = tempInserted;
+                                                                                            printSymbol(lastSymbol[scopeNum+1]);
+                                                                                        }
+                                                                                        break;
+                                                                                    case 17: //n->array.type = strdup(fullType); 
+                                                                                        n->array.type = strdup(fullType);
+                                                                                        s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
+                                                                                        tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                        if(tempInserted!= 0){
+                                                                                            lastSymbol[scopeNum+1] = tempInserted;
+                                                                                            printSymbol(lastSymbol[scopeNum+1]);
+                                                                                        }
+                                                                                        break;
+                                                                                    case 18: n->funcDec.type = strdup(fullType);
                                                                                         
-                                                                                        scopeList[scopeNum+1]->previousHead = symbolTemp->head;
-                                                                                        symbolTemp->subHead = scopeList[scopeNum+1];
-                                                                                        printSymbol(symbolTemp);
-                                                                                    }
-                                                                                    
-                                                                                    
-                                                                                    //scopeList[scopeNum+1] = NULL;
-                                                                                    //need to actually store the last pointer inserted in a given scope
-                                                                                    break;
+                                                                                        s = generateSymbol(atoi($3->multDec.left->ident.ident), localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
+                                                                                        symbolTemp = findSymbol(lastSymbol[scopeNum+1]->head, s->identName, 0);
+                                                                                        if(symbolTemp == NULL){
+                                                                                            tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                            if(tempInserted!= 0){
+                                                                                                lastSymbol[scopeNum+1] = tempInserted;
+                                                                                                scopeList[scopeNum+1]->previousHead = lastSymbol[scopeNum+1]->head;
+                                                                                                lastSymbol[scopeNum+1]->subHead = scopeList[scopeNum+1];
+                                                                                                
+                                                                                                
+                                                                                                printSymbol(lastSymbol[scopeNum+1]);
+                                                                                                
+                                                                                            }
+                                                                                        }
+                                                                                        else{
+                                                                                            symbolTemp = s;
+                                                                                            
+                                                                                            scopeList[scopeNum+1]->previousHead = symbolTemp->head;
+                                                                                            symbolTemp->subHead = scopeList[scopeNum+1];
+                                                                                            printSymbol(symbolTemp);
+                                                                                        }
+                                                                                        
+                                                                                        
+                                                                                        //scopeList[scopeNum+1] = NULL;
+                                                                                        //need to actually store the last pointer inserted in a given scope
+                                                                                        break;
 
+                                                                                        
+                                                                                    }
+                                                                                    lastSymbol[scopeNum+2] = NULL;
+                                                                                    printAST(exprChain,0,s->subHead);
                                                                                     
-                                                                                }
-                                                                                lastSymbol[scopeNum+2] = NULL;
-                                                                                printAST(exprChain,0,s->subHead);
-                                                                                
-                                                                                branchNum++;
-                                                                                cur_bb++;
-                                                                                bbToInsert++;
-                                                                                gen_quad(exprChain);
-                                                                                emit("RET",NULL,NULL,NULL);
-                                                                                print_quads(blockList,branchNum,blockNums);
-                                                                                //printf("GET ME THE FUCK OUT OF HERE\n");
-                                                                                /*while(exprChain != NULL){
-                                                                                    printAST(exprChain,0,lastSymbol[scopeNum+1]->subHead);
-                                                                                    exprChain = exprChain->next;
-                                                                                }*/
+                                                                                    branchNum++;
+                                                                                    cur_bb++;
+                                                                                    bbToInsert++;
+                                                                                    gen_quad(exprChain);
+                                                                                    emit(opRET,NULL,NULL,NULL);
+                                                                                    //print_quads(blockList,branchNum,blockNums);
+                                                                                    //printf("GET ME THE FUCK OUT OF HERE\n");
+                                                                                    /*while(exprChain != NULL){
+                                                                                        printAST(exprChain,0,lastSymbol[scopeNum+1]->subHead);
+                                                                                        exprChain = exprChain->next;
+                                                                                    }*/
                                                                             }
+                                                                            else{
+                                                                                if(type->nodetype == 14 || type->nodetype == 21){
+                                                                                    while(type != NULL){
+                                                                                        if(type->nodetype != 21){
+                                                                                            sprintf(temp,"%s %s",fullType, stringFromDecType(type->decType.type));
+                                                                                            fullType = strdup(temp);
+                                                                                            type = type->decType.nextType;
+                                                                                        }
+                                                                                        else{
+                                                                                            storeType = type->storageType.storageType;
+                                                                                            type = type->storageType.nextType;
+                                                                                        }
+                                                                                        
+                                                                                    }
+                                                                                }
+                                                                                switch(n->nodetype){
+                                                                                    case 2: setupScalar(n,storeType, strdup(fullType),strdup(n->ident.ident));
+                                                                                        s = generateSymbol(line,localStart,0,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4 );
+                                                                                        tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                        if(tempInserted!= 0){
+                                                                                            lastSymbol[scopeNum+1] = tempInserted;
+                                                                                            printSymbol(lastSymbol[scopeNum+1]);
+                                                                                        }
+                                                                                        break;
+                                                                                    case 16:// n->pointer.type = strdup(fullType);
+                                                                                        n->pointer.type = strdup(fullType);
+                                                                                        s = generateSymbol(line, localStart, 0,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
+                                                                                        tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                        if(tempInserted!= 0){
+                                                                                            lastSymbol[scopeNum+1] = tempInserted;
+                                                                                            printSymbol(lastSymbol[scopeNum+1]);
+                                                                                        }
+                                                                                        break;
+                                                                                    case 17: //n->array.type = strdup(fullType); 
+                                                                                        n->array.type = strdup(fullType);
+                                                                                        s = generateSymbol(line, localStart, 0,0, n->array.type, n->array.name,name,17, n, lastSymbol[scopeNum+1]->head,0, lastSymbol[scopeNum+1]->nameSpace,4);
+                                                                                        tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                        if(tempInserted!= 0){
+                                                                                            lastSymbol[scopeNum+1] = tempInserted;
+                                                                                            printSymbol(lastSymbol[scopeNum+1]);
+                                                                                        }
+                                                                                        break;
+                                                                                    case 18: n->funcDec.type = strdup(fullType);
+                                                                                        
+                                                                                        s = generateSymbol(line, localStart, 0,1, n->funcDec.type, n->funcDec.name, name ,18, n, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
+                                                                                        symbolTemp = findSymbol(lastSymbol[scopeNum+1]->head, s->identName, 0);
+                                                                                        if(symbolTemp == NULL){
+                                                                                            tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                                                                            if(tempInserted!= 0){
+                                                                                                lastSymbol[scopeNum+1] = tempInserted;
+                                                                                                //scopeList[scopeNum+1]->previousHead = lastSymbol[scopeNum+1]->head;
+                                                                                                //lastSymbol[scopeNum+1]->subHead = scopeList[scopeNum+1];
+                                                                                                
+                                                                                                
+                                                                                                printSymbol(lastSymbol[scopeNum+1]);
+                                                                                                
+                                                                                            }
+                                                                                        }
+                                                                                        else{
+                                                                                            symbolTemp = s;
+                                                                                            
+                                                                                            scopeList[scopeNum+1]->previousHead = symbolTemp->head;
+                                                                                            symbolTemp->subHead = scopeList[scopeNum+1];
+                                                                                            printSymbol(symbolTemp);
+                                                                                        }
+                                                                                        
+                                                                                        
+                                                                                        //scopeList[scopeNum+1] = NULL;
+                                                                                        //need to actually store the last pointer inserted in a given scope
+                                                                                        break;
+
+                                                                                        
+                                                                                    }
+                                                                                    lastSymbol[scopeNum+2] = NULL;
+                                                                            }
+                                                                        }
 ;
 
 
@@ -1247,7 +1349,7 @@ function_specifier:  INLINE {$$ = INLINE;}
 
 
 
-compound_statement: '{' '}' 
+compound_statement: '{' '}'  {$$ = NULL;}
     | open_scope decl_or_stmt_list close_scope  { struct astnode *n = malloc(sizeof(struct astnode));
                                                     setupMult(n, $1, $2);
                                                     
@@ -1771,6 +1873,18 @@ postexp:  primexp
                                         }
                                      //this is where the functions go
 
+    | open_function_param ')'   {   struct astnode *n   = malloc(1024);
+                                        struct symbolNode *s;
+                                        struct symbolNode *varSymbol = findSymbol(lastSymbol[0]->head,$1->ident.ident,0);
+                                        if(varSymbol == NULL){
+                                            s = generateSymbol(line, lastSymbol[scopeNum+1]->declaredLine, 0,1, "int", $1->ident.ident, name ,18, NULL, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
+                                            lastSymbol[scopeNum+1]= insertSymbol(lastSymbol[scopeNum+1]->head, s);
+                                        }
+                                    setupFunc(n,$1, NULL);
+                                        
+                                        $$ = n;
+                                }
+
     | postexp '.' IDENT     {struct astnode *n = malloc(1024);
                                 setupSelect(n,0,$1,$3);
                                 $$= n;
@@ -2200,21 +2314,27 @@ void printAST(struct astnode* n, int indent, struct symbolNode *head){
                     printAST(n->type.next, indent + 1,head);
                 }
                 break;
-            case 13:    
-                printf("FUNCTION CALL,%i arguments\n",n->func.args->funcarg.argCount);
-                printAST(n->func.name, indent + 1,head);
-                int i;
-                i = 1;
-                struct astnode *copy = n->func.args->funcarg.head;
-                while (copy!= NULL){
-                    for (int i = 0; i<indent; i++){
-                                printf("\t");
+            case 13:   
+                if(n->func.args){
+                    printf("FUNCTION CALL,%i arguments\n",n->func.args->funcarg.argCount);
+                    printAST(n->func.name, indent + 1,head);
+                    int i;
+                    i = 1;
+                    struct astnode *copy = n->func.args->funcarg.head;
+                    while (copy!= NULL){
+                        for (int i = 0; i<indent; i++){
+                                    printf("\t");
+                        }
+                        printf("arg #%i=\n",i);
+                        printAST(copy->funcarg.current,indent+1,head);
+                        copy = copy->funcarg.next;
+                        i++;
                     }
-                    printf("arg #%i=\n",i);
-                    printAST(copy->funcarg.current,indent+1,head);
-                    copy = copy->funcarg.next;
-                    i++;
                 }
+                else{
+                    printf("FUNCTION CALL, 0 arguments\n");
+                } 
+                
                 break;
 
 
@@ -2611,7 +2731,7 @@ char *gen_rvalue(struct astnode *node, char *target){
                 target = new_temp();
             }
             
-            emit("LEA", node->ident.ident, NULL, target);
+            emit(opLEA, node->ident.ident, NULL, target);
             
             //printf("POINTER\n");
             return target;
@@ -2622,14 +2742,14 @@ char *gen_rvalue(struct astnode *node, char *target){
                 target = new_temp();
             }
             
-            emit("LEA", node->ident.ident, NULL, target);
+            emit(opLEA, node->ident.ident, NULL, target);
             //then if numDim>1, call gen_rvalue on localSymbol->member->nextDimension to get new offset, then need to figure
             //out how to chain that up to the previous addition (might just store that value in a global and do the addition here)
             if(numDim > 1 && lastDim){
 
                 char *newTemp = gen_rvalue(localSymbol->member->array.nextDimension,NULL);
                 char *newerTemp = new_temp();
-                emit("ADD",newTemp,target,newerTemp);
+                emit(opADD,newTemp,target,newerTemp);
                 target = newerTemp;
             }
             return target;
@@ -2643,7 +2763,7 @@ char *gen_rvalue(struct astnode *node, char *target){
         if(!target){
             target = new_temp();
         }
-        emit 
+        //deal with once Hak tells me how
         return node->string.string;
     }
     if(node->nodetype == 1){
@@ -2664,10 +2784,10 @@ char *gen_rvalue(struct astnode *node, char *target){
         if(rightOp->nodetype == 1){
             char *numBuffer = malloc(1024);
             sprintf(numBuffer,"%d",rightOp->num.number);
-            emit("MUL",numBuffer,bufferSize,target);
+            emit(opMUL,numBuffer,bufferSize,target);
         }
         if(rightOp->nodetype == 2){
-            emit("MUL",node->ident.ident,bufferSize,target);
+            emit(opMUL,node->ident.ident,bufferSize,target);
         }
         return target;
         
@@ -2693,14 +2813,14 @@ char *gen_rvalue(struct astnode *node, char *target){
         
         if(isLeft){
             char *multTemp = new_temp();
-            emit("MUL", strdup(lastSize), right, multTemp);
+            emit(opMUL, strdup(lastSize), right, multTemp);
             sprintf(lastSize,"");
             right = multTemp;
         }
         else{
             if(strcmp(lastSize, "1") != 0){
                 char *multTemp = new_temp();
-                emit("MUL", strdup(lastSize), right, multTemp);
+                emit(opMUL, strdup(lastSize), right, multTemp);
                 sprintf(lastSize,"");
                 left = multTemp;
             }
@@ -2728,7 +2848,7 @@ char *gen_rvalue(struct astnode *node, char *target){
                     if(!target){
                         target = new_temp();
                     }
-                    emit("LOAD",temp_target,NULL,target);
+                    emit(opLOAD,temp_target,NULL,target);
                     return target;
                 }
                 
@@ -2743,13 +2863,13 @@ char *gen_rvalue(struct astnode *node, char *target){
 
                     
                     char *size = getSize(localSymbol->member->array.type);
-                    emit("LEA",node->general.next->binop.left->ident.ident, NULL, temp);
+                    emit(opLEA,node->general.next->binop.left->ident.ident, NULL, temp);
                     char *offset = malloc(1024);
                     sprintf(offset, "%lld", node->general.next->binop.right->num.number);
                     char *secondTemp = new_temp();
-                    emit("MUL",offset, size, secondTemp);
+                    emit(opMUL,offset, size, secondTemp);
                     char *thirdTemp = new_temp();
-                    emit("ADD", temp, secondTemp, thirdTemp);
+                    emit(opADD, temp, secondTemp, thirdTemp);
                     return thirdTemp;
                 }  */
             }
@@ -2762,7 +2882,7 @@ char *gen_rvalue(struct astnode *node, char *target){
                 if(!target){
                     target = new_temp();
                 }
-                emit("LOAD", addr, NULL, target);
+                emit(opLOAD, addr, NULL, target);
                 return target;
             }
             
@@ -2779,7 +2899,7 @@ char *gen_rvalue(struct astnode *node, char *target){
             if(!target){
                 target = new_temp();
             }
-            emit("LEA",addresse,NULL,target);
+            emit(opLEA,addresse,NULL,target);
             return target;
         }
         return target;
@@ -2788,11 +2908,11 @@ char *gen_rvalue(struct astnode *node, char *target){
         char *tempBB = malloc(1024);
         if(node->jump.jumpType == 2){ //break
             sprintf(tempBB,"BB%d",end_loop);
-            emit("BR",tempBB,NULL,NULL);
+            emit(opBR,tempBB,NULL,NULL);
         }
         if(node->jump.jumpType == 1){ //continue
             sprintf(tempBB,"BB%d",start_loop);
-            emit("BR",tempBB,NULL,NULL);
+            emit(opBR,tempBB,NULL,NULL);
         }
         if(node->jump.jumpType == 3 || node->jump.jumpType == 4){ //return
             
@@ -2804,7 +2924,7 @@ char *gen_rvalue(struct astnode *node, char *target){
             else{
                 sprintf(retValue,"");
             }
-            emit("RET",retValue,NULL,NULL);
+            emit(opRET,retValue,NULL,NULL);
             return target;
         } 
         
@@ -2825,24 +2945,26 @@ char *gen_rvalue(struct astnode *node, char *target){
         else{
             sprintf(num_arg,"");
         }
-        emit("ARGBEGIN",num_arg, NULL, NULL);
+        emit(opARGBEGIN,num_arg, NULL, NULL);
         
         int argNum = 0;
         char *arg_num = malloc(1024);
         sprintf(arg_num,"%d",argNum);
-        while(arg){
-            argNum++;
-            sprintf(arg_num,"%d",argNum);
-            char *tempArgValue = gen_rvalue(arg->funcarg.current,NULL);
-            emit("ARG",strdup(arg_num),tempArgValue,NULL);
-            arg = arg->funcarg.next;
-            
+        if(node->func.args){
+            while(arg){
+                argNum++;
+                sprintf(arg_num,"%d",argNum);
+                char *tempArgValue = gen_rvalue(arg->funcarg.current,NULL);
+                emit(opARG,strdup(arg_num),tempArgValue,NULL);
+                arg = arg->funcarg.next;
+                
+            }
         }
-        emit("CALL",gen_rvalue(node->func.name,NULL),strdup(arg_num),target);
+        emit(opCALL,gen_rvalue(node->func.name,NULL),strdup(arg_num),target);
         int callBB = new_bb();
         char *bbName = malloc(1024);
         sprintf(bbName, "BB%d",callBB);
-        emit("BR",bbName,NULL,NULL);
+        emit(opBR,bbName,NULL,NULL);
         cur_bb = callBB;
         return target;
     } 
@@ -2850,11 +2972,11 @@ char *gen_rvalue(struct astnode *node, char *target){
         if(node->unop.operator == PLUSPLUS){
             char *operand = gen_rvalue(node->unop.operand,NULL);
             
-            emit("ADD",operand,"1",operand);
+            emit(opADD,operand,"1",operand);
         }
         if(node->unop.operator == MINUSMINUS){
             char *operand = gen_rvalue(node->unop.operand,NULL);
-            emit("SUB",operand,"1",operand);
+            emit(opSUB,operand,"1",operand);
         }
     }
     if(node->nodetype == 8 || node->nodetype == 5){
@@ -2872,11 +2994,11 @@ char *gen_rvalue(struct astnode *node, char *target){
         sprintf(beName, "BB%d",be);
         gen_condexpr(node, btName,bfName);
         cur_bb = bt;
-        emit("MOV","1",NULL,target);
-        emit("BR",beName,NULL,NULL);
+        emit(opMOV,"1",NULL,target);
+        emit(opBR,beName,NULL,NULL);
         cur_bb = bf;
-        emit("MOV","0",NULL,target);
-        emit("BR",beName,NULL,NULL);
+        emit(opMOV,"0",NULL,target);
+        emit(opBR,beName,NULL,NULL);
         cur_bb = be;
         return target;
         //gen_localcond(node->compop,btName,bfName);
@@ -2963,7 +3085,7 @@ char *gen_assign(struct astnode *node){
            temp = gen_rvalue(node->assop.right,dst);
            if(temp != dst){
                 
-                emit("MOV",temp,NULL,dst);
+                emit(opMOV,temp,NULL,dst);
             }
             
            
@@ -2977,25 +3099,25 @@ char *gen_assign(struct astnode *node){
         if(node->assop.assType != '='){
             char *newTemp = new_temp();
             switch(node->assop.assType){
-                case TIMESEQ: emit("MUL",temp,dst,newTemp); break;
-                case DIVEQ: emit("DIV", temp, dst, newTemp); break;
-                case MODEQ: emit("MOD", temp, dst, newTemp); break;
-                case PLUSEQ: emit("ADD", temp, dst, newTemp); break;
-                case MINUSEQ: emit("SUB", temp, dst, newTemp); break;
+                case TIMESEQ: emit(opMUL,temp,dst,newTemp); break;
+                case DIVEQ: emit(opDIV, temp, dst, newTemp); break;
+                case MODEQ: emit(opMOD, temp, dst, newTemp); break;
+                case PLUSEQ: emit(opADD, temp, dst, newTemp); break;
+                case MINUSEQ: emit(opSUB, temp, dst, newTemp); break;
             }
             temp = newTemp;
-            emit("MOV", temp, NULL,dst);
+            emit(opMOV, temp, NULL,dst);
         }
         
       /*  if(node->assop.right->nodetype == 1 || node->assop.right->nodetype == 2){
-            emit("STORE", temp, NULL,dst);
+            emit(opSTORE, temp, NULL,dst);
         }*/
         
     }
     else{
         char *t1 = gen_rvalue(node->assop.right, NULL);
         
-        emit("STORE",t1,dst,NULL);
+        emit(opSTORE,t1,dst,NULL);
     }
     
     
@@ -3043,8 +3165,9 @@ int new_bb(){
 }
 
 
-void emit(char *opcode, char *left, char *right, char *target){
-    sprintf(lastOpcode,"%s",opcode);
+void emit(int opcode, char *left, char *right, char *target){
+    //sprintf(lastOpcode,"%s",opcode);
+    lastOpcode = opcode;
     if(!right){
         right = malloc(1024);
         sprintf(right, "");
@@ -3105,30 +3228,30 @@ int checkBB(int *bbList,int bbToCheck){
     }
     return 0;
 }
-char *getOpcode(struct astnode *node){
+int getOpcode(struct astnode *node){
     if(node->nodetype == 0){
         switch(node->binop.operator){
-            case '+' : return "ADD";break;
-            case '-' : return "SUB";break;
-            case '*' : return "MUL";break;
-            case '/' : return "DIV";break;
+            case '+' : return opADD;break;
+            case '-' : return opSUB;break;
+            case '*' : return opMUL;break;
+            case '/' : return opDIV;break;
             
         }
     }
     if(node->nodetype == 8){
         switch(node->compop.operator){
-            case '<' : return "BRGE"; break;
-            case '>' : return "BRLE"; break;
-            case EQEQ: return "BRNE"; break;
-            case NOTEQ: return "BREQ"; break;
-            case LTEQ: return "BRGT"; break;
-            case GTEQ: return "BRLT"; break;
+            case '<' : return opBRGE; break;
+            case '>' : return opBRLE; break;
+            case EQEQ: return opBRNE; break;
+            case NOTEQ: return opBREQ; break;
+            case LTEQ: return opBRGT; break;
+            case GTEQ: return opBRLT; break;
         }
     }
     
 }
 
-struct quad *setup_quad(char *target, char *opcode, char *left, char *right, int leftScope, int rightScope, int targetScope){
+struct quad *setup_quad(char *target, int opcode, char *left, char *right, int leftScope, int rightScope, int targetScope){
     struct quad *newQuad = malloc(sizeof(struct quad));
     newQuad->target = target;
     newQuad->opcode = opcode;
@@ -3181,7 +3304,7 @@ void gen_if(struct astnode *if_node){
     quadScopeCount++;
     if(if_node->ifNode.elseBody){
         quadScopeCount++;
-        emit("BR",bnName,NULL,NULL);
+        emit(opBR,bnName,NULL,NULL);
         cur_bb = bf;
         gen_quad(if_node->ifNode.elseBody);
         quadScopeCount++;
@@ -3208,7 +3331,7 @@ void gen_while(struct astnode *while_node){
     quadScopeCount++;
     gen_quad(while_node->iterator.body);
     quadScopeCount++;
-    emit("BR",curName,NULL,NULL );
+    emit(opBR,curName,NULL,NULL );
     cur_bb = bf;
 
 }
@@ -3221,7 +3344,7 @@ void gen_condexpr(struct astnode *condition, char *bt, char *bf){
     //need to handle case where it's just an ident
 
     if(condition->nodetype == 8){ //compop
-        emit("CMP",gen_rvalue(condition->compop.left,NULL), gen_rvalue(condition->compop.right,NULL), NULL);
+        emit(opCMP, gen_rvalue(condition->compop.left,NULL), gen_rvalue(condition->compop.right,NULL), NULL);
         emit(getOpcode(condition), bf, bt, NULL);
     }
     if(condition->nodetype == 5 ){
@@ -3249,34 +3372,42 @@ void gen_condexpr(struct astnode *condition, char *bt, char *bf){
 }
 void print_quads(struct quad **blocks, int numBuckets, int *numList){
     
-    for (int i = 1; i<=numBuckets ;i++){
+    for (int i = 1; i<=numBuckets+1 ;i++){
         struct quad *currentQuad = blocks[i];
-        printf("BB%d:",numList[i]);
-        while(currentQuad){
-            char *targetPrint = currentQuad->target;
-            char *leftPrint = currentQuad->left;
-            char *rightPrint = currentQuad->right;
-            char *tempScope = malloc(1024);
-            if(currentQuad->leftScope !=-1 && strcmp(currentQuad->left,"") != 0){
-                sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->leftScope));
-                strcat(leftPrint, tempScope );
+        if(currentQuad){
+            printf("BB%d:",numList[i]);
+            while(currentQuad){
+                char *targetPrint = malloc(1024);
+                strcpy(targetPrint, currentQuad->target);
+                char *leftPrint = malloc(1024);
+                strcpy(leftPrint, currentQuad->left);
+                char *rightPrint = malloc(1024);
+                strcpy(rightPrint, currentQuad->right);
+                char *tempScope = malloc(1024);
+                if(currentQuad->leftScope !=-1 && strcmp(currentQuad->left,"") != 0){
+                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->leftScope));
+                    strcat(leftPrint, tempScope );
+                }
+                
+                if(currentQuad->rightScope !=-1  && strcmp(currentQuad->right,"") != 0){
+                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->rightScope));
+                    strcat(rightPrint, tempScope);
+                }
+                if(currentQuad->targetScope !=-1  && strcmp(currentQuad->target,"") != 0 ){
+                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->targetScope));
+                    strcat(targetPrint, tempScope);
+                }
+                if(strcmp(currentQuad->target,"") == 0){
+                    printf("\t\t%s %s %s\n",getOpcodeString(currentQuad->opcode),leftPrint, rightPrint);
+                }
+                else{
+                    printf("\t%s= \t %s %s %s\n", targetPrint,getOpcodeString(currentQuad->opcode),leftPrint,rightPrint);
+                }
+                currentQuad = currentQuad->nextQuad;
             }
-            if(currentQuad->rightScope !=-1  && strcmp(currentQuad->right,"") != 0){
-                sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->rightScope));
-                strcat(rightPrint, tempScope);
-            }
-            if(currentQuad->targetScope !=-1  && strcmp(currentQuad->target,"") != 0 ){
-                sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->targetScope));
-                strcat(targetPrint, tempScope);
-            }
-            if(strcmp(currentQuad->target,"") == 0){
-                printf("\t\t%s %s %s\n",currentQuad->opcode,leftPrint, rightPrint);
-            }
-            else{
-                printf("\t%s= \t %s %s %s\n", targetPrint,currentQuad->opcode,leftPrint,rightPrint);
-            }
-            currentQuad = currentQuad->nextQuad;
+        
         }
+        
     }
 }
 
@@ -3286,7 +3417,7 @@ int main(){
     base = generateSymbol(0,1,0,0,"","",name,-1,NULL, base,0, 0, 4);
     firstQuad = NULL;
     lastSymbol[0] = base;
-    lastOpcode = malloc(1024);
+    lastOpcode = -1;
     lastSize = malloc(1024);
     sprintf(lastSize,"1");
    // generateSymbol(int decLine, int scopeStart, int scope, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head)
@@ -3312,9 +3443,10 @@ int main(){
     rightOp = malloc(sizeof(struct astnode));
     rightOp->nodetype = -1;
     bbToInsert = 0;
+    fp = fopen("./dscc.s", "w");
     //cur_bb = malloc(1024);
     yyparse();
-    //print_quads(blockList,branchNum);
+    print_quads(blockList,branchNum, blockNums);
 
 
 }

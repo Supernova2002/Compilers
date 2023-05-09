@@ -276,7 +276,30 @@
 
     struct quad{
         char *target;
-        char *opcode;
+        //char *opcode;
+        enum opcodes{
+            opLEA,
+            opADD,
+            opSUB,
+            opMUL,
+            opDIV,
+            opMOD,
+            opLOAD,
+            opBR,
+            opBRGE,
+            opBRLE,
+            opBRNE,
+            opBREQ,
+            opBRGT,
+            opBRLT,
+            opRET,
+            opARGBEGIN,
+            opARG,
+            opCALL,
+            opMOV,
+            opSTORE,
+            opCMP
+        }opcode;
         char *left;
         char *right;
         int leftScope;
@@ -331,11 +354,11 @@ void setupCase(struct astnode *n, struct astnode *expression, struct astnode *st
 
 char *gen_rvalue(struct astnode *node, char *target);
 
-void emit(char *opcode, char *left, char *right, char *target);
+void emit(int opcode, char *left, char *right, char *target);
 
 char *new_temp();
 
-char *getOpcode(struct astnode *node);
+int getOpcode(struct astnode *node);
 
 char *gen_lvalue(struct astnode *node, int *mode);
 
@@ -345,7 +368,7 @@ char *gen_assign(struct astnode *node);
 void gen_quad(struct astnode *node);
 
 
-struct quad *setup_quad(char *target, char *opcode, char *left, char *right, int leftScope, int rightScope, int targetScope);
+struct quad *setup_quad(char *target, int opcode, char *left, char *right, int leftScope, int rightScope, int targetScope);
 
 void insertQuad(struct quad *quad, struct quad *newQuad);
 
@@ -364,5 +387,9 @@ void gen_while(struct astnode *while_node);
 void print_quads(struct quad **blocks, int numBuckets, int *numList);
 
 int checkBB(int *bbList,int bbToCheck);
+
+
+char *getOpcodeString(int opcode);
+
 
 #endif
