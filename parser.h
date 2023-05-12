@@ -298,7 +298,8 @@
             opCALL,
             opMOV,
             opSTORE,
-            opCMP
+            opCMP,
+            opCOMM
         }opcode;
         char *left;
         char *right;
@@ -306,6 +307,9 @@
         int rightScope;
         int targetScope;
         struct quad *nextQuad;
+        struct symbolNode *leftSymbol;
+        struct symbolNode *rightSymbol;
+        struct symbolNode *targetSymbol;
     };
    
 extern int line;
@@ -368,7 +372,7 @@ char *gen_assign(struct astnode *node);
 void gen_quad(struct astnode *node);
 
 
-struct quad *setup_quad(char *target, int opcode, char *left, char *right, int leftScope, int rightScope, int targetScope);
+struct quad *setup_quad(char *target, int opcode, char *left, char *right, int leftScope, int rightScope, int targetScope, struct symbolNode *leftSymbol, struct symbolNode *rightSymbol, struct symbolNode *targetSymbol);
 
 void insertQuad(struct quad *quad, struct quad *newQuad);
 
@@ -384,12 +388,16 @@ void gen_condexpr(struct astnode *condition, char *bt, char *bf);
 
 void gen_while(struct astnode *while_node);
 
-void print_quads(struct quad **blocks, int numBuckets, int *numList);
+void print_quads(struct quad **blocks,int lowerBlock, int numBuckets, int *numList);
 
 int checkBB(int *bbList,int bbToCheck);
 
 
 char *getOpcodeString(int opcode);
 
+
+void gen_dec(struct astnode *dec_node);
+
+void globalEmit(int opcode, char *left, char *right, char *target);
 
 #endif

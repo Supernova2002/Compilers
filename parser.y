@@ -14,7 +14,7 @@
     #define newline 600
     #define PUNCTUATION 601 
     
-
+    int endBlock;
     struct symbolNode *base;
     struct symbolNode *last;
     struct symbolNode *funcHead;
@@ -26,6 +26,7 @@
     struct symbolNode *scopeList[1024];
     struct symbolNode *allScopes[1024];
     struct quad *blockList[1024];
+    struct quad *globalList;
     int blockNums[1024];
     int lastType;
     struct astnode *lastDim;
@@ -384,6 +385,7 @@
             case opMOV: return "MOV";
             case opSTORE: return "STORE";
             case opCMP: return "CMP";
+            case opCOMM: return "COMM";
         }
     }
     
@@ -504,7 +506,7 @@ dec_or_func: declaration {  struct symbolNode *s = NULL;
                             
                             lastSymbol[scopeNum+2] = NULL;
 
-                            }//maybe move all symbol generation and type definition over here
+                            }
     | function_definition
 ;
 declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
@@ -749,14 +751,24 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                         
                                                                                     }
                                                                                     lastSymbol[scopeNum+2] = NULL;
-                                                                                    printAST(exprChain,0,s->subHead);
-                                                                                    
+                                                                                    //printAST(exprChain,0,s->subHead);
+                                                                                 last = last->next;
+                                                                                    while(last){
+                                                                                        
+                                                                                        gen_dec(last->member);
+                                                                                        last = last->next;
+                                                                                    }
+                                                                                    last = lastSymbol[scopeNum+1];
                                                                                     branchNum++;
                                                                                     cur_bb++;
                                                                                     bbToInsert++;
+                                                                                    quadScopeCount++;
                                                                                     gen_quad(exprChain);
+                                                                                    
+                                                                                    print_quads(blockList,endBlock, branchNum,blockNums);
                                                                                     emit(opRET,NULL,NULL,NULL);
-                                                                                    //print_quads(blockList,branchNum,blockNums);
+                                                                                    endBlock = cur_bb;
+                                                                                    quadScopeCount++;
                                                                                     //printf("GET ME THE FUCK OUT OF HERE\n");
                                                                                     /*while(exprChain != NULL){
                                                                                         printAST(exprChain,0,lastSymbol[scopeNum+1]->subHead);
@@ -1352,9 +1364,6 @@ function_specifier:  INLINE {$$ = INLINE;}
 compound_statement: '{' '}'  {$$ = NULL;}
     | open_scope decl_or_stmt_list close_scope  { struct astnode *n = malloc(sizeof(struct astnode));
                                                     setupMult(n, $1, $2);
-                                                    
-        
-        
                                                     $$ = n;}
 ;
 decl_or_stmt_list: decl_or_stmt
@@ -1389,18 +1398,16 @@ open_scope: '{' {   int test = line;
                     }
 ;
 close_scope: '}' {scopeNum-= 1;
-                scopeTotal +=1;
+                
                     allScopes[scopeTotal] = scopeList[scopeNum];
                 }
 ;
 decl_or_stmt: declaration { struct symbolNode *s;
                             struct astnode *bigN = $1;
-                            //struct astnode *n = $1;
                             struct astnode *n = bigN;
                             struct symbolNode *tempInserted;
                             int localScope;
                             int localStart = scopeList[scopeNum]->declaredLine;
-                            //int typeStore = 2;
                             if(scopeNum ==0){
                                 localScope = 1;
                                 
@@ -1880,6 +1887,7 @@ postexp:  primexp
                                             s = generateSymbol(line, lastSymbol[scopeNum+1]->declaredLine, 0,1, "int", $1->ident.ident, name ,18, NULL, lastSymbol[scopeNum+1]->head,1, lastSymbol[scopeNum+1]->nameSpace, 4);
                                             lastSymbol[scopeNum+1]= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                         }
+                                        
                                     setupFunc(n,$1, NULL);
                                         
                                         $$ = n;
@@ -2720,7 +2728,10 @@ char *gen_rvalue(struct astnode *node, char *target){
     //target is the destination astnode, so if it's NULL it's an intermediate expression
     if(node->nodetype == 2 ){
         struct symbolNode *localSymbol = findSymbol(allScopes[quadScopeCount],node->ident.ident , 0);
-        lastScopeType = localSymbol->scope;
+        if(localSymbol){
+             lastScopeType = localSymbol->scope;
+        }
+       
         if(localSymbol && localSymbol->member !=NULL && localSymbol->member->nodetype == 15 && isPointer ){
             lastSize = getSize(localSymbol->type);
         }
@@ -2731,8 +2742,8 @@ char *gen_rvalue(struct astnode *node, char *target){
                 target = new_temp();
             }
             
-            emit(opLEA, node->ident.ident, NULL, target);
-            
+            //emit(opLEA, node->ident.ident, NULL, target);
+            return node->ident.ident;
             //printf("POINTER\n");
             return target;
         }
@@ -2925,7 +2936,7 @@ char *gen_rvalue(struct astnode *node, char *target){
                 sprintf(retValue,"");
             }
             emit(opRET,retValue,NULL,NULL);
-            return target;
+            return "RET";
         } 
         
         
@@ -3031,6 +3042,13 @@ void gen_quad(struct astnode *node){
         gen_quad(node->next);
     }
     
+}
+
+void gen_global(struct astnode *node){
+    switch(node->nodetype){
+        case 15: 
+
+    }
 }
 
 char *getSize(char *type){
@@ -3196,7 +3214,7 @@ void emit(int opcode, char *left, char *right, char *target){
         targetScope = targetSymbol->scope;
     }
     
-    struct quad *newQuad= setup_quad(target, opcode, left, right, leftScope, rightScope, targetScope);
+    struct quad *newQuad= setup_quad(target, opcode, left, right, leftScope, rightScope, targetScope, leftSymbol, rightSymbol, targetSymbol);
     //if(blockList[cur_bb] == NULL){
     //if(blockList[bbToInsert] == NULL){
     if(!checkBB( blockNums, cur_bb)){  
@@ -3218,6 +3236,33 @@ void emit(int opcode, char *left, char *right, char *target){
     
     
 
+}
+
+void globalEmit(int opcode, char *left, char *right, char *target){
+    lastOpcode = opcode;
+    if(!right){
+        right = malloc(1024);
+        sprintf(right, "");
+    }
+    if(!left){
+        left = malloc(1024);
+        sprintf(left, "");
+    }
+    if(!target){
+        target = malloc(1024);
+        sprintf(target,"");
+    }
+    struct quad *newQuad= setup_quad(target, opcode, left, right, -1, -1, -1, NULL, NULL, NULL);
+    struct quad *currentQuad = globalList;
+    if(!currentQuad){
+        globalList = newQuad;
+    }
+    else{
+        while(currentQuad->nextQuad){
+            currentQuad = currentQuad->nextQuad;
+        }
+        currentQuad->nextQuad = newQuad;
+    }
 }
 int checkBB(int *bbList,int bbToCheck){
     int current = bbList[0];
@@ -3251,7 +3296,7 @@ int getOpcode(struct astnode *node){
     
 }
 
-struct quad *setup_quad(char *target, int opcode, char *left, char *right, int leftScope, int rightScope, int targetScope){
+struct quad *setup_quad(char *target, int opcode, char *left, char *right, int leftScope, int rightScope, int targetScope, struct symbolNode *leftSymbol, struct symbolNode *rightSymbol, struct symbolNode *targetSymbol){
     struct quad *newQuad = malloc(sizeof(struct quad));
     newQuad->target = target;
     newQuad->opcode = opcode;
@@ -3260,6 +3305,9 @@ struct quad *setup_quad(char *target, int opcode, char *left, char *right, int l
     newQuad->leftScope = leftScope;
     newQuad->rightScope = rightScope;
     newQuad->targetScope = targetScope;
+    newQuad->leftSymbol = leftSymbol;
+    newQuad->rightSymbol = rightSymbol;
+    newQuad->targetSymbol  = targetSymbol;
     return newQuad;
 }
 
@@ -3370,9 +3418,27 @@ void gen_condexpr(struct astnode *condition, char *bt, char *bf){
     }
    // branchNum+=2;
 }
-void print_quads(struct quad **blocks, int numBuckets, int *numList){
+
+void gen_dec(struct astnode *dec_node){
+   if(dec_node->nodetype == 15){
+    globalEmit(opCOMM, "4", "4", dec_node->scalarVar.name);
+   }
+   else if(dec_node->nodetype == 17){
+    char *size = getSize(dec_node->array.type);
+    int totalSize = atoi(size) * dec_node->array.size;
+    char *totalSizeString = malloc(1024);
+    sprintf(totalSizeString, "%d", totalSize);
+    globalEmit(opCOMM, totalSizeString,totalSizeString, dec_node->array.name);
+
+   }
+   else if(dec_node->nodetype == 16){
+    globalEmit(opCOMM, "4","4", dec_node->pointer.name);
+   }
+}
+
+void print_quads(struct quad **blocks,int lowerBlock, int numBuckets, int *numList){
     
-    for (int i = 1; i<=numBuckets+1 ;i++){
+    for (int i = lowerBlock+1; i<=numBuckets+1 ;i++){
         struct quad *currentQuad = blocks[i];
         if(currentQuad){
             printf("BB%d:",numList[i]);
@@ -3384,17 +3450,17 @@ void print_quads(struct quad **blocks, int numBuckets, int *numList){
                 char *rightPrint = malloc(1024);
                 strcpy(rightPrint, currentQuad->right);
                 char *tempScope = malloc(1024);
-                if(currentQuad->leftScope !=-1 && strcmp(currentQuad->left,"") != 0){
-                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->leftScope));
+                if(currentQuad->leftSymbol && strcmp(currentQuad->left,"") != 0){
+                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->leftSymbol->scope));
                     strcat(leftPrint, tempScope );
                 }
                 
-                if(currentQuad->rightScope !=-1  && strcmp(currentQuad->right,"") != 0){
-                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->rightScope));
+                if(currentQuad->rightSymbol && strcmp(currentQuad->right,"") != 0){
+                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->rightSymbol->scope));
                     strcat(rightPrint, tempScope);
                 }
-                if(currentQuad->targetScope !=-1  && strcmp(currentQuad->target,"") != 0 ){
-                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->targetScope));
+                if(currentQuad->targetSymbol  && strcmp(currentQuad->target,"") != 0 ){
+                    sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->targetSymbol->scope));
                     strcat(targetPrint, tempScope);
                 }
                 if(strcmp(currentQuad->target,"") == 0){
@@ -3416,13 +3482,15 @@ int main(){
     
     base = generateSymbol(0,1,0,0,"","",name,-1,NULL, base,0, 0, 4);
     firstQuad = NULL;
+    globalList = NULL;
     lastSymbol[0] = base;
+    last = base;
     lastOpcode = -1;
     lastSize = malloc(1024);
     sprintf(lastSize,"1");
    // generateSymbol(int decLine, int scopeStart, int scope, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head)
     funcHead = NULL;
-    last = NULL;
+    
     lastType = -1;
     structOrFunc = -1;
     scopeNum = -1;
@@ -3443,10 +3511,12 @@ int main(){
     rightOp = malloc(sizeof(struct astnode));
     rightOp->nodetype = -1;
     bbToInsert = 0;
+    endBlock = 0;
     fp = fopen("./dscc.s", "w");
     //cur_bb = malloc(1024);
     yyparse();
-    print_quads(blockList,branchNum, blockNums);
+    fclose(fp);
+    //print_quads(blockList,branchNum, blockNums);
 
 
 }
