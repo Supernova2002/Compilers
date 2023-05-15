@@ -44,12 +44,12 @@ OCTAL   0{OCTALDIGIT}*
 <FILEINFO>.         { ;}  
 <FILEINFO>\n        {BEGIN(INITIAL);}
         /*[a-z|A-Z]+\.c   {yylval.string = strdup(yytext);name = yylval.string; return NAME;*/
-<INITIAL>\L?\" {BEGIN(STRING);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
-<INITIAL>\L?\' {BEGIN(CHARCASE);placeholder= malloc(sizeof(char));sprintf(placeholder,"");}
+<INITIAL>\L?\" {BEGIN(STRING);placeholder= malloc(1024);sprintf(placeholder,"");}
+<INITIAL>\L?\' {BEGIN(CHARCASE);placeholder= malloc(1024);sprintf(placeholder,"");}
 
 <STRING,CHARCASE>\\['|"|\\|?] {strcat(placeholder,&yytext[1]);}
 <STRING,CHARCASE>\\[0|a|b|f|n|r|t|v] {strcat(placeholder, yytext);}
-<STRING,CHARCASE>\\{OCTALDIGIT}{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(sizeof(char));
+<STRING,CHARCASE>\\{OCTALDIGIT}{1,3} {long temp = strtol(yytext+1,NULL,8);char* storage=malloc(1024);
         if(temp > 255){
                 
                 fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
@@ -64,7 +64,7 @@ OCTAL   0{OCTALDIGIT}*
         }
         strcat(placeholder,storage);free(storage);}
 
-<STRING,CHARCASE>\\x{HEXDIGIT}+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(sizeof(char));
+<STRING,CHARCASE>\\x{HEXDIGIT}+ {long temp = strtol(yytext+2,NULL,16);char* storage=malloc(1024);
         if(temp > 255){
                 fprintf(stderr,"%s:%d:Hex escape sequence %s out of range",name,line); 
                 temp = 255;
@@ -96,7 +96,7 @@ OCTAL   0{OCTALDIGIT}*
 <INITIAL>{HEX}{P}?[lL]? {
         char * end;
         long temp = strtol(yytext+2,&end,16);
-        char* storage= malloc(sizeof(char));
+        char* storage= malloc(1024);
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
@@ -109,7 +109,7 @@ OCTAL   0{OCTALDIGIT}*
 <INITIAL>{HEX}{P}?[u|U]?[l|L]{0,2} {
         char * end;
         long temp = strtol(yytext+2,&end,16);
-        char* storage= malloc(sizeof(char));
+        char* storage= malloc(1024);
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);
@@ -122,7 +122,7 @@ OCTAL   0{OCTALDIGIT}*
 <INITIAL>{HEX}{P}?[l|L]{0,2}[u|U]? {
         char * end;
         long temp = strtol(yytext+2,&end,16);
-        char* storage= malloc(sizeof(char));
+        char* storage= malloc(1024);
         sprintf(storage,"%ld",temp);
         strcat(storage,end);yylval.string =strdup(storage);
         free(storage);

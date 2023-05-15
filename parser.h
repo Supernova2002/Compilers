@@ -269,6 +269,7 @@
         struct symbolNode *subHead;
         struct symbolNode *blockHead;
         struct astnode *firstStatement;
+        int ebpOffset;
         char* parentName;
         int structCompleteFlag; // 0 if struct incomplete, 1 if complete, not touched if neither of those
         int nameSpace;
@@ -279,39 +280,46 @@
         //char *opcode;
         enum opcodes{
             opLEA,
-            opADD,
-            opSUB,
-            opMUL,
+            opADD, //handled
+            opSUB, //handled
+            opMUL, //handled
             opDIV,
             opMOD,
+            opINC,//handled
+            opDEC, //handled
             opLOAD,
-            opBR,
-            opBRGE,
-            opBRLE,
-            opBRNE,
-            opBREQ,
-            opBRGT,
-            opBRLT,
-            opRET,
-            opARGBEGIN,
-            opARG,
-            opCALL,
-            opMOV,
+            opBR, //handled
+            opBRGE, //handled
+            opBRLE,//handled
+            opBRNE,//handled
+            opBREQ,//handled
+            opBRGT,//handled
+            opBRLT,//handled
+            opRET, //handled
+            opARGBEGIN, //handled
+            opARG, //handled
+            opCALL, //basically handled
+            opMOV, //need to setting equal to value of functions
             opSTORE,
-            opCMP,
-            opCOMM
+            opCMP, //handled I think
+            opCOMM, //assembly done
+            opFUNC, //assembly done
+            opSTRING //handled I think
         }opcode;
         char *left;
         char *right;
         int leftScope;
         int rightScope;
         int targetScope;
+    
         struct quad *nextQuad;
         struct symbolNode *leftSymbol;
         struct symbolNode *rightSymbol;
         struct symbolNode *targetSymbol;
     };
-   
+
+
+
 extern int line;
 extern char name[1024];
 //extern struct symbolNode *base;
@@ -399,5 +407,18 @@ char *getOpcodeString(int opcode);
 void gen_dec(struct astnode *dec_node);
 
 void globalEmit(int opcode, char *left, char *right, char *target);
+
+void print_globals(struct quad *currentGlobal);
+
+void outputAss(struct quad *currentQuad);
+
+
+
+char *getOperand(char *quadOperand, struct symbolNode *quadSymbol, int scratchBase);
+
+void rodataStrings();
+
+
+char* getRegFromScratch(int regNum);
 
 #endif

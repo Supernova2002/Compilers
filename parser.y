@@ -15,20 +15,34 @@
     #define PUNCTUATION 601 
     
     int endBlock;
+    enum sections{
+        unknown,
+        data,
+        text,
+        ro_data
+    }section;
     struct symbolNode *base;
     struct symbolNode *last;
     struct symbolNode *funcHead;
     int lastOpcode;
     char *lastSize;
+    int isArraySet;
+    int scratchReg;
     struct quad *firstQuad;
     struct symbolNode *scopeList[1024];
     struct symbolNode *lastSymbol[1024];
     struct symbolNode *scopeList[1024];
     struct symbolNode *allScopes[1024];
+    char *stringList[1024];
+    int scratchStart[1024];
     struct quad *blockList[1024];
     struct quad *globalList;
+    int quadStringCount;
+    int assStringCount;
+    struct quad *lastGlobal;
     int blockNums[1024];
     int lastType;
+    int funcCount;
     struct astnode *lastDim;
     struct astnode *rightOp;
     int cur_bb;
@@ -43,6 +57,7 @@
     int nameSpaceNum;
     int isFunction;
     int isDeref;
+    int ebpOffset;
     int isPointer;
     int tempVarCountNum; //number of temporary variable for quads list
     int branchNum; //number of branches 
@@ -114,6 +129,7 @@
         s->nameSpace = nameSpace;
         s->structCompleteFlag = -1;
         s->storageType = storageClass;
+        s->ebpOffset = -1;
     }
     struct symbolNode *insertSymbol (struct symbolNode *head, struct symbolNode *newSymbol){
         //check for presence of struct with same name first
@@ -370,6 +386,8 @@
             case opMUL: return "MUL";
             case opDIV: return "DIV";
             case opMOD: return "MOD";
+            case opINC: return "INC";
+            case opDEC: return "DEC";
             case opLOAD: return "LOAD";
             case opBR: return "BR";
             case opBRGE: return "BRGE";
@@ -386,6 +404,8 @@
             case opSTORE: return "STORE";
             case opCMP: return "CMP";
             case opCOMM: return "COMM";
+            case opFUNC: return "FUNC";
+            case opSTRING: return "STRING";
         }
     }
     
@@ -514,6 +534,7 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                                             n = bigN;
                                                             //struct astnode *n = malloc(sizeof(struct astnode));
                                                             char* fullType = malloc(1024);
+                                                            sprintf(fullType, "");
                                                             char* temp = malloc(1024);
                                                             struct astnode *type = $1;
                                                             int storeType=2;
@@ -617,6 +638,7 @@ declaration:  declaration_specifiers declarator_list ';' { struct astnode *n;
                                     //char *temp;
                                     char *structName;
                                     char* fullType = malloc(1024);
+                                    sprintf(fullType, "");
                                     char* temp = malloc(1024);
                                     struct astnode *type = $1;
                                     int storeType=2;
@@ -673,6 +695,7 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                             struct symbolNode *symbolTemp;
                                                                             int localStart = lastSymbol[scopeNum+1]->head->scopeStart;
                                                                             char* fullType = malloc(1024);
+                                                                            sprintf(fullType, "");
                                                                             char* temp = malloc(1024);
                                                                             struct astnode *type = $1;
                                                                             int storeType=2;
@@ -751,6 +774,13 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                         
                                                                                     }
                                                                                     lastSymbol[scopeNum+2] = NULL;
+                                                                                    scratchStart[funcCount] = ebpOffset;
+                                                                                    branchNum++;
+                                                                                    cur_bb++;
+                                                                                    bbToInsert++;
+                                                                                    quadScopeCount++;
+                                                                                    gen_quad(exprChain);
+                                                                                    
                                                                                     //printAST(exprChain,0,s->subHead);
                                                                                  last = last->next;
                                                                                     while(last){
@@ -758,17 +788,29 @@ function_definition: declaration_specifiers declarator compound_statement { stru
                                                                                         gen_dec(last->member);
                                                                                         last = last->next;
                                                                                     }
+                                                                                    if(!lastGlobal){
+                                                                                        lastGlobal = globalList;
+                                                                                    }
+                                                                                    else{
+                                                                                        lastGlobal = lastGlobal->nextQuad;
+                                                                                    }
+                                                                                    print_globals(lastGlobal);
+                                                                                    if(lastGlobal){
+                                                                                        while(lastGlobal->nextQuad){
+                                                                                            lastGlobal = lastGlobal->nextQuad;
+                                                                                        }
+                                                                                    }
+                                                                                    
                                                                                     last = lastSymbol[scopeNum+1];
-                                                                                    branchNum++;
-                                                                                    cur_bb++;
-                                                                                    bbToInsert++;
-                                                                                    quadScopeCount++;
-                                                                                    gen_quad(exprChain);
+                                                                                    
+                                                                                    
                                                                                     
                                                                                     print_quads(blockList,endBlock, branchNum,blockNums);
                                                                                     emit(opRET,NULL,NULL,NULL);
                                                                                     endBlock = cur_bb;
                                                                                     quadScopeCount++;
+                                                                                    ebpOffset = 4;
+                                                                                    funcCount++;
                                                                                     //printf("GET ME THE FUCK OUT OF HERE\n");
                                                                                     /*while(exprChain != NULL){
                                                                                         printAST(exprChain,0,lastSymbol[scopeNum+1]->subHead);
@@ -1025,7 +1067,8 @@ actually_opening: IDENT  open_struct {
                         lastSymbol[scopeNum] = insertSymbol(lastSymbol[scopeNum]->head,s );
                     }
                     printSymbol(s);
-                    allScopes[scopeTotal] = scopeList[scopeNum];
+                    allScopes[scopeTotal] = lastSymbol[scopeNum+1]->head;
+                    
                     /*if(scopeNum > 0){
                         scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
                     }*/
@@ -1055,7 +1098,7 @@ open_struct: '{'/* { scopeNum += 1;
 
 close_struct: '}' {scopeNum-=1;
                     scopeTotal +=1;
-                    allScopes[scopeTotal] = scopeList[scopeNum];
+                    allScopes[scopeTotal] = lastSymbol[scopeNum+1]->head;
                     }
 ;
 struct_or_union: STRUCT {$$ = STRUCT;}
@@ -1147,6 +1190,7 @@ struct_declaration: spec_qual_list struct_declarator_list ';' { //struct astnode
                                                                 struct astnode *bigN = $2;
                                                                 n = bigN;
                                                                 char* fullType = malloc(1024);
+                                                                sprintf(fullType, "");
                                                                 char* temp = malloc(1024);
                                                                 struct astnode *type = $1;
                                                                 int storeType=2;
@@ -1377,6 +1421,7 @@ decl_or_stmt_list: decl_or_stmt
                                         }
 ;
 open_scope: '{' {   int test = line;
+                    
                     char buffer[100];
                     scopeNum += 1; 
                     scopeTotal +=1;
@@ -1393,13 +1438,14 @@ open_scope: '{' {   int test = line;
                         scopeList[scopeNum]->previousHead = scopeList[scopeNum-1]->head;
                                 scopeList[scopeNum-1]->subHead = scopeList[scopeNum];
                     }
-                    allScopes[scopeTotal] = scopeList[scopeNum];
+                    allScopes[scopeTotal] = lastSymbol[scopeNum+1]->head;
                     $$ = n;
                     }
 ;
 close_scope: '}' {scopeNum-= 1;
-                
-                    allScopes[scopeTotal] = scopeList[scopeNum];
+                    
+                    scopeTotal++;
+                    allScopes[scopeTotal] = lastSymbol[scopeNum+1]->head;
                 }
 ;
 decl_or_stmt: declaration { struct symbolNode *s;
@@ -1425,6 +1471,10 @@ decl_or_stmt: declaration { struct symbolNode *s;
                                         s->structCompleteFlag = 0; 
                                         tempInserted= insertSymbol(lastSymbol[scopeNum+1]->head, s);
                                         if(tempInserted!= 0){
+                                            ebpOffset +=4;
+                                            if(ebpOffset%4 !=0){
+                                                ebpOffset+=ebpOffset%4;
+                                            }
                                             lastSymbol[scopeNum+1] = tempInserted;
                                             printSymbol(lastSymbol[scopeNum+1]);
                                         }
@@ -1432,9 +1482,15 @@ decl_or_stmt: declaration { struct symbolNode *s;
                                     } 
                                     else{
                                         s = generateSymbol(line,localStart,localScope,0,n->scalarVar.dataType,n->scalarVar.name, name,15, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace,n->scalarVar.storageClass );
+                                        s->ebpOffset  = ebpOffset;
+                                        
                                         //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum],s); 
                                         tempInserted= insertSymbol(scopeList[scopeNum], s);
                                         if(tempInserted!= 0){
+                                            ebpOffset +=4;
+                                            if(ebpOffset%4 !=0){
+                                                ebpOffset+=ebpOffset%4;
+                                            }
                                             lastSymbol[scopeNum+1] = tempInserted;
                                             printSymbol(lastSymbol[scopeNum+1]);
                                         }
@@ -1443,18 +1499,28 @@ decl_or_stmt: declaration { struct symbolNode *s;
                                         break;
                                     case 16:// n->pointer.type = strdup(fullType);
                                         s = generateSymbol(line, localStart, localScope,0, n->pointer.type, n->pointer.member->ident.ident,name,16, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace,n->pointer.storageClass);
+                                        s->ebpOffset = ebpOffset;
                                         //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum], s);
                                         tempInserted= insertSymbol(scopeList[scopeNum], s);
                                         if(tempInserted!= 0){
+                                            ebpOffset +=4;
+                                            if(ebpOffset%4 !=0){
+                                                ebpOffset+=ebpOffset%4;
+                                            }
                                             lastSymbol[scopeNum+1] = tempInserted;
                                             printSymbol(lastSymbol[scopeNum+1]);
                                         }
                                         break;
                                     case 17: //n->array.type = strdup(fullType); 
                                         s = generateSymbol(line, localStart, localScope,0, n->array.type, n->array.name,name,17, n, scopeList[scopeNum],0, lastSymbol[scopeNum+1]->nameSpace, n->array.storageClass);
+                                        s->ebpOffset = ebpOffset;
                                         //lastSymbol[scopeNum+1] = insertSymbol(scopeList[scopeNum], s);
                                         tempInserted= insertSymbol(scopeList[scopeNum], s);
                                         if(tempInserted!= 0){
+                                            ebpOffset += (4*n->array.size);
+                                            if(ebpOffset%(4*n->array.size)!= 0){
+                                                ebpOffset+=ebpOffset%(4*n->array.size);
+                                            }
                                             lastSymbol[scopeNum+1] = tempInserted;
                                             printSymbol(lastSymbol[scopeNum+1]);
                                         }
@@ -1816,7 +1882,7 @@ jump_statement: GOTO IDENT ';' { struct astnode *n = malloc(sizeof(struct astnod
 
 //;
 expr: assexp 
-    | expr ',' assexp {  struct astnode *n = malloc(1024);
+    | expr ',' assexp {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                         setupBinop(n,',',$1,$3);
                                 
@@ -1836,20 +1902,20 @@ primexp: IDENT {
                         exit(0);
                     }
                 } 
-                struct astnode *n = malloc(1024);
+                struct astnode *n = malloc(sizeof(struct astnode));
                  setupIdent(n,$1);
                  $$ = n;
                 isFunction = 0;
                 }    
-    | NUMBER   {struct astnode *n = malloc(1024);
+    | NUMBER   {struct astnode *n =malloc(sizeof(struct astnode));
                          setupNumber(n,$1);
                 $$ = n;
                 }
-    | CHARLIT   {struct astnode *n = malloc(1024);
+    | CHARLIT   {struct astnode *n = malloc(sizeof(struct astnode));
                          setupNumber(n,$1);
                 $$ = n;
                 }
-    | newString { struct astnode *n = malloc(1024);
+    | newString { struct astnode *n = malloc(sizeof(struct astnode));
                  setupString(n,$1);
                  $$ = n;
                  }  
@@ -1857,16 +1923,16 @@ primexp: IDENT {
                  
 ;
 postexp:  primexp
-    | postexp '[' expr ']' {  struct astnode *sub = malloc(1024);
+    | postexp '[' expr ']' {  struct astnode *sub = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(sub,'+',$1,$3);
-                                struct astnode *n = malloc(1024);
+                                struct astnode *n = malloc(sizeof(struct astnode));
                                 setupGeneral(n, 0, sub);
                                 
                                 $$= n;
 
                             }
-    | open_function_param argexplist ')'    {   struct astnode *n   = malloc(1024);
+    | open_function_param argexplist ')'    {   struct astnode *n   = malloc(sizeof(struct astnode));
                                         struct symbolNode *s;
                                         struct symbolNode *varSymbol = findSymbol(lastSymbol[0]->head,$1->ident.ident,0);
                                         if(varSymbol == NULL){
@@ -1880,7 +1946,7 @@ postexp:  primexp
                                         }
                                      //this is where the functions go
 
-    | open_function_param ')'   {   struct astnode *n   = malloc(1024);
+    | open_function_param ')'   {   struct astnode *n   = malloc(sizeof(struct astnode));
                                         struct symbolNode *s;
                                         struct symbolNode *varSymbol = findSymbol(lastSymbol[0]->head,$1->ident.ident,0);
                                         if(varSymbol == NULL){
@@ -1893,20 +1959,20 @@ postexp:  primexp
                                         $$ = n;
                                 }
 
-    | postexp '.' IDENT     {struct astnode *n = malloc(1024);
+    | postexp '.' IDENT     {struct astnode *n = malloc(sizeof(struct astnode));
                                 setupSelect(n,0,$1,$3);
                                 $$= n;
                                 }
-    | postexp INDSEL IDENT  {struct astnode *n = malloc(1024);
+    | postexp INDSEL IDENT  {struct astnode *n =malloc(sizeof(struct astnode));
                             //FIX THIS WITH THE EQUIVALENCY
                                 setupSelect(n,1,$1,$3);
                                 $$= n;
                                 }
-    | postexp PLUSPLUS      {struct astnode *n = malloc(1024);
+    | postexp PLUSPLUS      {struct astnode *n = malloc(sizeof(struct astnode));
                             setupUnop(n,PLUSPLUS,$1);
                             $$ = n;
                         }
-    | postexp MINUSMINUS    {struct astnode *n = malloc(1024);
+    | postexp MINUSMINUS    {struct astnode *n = malloc(sizeof(struct astnode));
                             setupUnop(n,MINUSMINUS,$1);
                             $$ = n;
                         }
@@ -1915,18 +1981,18 @@ postexp:  primexp
 
 ;
 open_function_param: IDENT '(' { // isFunction = 1;
-                                    struct astnode *n = malloc(1024);
+                                    struct astnode *n = malloc(sizeof(struct astnode));
                                     setupIdent(n,$1);
                                     $$ = n;
                                     
                             }
 
-argexplist : assexp     { struct astnode *n = malloc(1024);
+argexplist : assexp     { struct astnode *n = malloc(sizeof(struct astnode));
                             setupFuncarg(n,$1,n);
                             n->funcarg.head = n;
                             $$ = n;
                             }
-    | argexplist ',' assexp {  struct astnode *n = malloc(1024);
+    | argexplist ',' assexp {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupFuncarg(n,$3,$1);
                                 n->funcarg.argCount = $1->funcarg.argCount + 1;
@@ -1937,7 +2003,7 @@ argexplist : assexp     { struct astnode *n = malloc(1024);
 
                     }
 castexp: unexp  
-    | '('typename')' castexp    {   struct astnode *n = malloc(1024);
+    | '('typename')' castexp    {   struct astnode *n = malloc(sizeof(struct astnode));
                                     setupType(n,$2,$4);
                                     $$ = n;
                                 }
@@ -1960,8 +2026,8 @@ unaryop: '+'   {$$ = '+';}
     | '!'   {$$ = '!';}
 ;
 unexp: postexp
-    | PLUSPLUS unexp    {struct astnode *n = malloc(1024);
-                            struct astnode *sub = malloc(1024);
+    | PLUSPLUS unexp    {struct astnode *n = malloc(sizeof(struct astnode));
+                            struct astnode *sub = malloc(sizeof(struct astnode));
                             struct number tempNum;
                             tempNum.value.intVal = 1;
                             tempNum.type = 0;
@@ -1969,8 +2035,8 @@ unexp: postexp
                             setupAssignment(n,PLUSEQ, $2,sub );
                             $$ = n;
                         }
-    | MINUSMINUS unexp  {struct astnode *n = malloc(1024);
-                        struct astnode *sub = malloc(1024);
+    | MINUSMINUS unexp  {struct astnode *n = malloc(sizeof(struct astnode));
+                        struct astnode *sub = malloc(sizeof(struct astnode));
                         struct number tempNum;
                         tempNum.value.intVal = 1;
                         tempNum.type = 0;
@@ -1978,46 +2044,46 @@ unexp: postexp
                         setupAssignment(n,MINUSEQ, $2,sub );
                         $$ = n;
                         }
-    | unaryop castexp   {struct astnode *n = malloc(1024);
+    | unaryop castexp   {struct astnode *n = malloc(sizeof(struct astnode));
                         setupUnop(n,$1,$2);
                         $$ = n;
                         }
-    | '&' castexp       { struct astnode *n = malloc(1024);
+    | '&' castexp       { struct astnode *n = malloc(sizeof(struct astnode));
                             setupGeneral(n,1,$2);
                             $$ = n;
                             }
-    | '*' castexp       { struct astnode *n = malloc(1024);
+    | '*' castexp       { struct astnode *n = malloc(sizeof(struct astnode));
                             setupGeneral(n,0,$2);
                             $$= n;
                             } 
-    | SIZEOF unexp  {struct astnode *n = malloc(1024);
+    | SIZEOF unexp  {struct astnode *n = malloc(sizeof(struct astnode));
                         setupGeneral(n,2,$2);
                         $$ = n;
                         }
-    | SIZEOF '('typename')' {struct astnode *n = malloc(1024);
+    | SIZEOF '('typename')' {struct astnode *n = malloc(sizeof(struct astnode));
                                 struct astnode *typeView = $3;
-                                struct astnode *type = malloc(1024);
+                                struct astnode *type = malloc(sizeof(struct astnode));
                                 //setupType(type,$3,NULL);
                             setupGeneral(n,2,typeView);
                             $$ = n;
                             }
 ;
 multexp:castexp
-    | multexp '*' castexp   {  struct astnode *n = malloc(1024);
+    | multexp '*' castexp   {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'*',$1,$3);
                                 
                                 $$= n;
 
                             }
-    | multexp '/' castexp   {  struct astnode *n = malloc(1024);
+    | multexp '/' castexp   {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'/',$1,$3);
                                 
                                 $$= n;
 
                             }
-    | multexp '%' castexp   {  struct astnode *n = malloc(1024);
+    | multexp '%' castexp   {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'%',$1,$3);
                                 
@@ -2026,14 +2092,14 @@ multexp:castexp
                             }
 ;
 addexp: multexp
-    | addexp '+' multexp    {  struct astnode *n = malloc(1024);
+    | addexp '+' multexp    {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'+',$1,$3);
                                 
                                 $$= n;
 
                             }
-    | addexp '-' multexp    {  struct astnode *n = malloc(1024);
+    | addexp '-' multexp    {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'-',$1,$3);
                                 
@@ -2042,14 +2108,14 @@ addexp: multexp
                             }
 ;
 shiftexp: addexp
-    | shiftexp  SHL addexp {  struct astnode *n = malloc(1024);
+    | shiftexp  SHL addexp {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,SHL,$1,$3);
                                 
                                 $$= n;
 
                             }
-    | shiftexp SHR addexp   {  struct astnode *n = malloc(1024);
+    | shiftexp SHR addexp   {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,SHR,$1,$3);
                                 
@@ -2058,41 +2124,41 @@ shiftexp: addexp
                             }
 ;
 relexp: shiftexp
-    | relexp '<' shiftexp { struct astnode *n = malloc(1024);
+    | relexp '<' shiftexp { struct astnode *n = malloc(sizeof(struct astnode));
                             setupCompop(n,'<', $1,$3);
                             $$ = n;
 
                             }
-    | relexp '>' shiftexp   { struct astnode *n = malloc(1024);
+    | relexp '>' shiftexp   { struct astnode *n = malloc(sizeof(struct astnode));
                             setupCompop(n,'>', $1,$3);
                             $$ = n;
 
                             }
-    | relexp LTEQ shiftexp  { struct astnode *n = malloc(1024);
+    | relexp LTEQ shiftexp  { struct astnode *n = malloc(sizeof(struct astnode));
                             setupCompop(n,LTEQ, $1,$3);
                             $$ = n;
 
                             }
-    | relexp GTEQ shiftexp  { struct astnode *n = malloc(1024);
+    | relexp GTEQ shiftexp  { struct astnode *n = malloc(sizeof(struct astnode));
                             setupCompop(n,GTEQ, $1,$3);
                             $$ = n;
 
                             }
 ;
 eqexp: relexp 
-    | eqexp EQEQ relexp { struct astnode *n = malloc(1024);
+    | eqexp EQEQ relexp { struct astnode *n = malloc(sizeof(struct astnode));
                             setupCompop(n,EQEQ, $1,$3);
                             $$ = n;
 
                             }
-    | eqexp NOTEQ relexp    { struct astnode *n = malloc(1024);
+    | eqexp NOTEQ relexp    { struct astnode *n = malloc(sizeof(struct astnode));
                             setupCompop(n,NOTEQ, $1,$3);
                             $$ = n;
 
                             }
 ;
 andexp:eqexp
-    | andexp '&' eqexp  {  struct astnode *n = malloc(1024);
+    | andexp '&' eqexp  {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'&',$1,$3);
                                 
@@ -2101,7 +2167,7 @@ andexp:eqexp
                             }
 ;
 exorexp: andexp
-    | exorexp '^' andexp    {  struct astnode *n = malloc(1024);
+    | exorexp '^' andexp    {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'^',$1,$3);
                                 
@@ -2110,7 +2176,7 @@ exorexp: andexp
                             }
 ;
 inorexp:exorexp
-    | inorexp '|' exorexp   {  struct astnode *n = malloc(1024);
+    | inorexp '|' exorexp   {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupBinop(n,'|',$1,$3);
                                 
@@ -2119,7 +2185,7 @@ inorexp:exorexp
                             }
 ;
 logandexp: inorexp
-    | logandexp LOGAND inorexp  {  struct astnode *n = malloc(1024);
+    | logandexp LOGAND inorexp  {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupLogop(n,LOGAND,$1,$3);
                                 
@@ -2128,7 +2194,7 @@ logandexp: inorexp
                             }
 ;
 logorexp: logandexp
-    | logorexp LOGOR logandexp  {  struct astnode *n = malloc(1024);
+    | logorexp LOGOR logandexp  {  struct astnode *n = malloc(sizeof(struct astnode));
                                 
                                 setupLogop(n,LOGOR,$1,$3);
                                 
@@ -2137,7 +2203,7 @@ logorexp: logandexp
                             }
 ;
 condexp: logorexp
-    | logorexp '?' expr ':' condexp {  struct astnode *n = malloc(1024);
+    | logorexp '?' expr ':' condexp {  struct astnode *n = malloc(sizeof(struct astnode));
                                         
                                         setupTernary(n,$1,$3,$5);
                                         
@@ -2146,7 +2212,7 @@ condexp: logorexp
                                     }
 ;
 assexp: condexp 
-    | unexp assop assexp    {  struct astnode *n = malloc(1024);
+    | unexp assop assexp    {  struct astnode *n = malloc(sizeof(struct astnode));
                                         
                                 setupAssignment(n,$2,$1,$3);
                                         
@@ -2724,7 +2790,7 @@ void setupCase(struct astnode *n, struct astnode *expression, struct astnode *st
 }
 
 char *gen_rvalue(struct astnode *node, char *target){
-    char *buffer = malloc(100);
+    char *buffer = malloc(10000);
     //target is the destination astnode, so if it's NULL it's an intermediate expression
     if(node->nodetype == 2 ){
         struct symbolNode *localSymbol = findSymbol(allScopes[quadScopeCount],node->ident.ident , 0);
@@ -2735,6 +2801,16 @@ char *gen_rvalue(struct astnode *node, char *target){
         if(localSymbol && localSymbol->member !=NULL && localSymbol->member->nodetype == 15 && isPointer ){
             lastSize = getSize(localSymbol->type);
         }
+
+        if(localSymbol && localSymbol->member !=NULL && localSymbol->member->nodetype == 15 && isDeref ){
+            if(!target){
+                target = new_temp();
+            }
+            
+            emit(opLEA, node->ident.ident, NULL, target);
+            return target;
+        }
+
 
         if(localSymbol && localSymbol->member != NULL && localSymbol->member->nodetype == 16 && !isDeref){
             lastSize = getSize(localSymbol->type);
@@ -2771,11 +2847,13 @@ char *gen_rvalue(struct astnode *node, char *target){
         
     }
     if(node->nodetype == 3){
-        if(!target){
-            target = new_temp();
-        }
+        
+        char *tempString = malloc(1024);
+        sprintf(tempString, "$.str%d", quadStringCount);
+        emit(opSTRING,node->string.string, NULL, tempString );
+        quadStringCount++;
         //deal with once Hak tells me how
-        return node->string.string;
+        return tempString;
     }
     if(node->nodetype == 1){
         
@@ -2855,11 +2933,20 @@ char *gen_rvalue(struct astnode *node, char *target){
                 }
                 else{
                     char *temp_target = gen_rvalue(node->general.next,NULL); 
-                   // target = gen_rvalue(node->general.next,NULL); 
-                    if(!target){
+                    
+                    //target = gen_rvalue(node->general.next,NULL); 
+                    if(!isArraySet){
+                        if(!target){
                         target = new_temp();
                     }
-                    emit(opLOAD,temp_target,NULL,target);
+                        emit(opLOAD,temp_target,NULL,target);
+                    }
+                    else{
+                        target = temp_target;
+                        isArraySet = 0;
+                    }
+                    
+                    
                     return target;
                 }
                 
@@ -2961,7 +3048,26 @@ char *gen_rvalue(struct astnode *node, char *target){
         int argNum = 0;
         char *arg_num = malloc(1024);
         sprintf(arg_num,"%d",argNum);
+        
         if(node->func.args){
+            
+            struct astnode *flipHead =malloc(sizeof(struct astnode));
+            
+            while(arg){
+                if(flipHead->nodetype == 0){
+                    *flipHead = *arg;
+                    flipHead->funcarg.next = NULL;
+                }
+                else{
+                    struct astnode *tempArg =malloc(sizeof(struct astnode));
+                    *tempArg = *flipHead;
+                    *flipHead = *arg;
+                    flipHead->funcarg.next = tempArg;
+                }
+                //flipHead = arg;
+                arg = arg->funcarg.next;
+            }
+            arg = flipHead;
             while(arg){
                 argNum++;
                 sprintf(arg_num,"%d",argNum);
@@ -2972,23 +3078,24 @@ char *gen_rvalue(struct astnode *node, char *target){
             }
         }
         emit(opCALL,gen_rvalue(node->func.name,NULL),strdup(arg_num),target);
-        int callBB = new_bb();
+       /* int callBB = new_bb();
         char *bbName = malloc(1024);
         sprintf(bbName, "BB%d",callBB);
         emit(opBR,bbName,NULL,NULL);
-        cur_bb = callBB;
+        cur_bb = callBB;*/
         return target;
     } 
     if(node->nodetype == 7){
         if(node->unop.operator == PLUSPLUS){
             char *operand = gen_rvalue(node->unop.operand,NULL);
             
-            emit(opADD,operand,"1",operand);
+            emit(opINC,NULL,NULL,operand);
         }
         if(node->unop.operator == MINUSMINUS){
             char *operand = gen_rvalue(node->unop.operand,NULL);
-            emit(opSUB,operand,"1",operand);
+            emit(opDEC,NULL,NULL,operand);
         }
+        
     }
     if(node->nodetype == 8 || node->nodetype == 5){
         if(!target){
@@ -3033,7 +3140,7 @@ void gen_quad(struct astnode *node){
     else if(node->nodetype == 22){
         gen_while(node);
     }
-    else{
+    else if(node->nodetype != 15 &&node->nodetype != 16&&  node->nodetype != 17 ){
         gen_rvalue(node, NULL);
     }
 
@@ -3078,6 +3185,7 @@ char *getSize(char *type){
         }
         placeholder *=8;
     }
+    
     if(placeholder == 0){
         return "0";
     }
@@ -3154,6 +3262,7 @@ char *gen_lvalue(struct astnode *node, int *mode){
         if(node->general.genType == 0){
             *mode = 0;
             if(node->general.next->nodetype == 0){
+                isArraySet = 1;
                 return gen_rvalue(node, NULL);
             }
             else{
@@ -3167,7 +3276,7 @@ char *gen_lvalue(struct astnode *node, int *mode){
 
 char *new_temp(){
     
-    char *temp = malloc(10);
+    char *temp = malloc(100);
     sprintf(temp, "%cT%d",37, tempVarCountNum);
     tempVarCountNum = tempVarCountNum + 1;
     return temp;
@@ -3364,16 +3473,20 @@ void gen_if(struct astnode *if_node){
 }
 
 void gen_while(struct astnode *while_node){
+    int bStart = new_bb();
     char *curName = malloc(1024);
+    cur_bb = bStart;
     sprintf(curName, "BB%d",cur_bb);
+    
     int bt = new_bb();
-    int start_loop = bt;
+    start_loop = bStart;
     char *btName = malloc(1024);
     sprintf(btName, "BB%d",bt);
     int bf = new_bb();
     int end_loop = bf;
     char *bfName = malloc(1024);
     sprintf(bfName, "BB%d",bf);
+    
     gen_condexpr(while_node->iterator.first,btName,bfName);
     cur_bb = bt;
     quadScopeCount++;
@@ -3434,15 +3547,22 @@ void gen_dec(struct astnode *dec_node){
    else if(dec_node->nodetype == 16){
     globalEmit(opCOMM, "4","4", dec_node->pointer.name);
    }
+   else if(dec_node->nodetype == 18){
+    globalEmit(opFUNC,NULL, NULL, dec_node->funcDec.name);
+   }
 }
 
 void print_quads(struct quad **blocks,int lowerBlock, int numBuckets, int *numList){
-    
+    int isReturn = 0;
     for (int i = lowerBlock+1; i<=numBuckets+1 ;i++){
         struct quad *currentQuad = blocks[i];
         if(currentQuad){
             printf("BB%d:",numList[i]);
+            char *assBlock = malloc(1024);
+            sprintf(assBlock, ".BB%d:\n", numList[i]);
+            fputs(assBlock, fp);
             while(currentQuad){
+                outputAss(currentQuad);
                 char *targetPrint = malloc(1024);
                 strcpy(targetPrint, currentQuad->target);
                 char *leftPrint = malloc(1024);
@@ -3450,19 +3570,37 @@ void print_quads(struct quad **blocks,int lowerBlock, int numBuckets, int *numLi
                 char *rightPrint = malloc(1024);
                 strcpy(rightPrint, currentQuad->right);
                 char *tempScope = malloc(1024);
+                char *offsetString = malloc(1024);
+                if(currentQuad->opcode == opRET){
+                    isReturn = 1;
+                }
                 if(currentQuad->leftSymbol && strcmp(currentQuad->left,"") != 0){
                     sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->leftSymbol->scope));
                     strcat(leftPrint, tempScope );
+                    if(currentQuad->leftSymbol->ebpOffset != -1){
+                        sprintf(offsetString, "(%c%d)", 37,currentQuad->leftSymbol->ebpOffset  );
+                        strcat(leftPrint, offsetString);
+                    }
                 }
                 
                 if(currentQuad->rightSymbol && strcmp(currentQuad->right,"") != 0){
                     sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->rightSymbol->scope));
                     strcat(rightPrint, tempScope);
+                    if(currentQuad->rightSymbol->ebpOffset != -1){
+                        sprintf(offsetString, "(%c%d)", 37,currentQuad->rightSymbol->ebpOffset  );
+                        strcat(rightPrint, offsetString);
+                    }
                 }
                 if(currentQuad->targetSymbol  && strcmp(currentQuad->target,"") != 0 ){
                     sprintf(tempScope,"{%s}", scopeFromNum(currentQuad->targetSymbol->scope));
                     strcat(targetPrint, tempScope);
+                    if(currentQuad->targetSymbol->ebpOffset != -1){
+                        sprintf(offsetString, "(%c%d)", 37,currentQuad->targetSymbol->ebpOffset  );
+                        strcat(targetPrint, offsetString);
+                    }
                 }
+
+                
                 if(strcmp(currentQuad->target,"") == 0){
                     printf("\t\t%s %s %s\n",getOpcodeString(currentQuad->opcode),leftPrint, rightPrint);
                 }
@@ -3475,6 +3613,611 @@ void print_quads(struct quad **blocks,int lowerBlock, int numBuckets, int *numLi
         }
         
     }
+    if(!isReturn){
+        struct astnode *retQuad  = setup_quad(NULL, opRET, NULL, NULL, -1, -1, -1, NULL, NULL, NULL);
+        outputAss(retQuad);
+    }
+}
+
+void print_globals(struct quad *currentGlobal){
+    while(currentGlobal){
+        printf("%s = \t %s %s %s\n", currentGlobal->target,getOpcodeString(currentGlobal->opcode), currentGlobal->left, currentGlobal->right);
+        outputAss(currentGlobal);
+        currentGlobal = currentGlobal->nextQuad;
+    }
+}
+
+void outputAss(struct quad *currentQuad){
+    char *tempTarget = malloc(1024);
+    sprintf(tempTarget, "");
+    char *tempRight = malloc(1024);
+    sprintf(tempRight, "");
+    int leftTest = 0;
+    int rightTest = 0;
+    int targetTest = 0;
+    char *assCommand = malloc(1024);
+    sprintf(assCommand, "");
+    char *leftOperand = malloc(1024);
+    sprintf(leftOperand, "");
+    char *rightOperand = malloc(1024);
+    sprintf(rightOperand, "");
+    char *targetOperand = malloc(1024);
+    sprintf(targetOperand, "");
+    int scratchBase = scratchStart[funcCount];
+    switch (currentQuad->opcode){
+        case opCOMM: 
+            if(section != data){
+                section = data;
+                sprintf(assCommand, "\t.data\n");
+                fputs(assCommand, fp);
+            }
+            sprintf(assCommand, "\t.comm %s,%s,%s\n", currentQuad->target,currentQuad->left,currentQuad->right);
+            fputs(assCommand, fp);
+            break;
+        case opFUNC:
+            if(section != text){
+                section = text;
+                sprintf(assCommand, "\t.text\n");
+                fputs(assCommand, fp);
+            }
+            sprintf(assCommand, "\t.globl %s\n", currentQuad->target);
+            fputs(assCommand, fp);
+            for (int i = endBlock+1; i<= branchNum+1; i++){
+                sprintf(assCommand, "\t.globl .BB%d\n",blockNums[i]);
+                fputs(assCommand, fp);
+            }
+            sprintf(assCommand, "\t.type\t%s,@function\n%s:\n",currentQuad->target,currentQuad->target );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tpushl %cebp\n\tmovl %cesp,%cebp\n", 37, 37, 37);
+            fputs(assCommand,fp);
+            sprintf(assCommand,"\tsubl\t$%d, %cesp\n", scratchBase, 37);
+            fputs(assCommand, fp);
+            
+            break;
+        case opMOV://four cases for operand: integer, global variable, local variable, and temp reg i.e. scratch variable
+                    //in case of global variable just pass in name of operand as  usual
+            if(section != text){
+                section = text;
+                sprintf(assCommand, "\t.text\n");
+                fputs(assCommand, fp);
+            }
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            if(!strstr(leftOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tmovl\t%s, %s\n", leftOperand, targetOperand);
+            fputs(assCommand, fp);
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            break;
+        case opSTRING:
+           
+            stringList[assStringCount] = currentQuad->left;
+            assStringCount++;
+
+
+
+            break;
+        case opARG:
+            char *tempTest = malloc(1024);
+            sprintf(tempTest, "%c", 37);
+            if(section != text){
+                    section = text;
+                    sprintf(assCommand, "\t.text\n");
+                    fputs(assCommand, fp);
+            }
+            char *argOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            if(!strstr(argOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", argOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(argOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            long argNum = strtol(currentQuad->left,NULL, 10)-1;
+            sprintf(assCommand, "\tpush\t%s\n", argOperand);
+            fputs(assCommand, fp);
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            break;
+        case opCALL:
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            if(section != text){
+                    section = text;
+                    sprintf(assCommand, "\t.text\n");
+                    fputs(assCommand, fp);
+            }
+            if(!isdigit(currentQuad->left[0])){
+                sprintf(assCommand, "\tcall\t%s\n", currentQuad->left);
+                fputs(assCommand, fp);
+                int testCmp = strcmp(targetOperand, "");
+                if(testCmp){
+                    sprintf(assCommand, "\tmovl\t%ceax, %s\n", 37, targetOperand);
+                    fputs(assCommand, fp);
+                }
+            }
+            break;
+        case opRET:
+            if(currentQuad->left){
+
+                leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+                sprintf(assCommand, "\tmovl %s, %ceax\n",leftOperand, 37);
+                fputs(assCommand, fp);
+            }
+            sprintf(assCommand, "\tleave\n\tret\n");
+            fputs(assCommand, fp);
+
+            break;
+        case opINC:
+            targetOperand= getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tincl\t%s\n", targetOperand);
+            fputs(assCommand, fp);
+            break;
+        case opDEC:
+            targetOperand= getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tdecl\t%s\n", targetOperand);
+            fputs(assCommand, fp);
+            break;
+        case opCMP:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            if(!strstr(leftOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            if(!strstr(rightOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", rightOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(rightOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                rightTest = 1;
+            }
+            
+            
+            sprintf(assCommand,"\tcmpl\t%s, %s\n", rightOperand, leftOperand );
+            fputs(assCommand, fp);
+            if(rightTest){
+                scratchReg--;
+                rightTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n", 37,getRegFromScratch(scratchReg));
+                fputs(assCommand, fp);
+            } 
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            
+            break;
+        case opBR:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            sprintf(assCommand,"\tjmp\t.%s\n", leftOperand );
+            fputs(assCommand, fp);
+            break;
+        case opBRGE:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            sprintf(assCommand, "\tjge\t.%s\n", leftOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tjl\t.%s\n", rightOperand);
+            fputs(assCommand,fp);
+            break;
+        case opBRLE:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            sprintf(assCommand, "\tjle\t.%s\n", leftOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tjg\t.%s\n", rightOperand);
+            fputs(assCommand,fp);
+            break;
+        case opBRNE:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            sprintf(assCommand, "\tjne\t.%s\n", leftOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tje\t.%s\n", rightOperand);
+            fputs(assCommand,fp);
+            break;
+        case opBREQ:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            sprintf(assCommand, "\tjee\t.%s\n", leftOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tjne\t.%s\n", rightOperand);
+            fputs(assCommand,fp);
+            break;
+        case opBRGT: 
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            sprintf(assCommand, "\tjg\t.%s\n", leftOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tjle\t.%s\n", rightOperand);
+            fputs(assCommand,fp);
+            break;
+        case opBRLT: 
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            sprintf(assCommand, "\tjl\t.%s\n", leftOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tjge\t.%s\n", rightOperand);
+            fputs(assCommand,fp);
+            break;
+        case opADD:
+            scratchReg++;
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            if(!strstr(leftOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            if(!strstr(rightOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", rightOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(rightOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                rightTest = 1;
+            }
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tmovl\t%s, %ceax\n", leftOperand, 37 );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\taddl\t%s, %ceax\n",rightOperand,37 );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tmovl\t %ceax, %s\n",37,targetOperand);
+            fputs(assCommand, fp);
+            if(rightTest){
+                scratchReg--;
+                rightTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n", 37,getRegFromScratch(scratchReg));
+                fputs(assCommand, fp);
+            } 
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            scratchReg--;
+            sprintf(assCommand, "\tmovl\t$0,%ceax\n",37);
+            fputs(assCommand,fp);
+            break;
+        case opSUB:
+            scratchReg++;
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            if(!strstr(leftOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            if(!strstr(rightOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", rightOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(rightOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                rightTest = 1;
+            }
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tmovl\t%s, %ceax\n", leftOperand, 37 );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tsubl\t%s, %ceax\n",rightOperand,37 );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tmovl\t %ceax, %s\n",37,targetOperand);
+            fputs(assCommand, fp);
+            if(rightTest){
+                scratchReg--;
+                rightTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n", 37,getRegFromScratch(scratchReg));
+                fputs(assCommand, fp);
+            } 
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            scratchReg--;
+            sprintf(assCommand, "\tmovl\t$0,%ceax\n",37);
+            fputs(assCommand,fp);
+            break;
+        case opMUL:
+            scratchReg++;
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            if(!strstr(leftOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            if(!strstr(rightOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", rightOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(rightOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                rightTest = 1;
+            }
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tmovl\t%s, %ceax\n", leftOperand, 37 );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\timul\t%s, %ceax\n",rightOperand,37 );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tmovl\t %ceax, %s\n",37,targetOperand);
+            fputs(assCommand, fp);
+            if(rightTest){
+                scratchReg--;
+                rightTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n", 37,getRegFromScratch(scratchReg));
+                fputs(assCommand, fp);
+            } 
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            scratchReg--;
+            sprintf(assCommand, "\tmovl\t$0,%ceax\n",37);
+            fputs(assCommand,fp);
+            break;
+        case opDIV:
+            scratchReg++;
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            if(!strstr(leftOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            
+                
+            sprintf(assCommand, "\tmovl\t%s, %cebx\n", rightOperand, 37);
+            fputs(assCommand,fp);
+            sprintf(rightOperand, "%cebx", 37);
+            scratchReg++;
+            rightTest = 1;
+        
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tmovl\t%s, %ceax\n", leftOperand, 37 );
+            fputs(assCommand, fp);
+            
+            sprintf(assCommand, "\tdiv\t%s\n",rightOperand );
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tmovl\t %ceax, %s\n",37,targetOperand);
+            fputs(assCommand, fp);
+            if(rightTest){
+                scratchReg--;
+                rightTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %cebx\n", 37);
+                fputs(assCommand, fp);
+            } 
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            scratchReg--;
+            sprintf(assCommand, "\tmovl\t$0,%ceax\n",37);
+            fputs(assCommand,fp);
+            break;
+        case opLEA:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            
+            strcpy(tempTarget, targetOperand);
+            sprintf(assCommand, "\tmovl\t%s, %c%s\n", targetOperand, 37, getRegFromScratch(scratchReg));
+            fputs(assCommand,fp);
+            sprintf(targetOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+           // scratchReg++;
+            //targetTest = 1;
+            sprintf(assCommand, "\tLEA\t%s, %s\n",leftOperand, targetOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tmovl %c%s, %s\n", 37, getRegFromScratch(scratchReg), tempTarget);
+            fputs(assCommand, fp);
+            if(targetTest){
+               // scratchReg--;
+                targetTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n", 37, getRegFromScratch(scratchReg));
+                fputs(assCommand, fp);
+            } 
+            break;  
+        case opLOAD:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            
+                
+            sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+            fputs(assCommand,fp);
+            sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+            scratchReg++;
+            leftTest = 1;
+            
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            
+            strcpy(tempTarget, targetOperand);
+           // sprintf(assCommand, "\tmovl\t%s, %c%s\n", targetOperand, 37, getRegFromScratch(scratchReg));
+            //fputs(assCommand,fp);
+            sprintf(targetOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+            scratchReg++;
+            targetTest = 1;
+            sprintf(assCommand, "\tmovl\t(%s), %s\n", leftOperand, targetOperand);
+            fputs(assCommand, fp);
+            sprintf(assCommand, "\tmovl\t%s, %s\n", targetOperand, tempTarget);
+            fputs(assCommand, fp);
+            if(targetTest){
+                scratchReg--;
+                targetTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            break;
+        case opSTORE:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            
+                
+            if(!strstr(leftOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", leftOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(leftOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                leftTest = 1;
+            }
+            
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            if(!strstr(rightOperand,"$" )){
+                
+                sprintf(assCommand, "\tmovl\t%s, %c%s\n", rightOperand, 37, getRegFromScratch(scratchReg));
+                fputs(assCommand,fp);
+                sprintf(rightOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+                scratchReg++;
+                rightTest = 1;
+            }
+           /* strcpy(tempRight, rightOperand);
+            sprintf(assCommand, "\tmovl\t%s, %c%s\n", rightOperand, 37, getRegFromScratch(scratchReg));
+            fputs(assCommand,fp);
+            sprintf(rightOperand, "%c%s", 37, getRegFromScratch(scratchReg));
+            scratchReg++;
+            targetTest = 1;*/
+            sprintf(assCommand, "\tmovl\t%s, (%s)\n", leftOperand, rightOperand);
+            fputs(assCommand, fp);
+           // sprintf(assCommand, "\tmovl\t%s, %s\n", targetOperand, tempTarget);
+            //fputs(assCommand, fp);
+            if(rightTest){
+                scratchReg--;
+                rightTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %cebx\n", 37);
+                fputs(assCommand, fp);
+            } 
+            if(leftTest){
+                scratchReg--;
+                leftTest = 0;
+                sprintf(assCommand, "\tmovl\t$0, %c%s\n",37, getRegFromScratch(scratchReg));
+                
+                fputs(assCommand, fp);
+            } 
+            break;
+        case opMOD:
+            leftOperand = getOperand(currentQuad->left, currentQuad->leftSymbol, scratchBase);
+            rightOperand = getOperand(currentQuad->right, currentQuad->rightSymbol, scratchBase);
+            targetOperand = getOperand(currentQuad->target, currentQuad->targetSymbol, scratchBase);
+            sprintf(assCommand, "\tmovl\t%s, %ceax\n", rightOperand,37);
+            fputs(assCommand, fp);
+            sprintf(rightOperand, "%ceax", 37);
+
+            sprintf(assCommand, "\tmovl\t%s, %cebx\n", leftOperand,37);
+            fputs(assCommand, fp);
+            sprintf(leftOperand, "%cebx", 37);
+            
+            sprintf(assCommand, "\txor\t%cedx, %cedx\n", 37,37);
+            fputs(assCommand,fp);
+
+            sprintf(assCommand, "\tdiv\t%s\n", leftOperand);
+            fputs(assCommand, fp);
+
+            sprintf(assCommand, "\tmovl %cedx, %s\n", 37, targetOperand);
+            fputs(assCommand, fp);
+
+            
+            break;
+    }
+}
+
+char *getOperand(char *quadOperand, struct symbolNode *quadSymbol, int scratchBase){
+    char *operand = malloc(1024);
+    if(isdigit(quadOperand[0])){
+        sprintf(operand, "$%s", quadOperand);
+    }
+    else if(quadSymbol){
+                if(quadSymbol->scope != global){
+                    sprintf(operand, "-%d(%cebp)", quadSymbol->ebpOffset, 37);
+                }
+                else{
+                    strcpy(operand,quadOperand);
+                }
+    }
+    else if(strstr(quadOperand, "%") != NULL){
+        long temp = strtol(quadOperand+2,NULL, 10);
+        long scratchOffset = temp*4 + scratchBase;
+        sprintf(operand, "-%d(%cebp)", scratchOffset, 37);
+        //need to extract number of temp variable, and then add multiply by 4 and add to scratchBase
+    }
+    else{
+        strcpy(operand, quadOperand);
+    }
+    return operand;
+
+}
+
+void rodataStrings(){
+    char *assCommand = malloc(1024);
+    section = ro_data;
+    sprintf(assCommand, "\t.section .rodata\n");
+    fputs(assCommand, fp);
+    for (int i=0; i<assStringCount; i++){
+        sprintf(assCommand, ".str%d:\n", i);
+        fputs(assCommand,fp);
+        sprintf(assCommand, "\t.string\t \"%s\"\n", stringList[i]);
+        fputs(assCommand,fp);
+    }
+}
+
+char *getRegFromScratch(int regNum){
+    switch(regNum){
+        case 0: return "eax";
+        case 1: return "ecx";
+        case 2: return "edx";
+    }
 }
 
 int main(){
@@ -3483,6 +4226,7 @@ int main(){
     base = generateSymbol(0,1,0,0,"","",name,-1,NULL, base,0, 0, 4);
     firstQuad = NULL;
     globalList = NULL;
+    lastGlobal = NULL;
     lastSymbol[0] = base;
     last = base;
     lastOpcode = -1;
@@ -3490,12 +4234,12 @@ int main(){
     sprintf(lastSize,"1");
    // generateSymbol(int decLine, int scopeStart, int scope, char* type, char* name,char* fileName,int astType, struct astnode *member, struct symbolNode *head)
     funcHead = NULL;
-    
+    section = 0;
     lastType = -1;
     structOrFunc = -1;
     scopeNum = -1;
     scopeTotal = -1;
-    quadScopeCount = 0;
+    quadScopeCount = -1;
     scopeNum = -1;
     nameSpaceNum = 0;
     isFunction = 0;
@@ -3506,15 +4250,22 @@ int main(){
     lastScopeType = -1;
     branchNum = 0;
     cur_bb = 0;
+    funcCount = 0;
+    ebpOffset = 4;
     lastDim = malloc(sizeof(struct astnode));
     lastDim->nodetype = -1;
     rightOp = malloc(sizeof(struct astnode));
     rightOp->nodetype = -1;
     bbToInsert = 0;
     endBlock = 0;
+    scratchReg = 0;
+    isArraySet = 0;
+    quadStringCount = 0;
+    assStringCount = 0;
     fp = fopen("./dscc.s", "w");
     //cur_bb = malloc(1024);
     yyparse();
+    rodataStrings();
     fclose(fp);
     //print_quads(blockList,branchNum, blockNums);
 
